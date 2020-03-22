@@ -6,6 +6,10 @@ This repository contains the official libraries for core functionality of [signu
 
 Signup is a non-custodial platform to build blockchain apps exclusively for Bitcoin Cash ecosystem. You can use this library to request your users to pay, store their data and perform social network functionalities without having to think about security measures and low level transaction building.
 
+## Demos
+
+1. [Simple BCH Tipping Button](https://examples.p0oker.now.sh/example_simple_tipping_button.html)
+
 ## Do I need a specific framework to use it?
 
 Signup is framework agnostic, you can import it in modern environments like React, Vue, ... apps or just drop a script tag and use it with plain JavaScript.
