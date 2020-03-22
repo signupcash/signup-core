@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>SIGNUP.cash - Wallet Creation</title>
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://getbootstrap.com/docs/4.4/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+
+    <link href="../css/toastnotify.css" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: center;
+        align-items: center;
+        padding-top: 40px;
+        padding-bottom: 40px;
+        background-color: white;
+      }
+      p {
+        text-align: left;
+        font-size: 16px;
+      }
+      h4 {
+        margin: 20px;
+      }
+      #recovery-phrases {
+        font-weight: bold;
+        color: deeppink;
+        background: lightskyblue;
+        padding: 20px 10px;
+      }
+      #show-balance {
+        text-align: center;
+        font-weight: 500;
+        margin: 25px;
+      }
+      .form-signin {
+        width: 100%;
+        max-width: 450px;
+        padding: 15px;
+        margin: auto;
+      }
+      .form-signin .checkbox {
+        font-weight: 400;
+      }
+      .form-signin .form-control {
+        position: relative;
+        box-sizing: border-box;
+        height: auto;
+        padding: 10px;
+        font-size: 16px;
+      }
+      .form-signin .form-control:focus {
+        z-index: 2;
+      }
+      .form-signin input[type="email"] {
+        margin-bottom: -1px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .form-signin input[type="password"] {
+        margin-bottom: 10px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+      .btn-primary {
+        background-color: #1c4baf;
+        border-color: red;
+        border: none;
+        border-radius: 0;
+      }
+      .btn-primary:hover,
+      .btn-primary:active {
+        background: #171941;
+      }
+      #cashaddr-address {
+        padding: 4px;
+        margin: 7px;
+      }
+      #buttons-container {
+        align-items: center;
+        align-content: center;
+        display: flex;
+      }
+      #buttons-container .btn {
+        margin: 0 auto;
+      }
+      img {
+        transition: all ease-out 0.3s;
+      }
+      #logo {
+        margin: 20px auto;
+      }
+    </style>
+  </head>
+
+  <body class="text-center">
+    <form class="form-signin">
+      <h4>Login once, use everywhere!</h4>
+      <img
+        src="../images/signup-logo.png"
+        alt="SIGNUP logo"
+        width="150"
+        id="logo"
+        style="display: none;"
+      />
+      <p id="qr-explainer" style="display: none;">
+        Here is your BCH address, you can top it up to perform transactions
+        using Signup.<br />
+      </p>
+      <div id="qr-contianer"></div>
+      <a id="cashaddr-address" href="#" class="badge badge-secondary"></a>
+
+      <p id="qr-disclaimer" style="display: none;margin-top:15px">
+        <span class="small"
+          >We are in beta and still testing, please <b>don't send</b> any
+          amounts more than $10 for now, treat it like a test account.</span
+        >
+      </p>
+      <p id="mnemonic-explainer" style="display: none;">
+        This is your recovery phrases, please write them down on a paper and
+        keep them safely. You might lose access to your wallet if you don't have
+        these phrases.
+      </p>
+      <p id="content" style="display: none;">
+        Signup is a universal non-custodial <b>Bitcoin Cash</b> authorization
+        platform. In order to use Signup, you need to create or import a
+        wallet.<br />
+      </p>
+      <p id="show-balance" style="display: none;">
+        0 BCH
+      </p>
+
+      <p id="recovery-phrases" style="display: none"></p>
+      <div id="buttons-container">
+        <button
+          class="btn btn-lg btn-primary btn-block"
+          id="create-wallet-btn"
+          style="display: none;"
+        >
+          Create a new wallet
+        </button>
+
+        <button
+          class="btn btn-lg btn-primary btn-block"
+          style="display: none"
+          id="confirm-wallet-btn"
+        >
+          I wrote it down
+        </button>
+
+        <button
+          class="btn btn-lg btn-secondary"
+          style="display: none"
+          id="go-back-btn"
+        >
+          Go back
+        </button>
+        <button
+          class="btn btn-lg btn-primary"
+          style="display: none"
+          id="check-balance-btn"
+        >
+          Reload Balance
+        </button>
+      </div>
+      <p id="disclaimer1" class="small">
+        We are in beta so for safety reasons wallet import is not available yet!
+      </p>
+      <p class="mt-5 mb-3 text-muted">&copy; 2020</p>
+    </form>
+
+    <script src="../js/signer.lib.js" type="text/javascript"></script>
+    <script></script>
+  </body>
+</html>

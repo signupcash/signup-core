@@ -1,0 +1,25 @@
+{
+  "name": "signup-cash-client",
+  "version": "0.8.0",
+  "description": "Client side library for interacting with Signup",
+  "main": "client.runtime.js",
+  "scripts": {
+    "start": "serve ./ -l 5000",
+    "build:dev": "NODE_ENV=development babel src -d dist",
+    "build": "NODE_ENV=production babel src -d dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "BCH",
+    "Bitcoin",
+    "BitcoinCash",
+    "Auth"
+  ],
+  "author": "p0o",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "babel-plugin-transform-inline-environment-variables": "^0.4.3"
+  }
+}

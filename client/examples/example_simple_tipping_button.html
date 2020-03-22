@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>SIGNUP.cash Client Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>SIGNUP.cash Simple Tipping Button Demo</h1>
+
+      <p>Click on the button below to tip me</p>
+      <button
+        class="btn btn-primary"
+        class="signupcash_button"
+        onclick="tipMe()"
+        data-="haha"
+      >
+        Tip 600 sats
+      </button>
+    </div>
+
+    <script type="text/javascript" src="../dist/client.runtime.js"></script>
+    <script>
+      const signup = new SignupCash({
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67"
+      });
+
+      async function tipMe() {
+        const user = await signup.cash.authenticate();
+        await user.pay(600, "SAT");
+      }
+    </script>
+  </body>
+</html>

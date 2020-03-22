@@ -1,0 +1,10 @@
+{
+  "plugins": [
+    [
+      "transform-inline-environment-variables",
+      {
+        "include": ["NODE_ENV"]
+      }
+    ]
+  ]
+}

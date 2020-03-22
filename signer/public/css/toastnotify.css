@@ -1,0 +1,351 @@
+/*!
+ * toastnotify.css  http://pixmawebdesign.com/library/toastnotify/
+ * Version - 1.2.1
+ * Licensed under the MIT license - http://opensource.org/licenses/MIT
+ * Copyright (c) 2019 Leonardo Manuel Alvarez
+ */
+:root {
+  --toastnotify-color: #fff;
+  --toastnotify-default: #202124;
+  --toastnotify-primary: #0d47a1;
+  --toastnotify-info: #448aff;
+  --toastnotify-warning: #ff8800;
+  --toastnotify-danger: #ff4444;
+  --toastnotify-success: #00c851;
+  --toastnotify-secondary: #9933cc;
+  --toastnotify-pink: #e91e63;
+  --z-toastnotify: 1000;
+}
+#toastnotify-container {
+  position: fixed;
+  z-index: var(--z-toastnotify);
+  bottom: 0;
+  left: 12px;
+  width: auto;
+  height: auto;
+}
+.toastnotify .vh {
+  -webkit-box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.302),
+    0 4px 8px 3px rgba(60, 64, 67, 0.149);
+  -moz-box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.302),
+    0 4px 8px 3px rgba(60, 64, 67, 0.149);
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.302),
+    0 4px 8px 3px rgba(60, 64, 67, 0.149);
+  -webkit-font-smoothing: antialiased;
+  font-family: Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.2px;
+  -webkit-align-items: center;
+  align-items: center;
+  border: none;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+  bottom: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  font-weight: 400;
+  left: 0;
+  margin: 24px;
+  max-width: 900px;
+  min-height: 52px;
+  padding: 8px 24px;
+  padding-left: 15px;
+  padding-right: 52px;
+  position: relative;
+  right: auto;
+  text-align: left;
+  top: auto;
+  white-space: normal;
+  color: var(--toastnotify-color);
+}
+.toastnotify .vh .b4cimg {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  display: block;
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  flex: 0 0 auto;
+  position: relative;
+  margin-right: 8px;
+  z-index: 0;
+  -webkit-transition: -webkit-box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease;
+}
+.toastnotify .vh .b4cimg .bAimg {
+  height: 100%;
+  width: 100%;
+  border-radius: 50%;
+}
+.toastnotify .vh .b4cimg:hover {
+  -webkit-box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
+}
+.toastnotify .vh .important {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: 0.5rem;
+  border-radius: 50%;
+  background-color: #ff3c32;
+  position: absolute;
+  z-index: 3;
+  top: 5px;
+  right: -2px;
+}
+.toastnotify .vh .important::before {
+  content: "";
+  display: block;
+  width: inherit;
+  height: inherit;
+  border-radius: 50%;
+  background-color: rgba(255, 60, 50, 0.75);
+  animation: live-toastnotify 0.4s ease-in-out infinite;
+}
+.toastnotify .vh .b4cicon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f4f83d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-size: 19px;
+  font-weight: 400;
+}
+.toastnotify.rounded .vh {
+  border-radius: 50px;
+}
+.toastnotify.toastnotify-dark .vh {
+  background: var(--toastnotify-default);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-default .vh {
+  background: var(--toastnotify-default);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-primary .vh {
+  background: var(--toastnotify-primary);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-info .vh {
+  background: var(--toastnotify-info);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-warning .vh {
+  background: var(--toastnotify-warning);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-danger .vh {
+  background: var(--toastnotify-danger);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-success .vh {
+  background: var(--toastnotify-success);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-secondary .vh {
+  background: var(--toastnotify-secondary);
+  color: var(--toastnotify-color);
+}
+.toastnotify.toastnotify-pink .vh {
+  background: var(--toastnotify-pink);
+  color: var(--toastnotify-color);
+}
+.bAq {
+  margin: 10px 0;
+  margin-right: 24px;
+}
+.bAo {
+  font-size: 0;
+  height: 36px;
+  margin-left: -16px;
+  margin-right: auto;
+}
+.bAo > .ad,
+div.toastnotify .a8k {
+  align-items: center;
+  border: none;
+  display: inline-flex;
+  justify-content: center;
+  outline: 0;
+  position: relative;
+  z-index: 0;
+  -webkit-font-smoothing: antialiased;
+  font-family: "Google Sans", Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.25px;
+  background: 0 0;
+  border-radius: 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-weight: 500;
+  height: 36px;
+  outline: 0;
+  color: #e7eef9;
+  margin-left: 8px;
+  min-width: auto;
+  padding: 0 8px;
+  text-decoration: none;
+}
+.bAo > .ad::before,
+div.toastnotify .a8k::before {
+  content: "";
+  display: block;
+  opacity: 0;
+  position: absolute;
+  transition-duration: 0.15s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: #f1f4f8d8;
+  border-radius: 4px;
+  transform: scale(0);
+  transition-property: transform, opacity;
+}
+.bAo > .ad:hover::before,
+div.toastnotify .a8k:hover::before {
+  opacity: 0.06;
+  transform: scale(1);
+  opacity: 0.2;
+}
+.bAo > .ad,
+div.toastnotify.toastnotify-dark .a8k {
+  color: #8ab4f8;
+}
+.bAo > .ad::before,
+div.toastnotify.toastnotify-dark .a8k::before {
+  background: #4285f4;
+}
+.toastnotify .bBe {
+  align-items: center;
+  border: none;
+  display: inline-flex;
+  justify-content: center;
+  outline: 0;
+  z-index: 0;
+  cursor: pointer;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+.toastnotify .bBe::before {
+  content: "";
+  display: block;
+  opacity: 0;
+  position: absolute;
+  transition-duration: 0.15s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+  bottom: -10px;
+  left: -10px;
+  right: -10px;
+  top: -10px;
+  background: 0 0;
+  border-radius: 50%;
+  box-sizing: border-box;
+  transform: scale(0);
+  transition-property: transform, opacity;
+}
+.toastnotify .bBe::after {
+  content: "";
+  height: 200%;
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+}
+.toastnotify .bBe .bBf {
+  height: 20px;
+  opacity: 0.54;
+  width: 20px;
+  opacity: 0.7;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 20px;
+}
+.toastnotify .bBe:hover::before {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  opacity: 1;
+  transform: scale(1);
+}
+.animated {
+  -webkit-animation-duration: 0.4s;
+  animation-duration: 0.4s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+@-webkit-keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+.fadeInLeft {
+  -webkit-animation-name: fadeInLeft;
+  animation-name: fadeInLeft;
+}
+@-webkit-keyframes fadeOutLeft {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+@keyframes fadeOutLeft {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+.fadeOutLeft {
+  -webkit-animation-name: fadeOutLeft;
+  animation-name: fadeOutLeft;
+}
+@keyframes live-toastnotify {
+  to {
+    background-color: transparent;
+    transform: scale(3);
+  }
+}
