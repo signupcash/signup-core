@@ -4,11 +4,7 @@ import BigNumber from "bignumber.js";
 import bitbox from "./libs/bitbox";
 import showToast from "./showToast";
 import { isUserWalletExist, getWalletAddr, getWalletHdNode } from "./wallet";
-import {
-  validateConfig,
-  validateReqType,
-  validateBrowser
-} from "./utils/validators";
+import { validateConfig, validateReqType } from "./utils/validators";
 import {
   isInSatoshis,
   convertAmountToBCHUnit,
@@ -49,20 +45,6 @@ function receiveMessage(event) {
       // pay
       if (isUserWalletExist()) {
         handleMessageBackToClient("AUTHENTICATED", reqId);
-        return;
-      }
-
-      try {
-        validateBrowser();
-      } catch (e) {
-        showToast(
-          "This website is a DApp with blockchain functionalities. Unfortunately at the moment Safari browsers are not supported because of limitations enforced by Apple. Please use another browser to navigate this DApp for the meantime. Thank you",
-          "I understand",
-          "",
-          () => null,
-          () => handleMessageBackToClient("REJECTED", reqId)
-        );
-        console.log(e);
         return;
       }
 
