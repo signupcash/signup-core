@@ -1,20 +1,25 @@
 const SignupCash = function () {
   const SIGNUP_ORIGIN = "production" === "development" ? "http://localhost:5050" : "https://secure.signup.cash";
-  const SIGNUP_IFRAME_WIDTH = "500px";
-  const SIGNUP_IFRAME_HEIGHT = "230px";
+  const isPhone = window.innerWidth < 625;
+  const SIGNUP_IFRAME_WIDTH = isPhone ? "100%" : "500px";
+  const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
   const LOGIN_URL = SIGNUP_ORIGIN + "/account";
   const config = {};
   let iframe;
   let userRequestManager = {
     pay: async function (amount, unit) {
-      console.log("[REQUEST TO PAY]", amount, unit);
       return new Promise(function (resolve, reject) {
         const newReqId = uuidv4(); // first set a listener to receive the response back from signer
 
-        listenForMessage(newReqId, function (payloadReceived) {
+        listenForMessage(newReqId, function (payloadFromSigner) {
           // remove the listener
           removeListeningForMessage();
-          resolve(payloadReceived);
+
+          if (payloadFromSigner.status === "REJECTED" || payloadFromSigner.status === "ERROR") {
+            return reject(payloadFromSigner);
+          }
+
+          resolve(payloadFromSigner);
         });
         requestFromUser({
           reqType: "PAY",
@@ -52,8 +57,15 @@ const SignupCash = function () {
       position: absolute;
       border: none;
       left: 0;
-      bottom: 0;
+      display: none;
     `;
+
+    if (isPhone) {
+      iframe.style.setProperty("top", "20");
+    } else {
+      iframe.style.setProperty("bottom", "0");
+    }
+
     iframe.setAttribute("width", SIGNUP_IFRAME_WIDTH);
     iframe.setAttribute("height", SIGNUP_IFRAME_HEIGHT);
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin"); // create container
@@ -67,6 +79,18 @@ const SignupCash = function () {
     };
   }
 
+  function hideIframe() {
+    setTimeout(function () {
+      iframe.style.setProperty("display", "none");
+    }, 500);
+  }
+
+  function showIframe() {
+    setTimeout(function () {
+      iframe.style.setProperty("display", "block");
+    }, 500);
+  }
+
   function authenticate() {
     return new Promise(function (resolve, reject) {
       const newReqId = uuidv4();
@@ -76,19 +100,19 @@ const SignupCash = function () {
       }); // first set a listener to receive the response back from signer
 
       listenForMessage(newReqId, function (payloadFromSigner) {
-        if (payloadFromSigner.authAccepted) {
+        removeListeningForMessage();
+
+        if (payloadFromSigner.status === "CONSENT-TO-LOGIN") {
           // redirect user for auth
           window.open(LOGIN_URL + "?reqId=" + newReqId);
         }
 
-        if (payloadFromSigner.isAuthenticated) {
+        if (payloadFromSigner.status === "AUTHENTICATED") {
           resolve(userRequestManager);
         } else {
           // Signin failed
           reject("User failed to Signin with a wallet");
         }
-
-        removeListeningForMessage();
       });
     });
   } // Utility functions
@@ -103,6 +127,7 @@ const SignupCash = function () {
   }
 
   function requestFromUser(requestPayload) {
+    showIframe();
     requestPayload.config = config;
     iframe.contentWindow.postMessage(requestPayload, SIGNUP_ORIGIN);
   }
@@ -112,10 +137,8 @@ const SignupCash = function () {
       throw new Error("Unknown Origin blocked! SIGNUP only authorize messages from " + SIGNUP_ORIGIN, event.origin);
     }
 
-    const {
-      status,
-      reqId
-    } = event.data;
+    const status = event.data.status;
+    const reqId = event.data.reqId;
 
     if (reqId === targetReqId) {
       cb(event.data);
@@ -128,13 +151,13 @@ const SignupCash = function () {
   function listenForMessage(targetReqId, cb) {
     if (!window) return null;
     window.addEventListener("message", function (event) {
-      console.log("event here=>", event.data);
       handleMessageReceivedFromSigner(event, targetReqId, cb);
     });
   }
 
   function removeListeningForMessage() {
     if (!window) return null;
+    hideIframe();
     window.removeEventListener("message", handleMessageReceivedFromSigner);
   }
 
