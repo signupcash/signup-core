@@ -77,8 +77,8 @@ function receiveMessage(event) {
   }
 }
 
-function handleMessageBackToClient(status, reqId) {
-  window.parent.postMessage({ status, reqId }, "*");
+function handleMessageBackToClient(status, reqId, meta = {}) {
+  window.parent.postMessage({ status, reqId, ...meta }, "*");
 }
 
 // perform the transaction right away
@@ -103,6 +103,15 @@ async function handleRequestToPayIsAccepted(
     getWalletAddr()
   );
   console.log(balances);
+
+  if (balances.satoshis_available_bch < amountInSatoshis) {
+    // early exit because there is not enough bch to spend
+    handleMessageBackToClient("ERROR", reqId, {
+      message: "Not enough bch available"
+    });
+    return;
+  }
+
   // TODO proceed with the payment
   const hdNode = getWalletHdNode();
   const fundingWIF = bitbox.HDNode.toWIF(hdNode);
@@ -115,11 +124,18 @@ async function handleRequestToPayIsAccepted(
 
   let sendTxId;
 
-  sendTxId = await bitboxWithSLP.simpleBchSend(
-    sendAmounts,
-    inputUtxos,
-    receiverAddress,
-    changeReceiverAddress
-  );
-  console.log("SEND txn complete:", sendTxId);
+  try {
+    sendTxId = await bitboxWithSLP.simpleBchSend(
+      sendAmounts,
+      inputUtxos,
+      receiverAddress,
+      changeReceiverAddress
+    );
+    handleMessageBackToClient("ACCOMPLISHED", reqId, { txId: sendTxId });
+  } catch (e) {
+    console.log("[SIGNUP ERROR]", e);
+    handleMessageBackToClient("ERROR", reqId, {
+      message: "Transaction failed"
+    });
+  }
 }
