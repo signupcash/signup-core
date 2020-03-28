@@ -42,13 +42,13 @@ function receiveMessage(event) {
             unit,
             config.addr
           ),
-        () => null
+        () => handleMessageBackToClient("REJECTED", reqId)
       );
       break;
     case "AUTH":
       // pay
       if (isUserWalletExist()) {
-        window.parent.postMessage({ isAuthenticated: true, reqId }, "*");
+        handleMessageBackToClient("AUTHENTICATED", reqId);
         return;
       }
 
@@ -59,7 +59,8 @@ function receiveMessage(event) {
           "This website is a DApp with blockchain functionalities. Unfortunately at the moment Safari browsers are not supported because of limitations enforced by Apple. Please use another browser to navigate this DApp for the meantime. Thank you",
           "I understand",
           "",
-          () => null
+          () => null,
+          () => handleMessageBackToClient("REJECTED", reqId)
         );
         console.log(e);
         return;
@@ -69,14 +70,15 @@ function receiveMessage(event) {
         "This website is a DApp using SIGNUP.cash, you need to log in with SIGNUP to get the full benefits of this web page",
         "Login With SIGNUP",
         "No Thanks!",
-        () => handleRequestToAuthAccepted(reqId)
+        () => handleMessageBackToClient("CONSENT-TO-LOGIN", reqId),
+        () => handleMessageBackToClient("REJECTED", reqId)
       );
       break;
   }
 }
 
-function handleRequestToAuthAccepted(reqId) {
-  window.parent.postMessage({ authAccepted: true, reqId }, "*");
+function handleMessageBackToClient(status, reqId) {
+  window.parent.postMessage({ status, reqId }, "*");
 }
 
 // perform the transaction right away
