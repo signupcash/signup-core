@@ -6,7 +6,7 @@ const SignupCash = (function() {
 
   const isPhone = window.innerWidth < 625;
   const SIGNUP_IFRAME_WIDTH = isPhone ? "100%" : "500px";
-  const SIGNUP_IFRAME_HEIGHT = isPhone ? "70%" : "230px";
+  const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
   const LOGIN_URL = SIGNUP_ORIGIN + "/account";
 
   const config = {};
@@ -15,7 +15,6 @@ const SignupCash = (function() {
 
   let userRequestManager = {
     pay: async function(amount, unit) {
-      console.log("[REQUEST TO PAY]", amount, unit);
       return new Promise(function(resolve, reject) {
         const newReqId = uuidv4();
         // first set a listener to receive the response back from signer
@@ -23,8 +22,11 @@ const SignupCash = (function() {
           // remove the listener
           removeListeningForMessage();
 
-          if (payloadFromSigner.status === "REJECTED") {
-            return reject("Payment failed");
+          if (
+            payloadFromSigner.status === "REJECTED" ||
+            payloadFromSigner.status === "ERROR"
+          ) {
+            return reject(payloadFromSigner);
           }
 
           resolve(payloadFromSigner);
@@ -163,7 +165,6 @@ const SignupCash = (function() {
   function listenForMessage(targetReqId, cb) {
     if (!window) return null;
     window.addEventListener("message", function(event) {
-      console.log("event here=>", event.data);
       handleMessageReceivedFromSigner(event, targetReqId, cb);
     });
   }
