@@ -12,15 +12,7 @@ function q(selector, el) {
 }
 
 export function storeWallet(mnemonic) {
-  document
-    .requestStorageAccess()
-    .then(res => {
-      console.log(res);
-      localStorage.setItem("SIGNUP", btoa(mnemonic));
-    })
-    .catch(e => {
-      console.log(e);
-    });
+  localStorage.setItem("SIGNUP", btoa(mnemonic));
 }
 
 export function storeWalletIsVerified() {

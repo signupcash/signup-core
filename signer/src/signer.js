@@ -4,11 +4,7 @@ import BigNumber from "bignumber.js";
 import bitbox from "./libs/bitbox";
 import showToast from "./showToast";
 import { isUserWalletExist, getWalletAddr, getWalletHdNode } from "./wallet";
-import {
-  validateConfig,
-  validateReqType,
-  validateBrowser
-} from "./utils/validators";
+import { validateConfig, validateReqType } from "./utils/validators";
 import {
   isInSatoshis,
   convertAmountToBCHUnit,
@@ -42,26 +38,13 @@ function receiveMessage(event) {
             unit,
             config.addr
           ),
-        () => null
+        () => handleMessageBackToClient("REJECTED", reqId)
       );
       break;
     case "AUTH":
       // pay
       if (isUserWalletExist()) {
-        window.parent.postMessage({ isAuthenticated: true, reqId }, "*");
-        return;
-      }
-
-      try {
-        validateBrowser();
-      } catch (e) {
-        showToast(
-          "This website is a DApp with blockchain functionalities. Unfortunately at the moment Safari browsers are not supported because of limitations enforced by Apple. Please use another browser to navigate this DApp for the meantime. Thank you",
-          "I understand",
-          "",
-          () => null
-        );
-        console.log(e);
+        handleMessageBackToClient("AUTHENTICATED", reqId);
         return;
       }
 
@@ -69,14 +52,15 @@ function receiveMessage(event) {
         "This website is a DApp using SIGNUP.cash, you need to log in with SIGNUP to get the full benefits of this web page",
         "Login With SIGNUP",
         "No Thanks!",
-        () => handleRequestToAuthAccepted(reqId)
+        () => handleMessageBackToClient("CONSENT-TO-LOGIN", reqId),
+        () => handleMessageBackToClient("REJECTED", reqId)
       );
       break;
   }
 }
 
-function handleRequestToAuthAccepted(reqId) {
-  window.parent.postMessage({ authAccepted: true, reqId }, "*");
+function handleMessageBackToClient(status, reqId, meta = {}) {
+  window.parent.postMessage({ status, reqId, ...meta }, "*");
 }
 
 // perform the transaction right away
@@ -101,6 +85,15 @@ async function handleRequestToPayIsAccepted(
     getWalletAddr()
   );
   console.log(balances);
+
+  if (balances.satoshis_available_bch < amountInSatoshis) {
+    // early exit because there is not enough bch to spend
+    handleMessageBackToClient("ERROR", reqId, {
+      message: "Not enough bch available"
+    });
+    return;
+  }
+
   // TODO proceed with the payment
   const hdNode = getWalletHdNode();
   const fundingWIF = bitbox.HDNode.toWIF(hdNode);
@@ -113,11 +106,18 @@ async function handleRequestToPayIsAccepted(
 
   let sendTxId;
 
-  sendTxId = await bitboxWithSLP.simpleBchSend(
-    sendAmounts,
-    inputUtxos,
-    receiverAddress,
-    changeReceiverAddress
-  );
-  console.log("SEND txn complete:", sendTxId);
+  try {
+    sendTxId = await bitboxWithSLP.simpleBchSend(
+      sendAmounts,
+      inputUtxos,
+      receiverAddress,
+      changeReceiverAddress
+    );
+    handleMessageBackToClient("ACCOMPLISHED", reqId, { txId: sendTxId });
+  } catch (e) {
+    console.log("[SIGNUP ERROR]", e);
+    handleMessageBackToClient("ERROR", reqId, {
+      message: "Transaction failed"
+    });
+  }
 }

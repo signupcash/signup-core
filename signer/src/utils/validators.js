@@ -6,16 +6,6 @@ export function validateConfig(configObject) {
   }
 }
 
-export function validateBrowser() {
-  if (
-    navigator &&
-    navigator.userAgent &&
-    navigator.userAgent.includes("Safari")
-  ) {
-    throw new Error("Browser is not supported");
-  }
-}
-
 export function validateReqType(reqType) {
   return ["PAY", "AUTH"].includes(reqType);
 }

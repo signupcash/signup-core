@@ -12,6 +12,9 @@
       p {
         font-size: 1.4em;
       }
+      h1 {
+        text-align: center;
+      }
       .container {
         display: flex;
         flex-direction: column;
@@ -26,26 +29,51 @@
     <div class="container">
       <h1>SIGNUP.cash Simple Tipping Button Demo</h1>
 
-      <p>Click on the button below to tip me</p>
-      <button
-        class="btn btn-primary"
-        class="signupcash_button"
-        onclick="tipMe()"
-        data-="haha"
-      >
-        Tip 600 sats
+      <p id="msg">Click on the button below to tip me</p>
+      <button type="button" class="btn btn-primary" id="signupcash_button">
+        Tip 600 Sats
       </button>
     </div>
 
-    <script type="text/javascript" src="../dist/client.runtime.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.signup.cash/client.runtime.js"
+    ></script>
     <script>
       const signup = new SignupCash({
         addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67"
       });
 
-      async function tipMe() {
-        const user = await signup.cash.authenticate();
-        await user.pay(600, "SAT");
+      const payButton = document.querySelector("#signupcash_button");
+      const msgText = document.querySelector("#msg");
+
+      payButton.addEventListener("click", tipMe);
+
+      function tipMe(e) {
+        e.preventDefault();
+        const user = signup.cash.authenticate().then(user => {
+          // change the state of button
+          payButton.innerHTML = "Processing...";
+          payButton.setAttribute("disabled", 1);
+
+          user
+            .pay(600, "SAT")
+            .then(res => {
+              console.log("PAY RESP =>", res);
+              // update the UI
+              msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${res.txId}'>TX ID</a>`;
+            })
+            .catch(({ status, message }) => {
+              // error handling
+              // e.status could be 'REJECTED' which means user refused to pay
+              // e.status === 'ERROR' means transaction failed. the reason is explained in e.message
+              console.log("error", status, message);
+            })
+            .finally(() => {
+              payButton.innerHTML = "Send 600 sats";
+              payButton.removeAttribute("disabled");
+            });
+        });
       }
     </script>
   </body>
