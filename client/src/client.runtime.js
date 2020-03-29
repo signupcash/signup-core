@@ -118,6 +118,10 @@ const SignupCash = (function() {
           // redirect user for auth
           window.open(LOGIN_URL + "?reqId=" + newReqId);
         }
+        if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
+          // redirect user to docs, guides, etc
+          window.open(payloadFromSigner.link);
+        }
         if (payloadFromSigner.status === "AUTHENTICATED") {
           resolve(userRequestManager);
         } else {

@@ -10,6 +10,7 @@ import {
   convertAmountToBCHUnit,
   convertAmountToSatoshiUnits
 } from "./utils/unitUtils";
+import { notionLinkToBrowserCompatibility } from "./config";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
@@ -42,9 +43,24 @@ function receiveMessage(event) {
       );
       break;
     case "AUTH":
-      // pay
-      if (isUserWalletExist()) {
-        handleMessageBackToClient("AUTHENTICATED", reqId);
+      try {
+        if (isUserWalletExist()) {
+          handleMessageBackToClient("AUTHENTICATED", reqId);
+          return;
+        }
+      } catch (e) {
+        console.log("[SIGNUP ERROR]", e);
+        // most probably because third party cookies are disable
+        showToast(
+          "Your browser settings are not allowing you to use Signup.cash platform.",
+          "Learn More",
+          "Ahh nevermind",
+          () =>
+            handleMessageBackToClient("CONSENT-TO-OPEN-LINK", reqId, {
+              link: notionLinkToBrowserCompatibility
+            }),
+          () => handleMessageBackToClient("REJECTED", reqId)
+        );
         return;
       }
 
