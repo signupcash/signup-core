@@ -9,6 +9,7 @@ Signup is a non-custodial platform to build blockchain apps exclusively for Bitc
 ## Demos
 
 1. [Simple BCH Tipping Button](https://examples.p0oker.now.sh/example_simple_tipping_button.html)
+2. [Login Example](https://examples.p0oker.now.sh/example_login.html)
 
 ## Do I need a specific framework to use it?
 

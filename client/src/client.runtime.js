@@ -10,10 +10,14 @@ const SignupCash = (function() {
   const LOGIN_URL = SIGNUP_ORIGIN + "/account";
 
   const config = {};
+  let identity = {};
 
   let iframe;
 
   let userRequestManager = {
+    getIdentity: function() {
+      return identity;
+    },
     pay: async function(amount, unit) {
       return new Promise(function(resolve, reject) {
         const newReqId = uuidv4();
@@ -123,6 +127,13 @@ const SignupCash = (function() {
           window.open(payloadFromSigner.link);
         }
         if (payloadFromSigner.status === "AUTHENTICATED") {
+          if (payloadFromSigner.cashAccount) {
+            identity.cashAccount = payloadFromSigner.cashAccount;
+            identity.accountEmoji = payloadFromSigner.accountEmoji;
+          }
+
+          identity.bchAddress = payloadFromSigner.bchAddress;
+
           resolve(userRequestManager);
         } else {
           // Signin failed

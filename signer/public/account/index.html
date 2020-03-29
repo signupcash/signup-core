@@ -45,7 +45,7 @@
       #show-balance {
         text-align: center;
         font-weight: 500;
-        margin: 25px;
+        margin: 0px 0 25px;
       }
       .form-signin {
         width: 100%;
@@ -108,7 +108,7 @@
   </head>
 
   <body class="text-center">
-    <form class="form-signin">
+    <form class="form-signin" onsubmit="return false">
       <h4>Login once, use everywhere!</h4>
       <img
         src="../images/signup-logo.png"
@@ -139,10 +139,22 @@
         Signup is a universal non-custodial <b>Bitcoin Cash</b> authorization
         platform. In order to use Signup, you need to create or import a
         wallet.<br />
+        
+        <div class="input-group mb-3" id="cashaccount-container" style="display: none;">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="cashaccount">@</span>
+          </div>
+          <input type="text" id="cashaccount-input" class="form-control" placeholder="Username" aria-label="Cash Account Username" aria-describedby="cashaccount">
+          <p class="small mt-1">
+            Optional, this is to create an immutable cash account for you
+          </p>
+        </div>
       </p>
-      <p id="show-balance" style="display: none;">
-        0 BCH
+      <p id="cashaccount-user" class="text-center" style="display:none"></p>
+      <p id="show-balance" class="text-center" style="display: none;">
+        Balance: <b>0 BCH</b>
       </p>
+
 
       <p id="recovery-phrases" style="display: none"></p>
       <div id="buttons-container">
@@ -150,6 +162,7 @@
           class="btn btn-lg btn-primary btn-block"
           id="create-wallet-btn"
           style="display: none;"
+          type="button"
         >
           Create a new wallet
         </button>
@@ -158,6 +171,7 @@
           class="btn btn-lg btn-primary btn-block"
           style="display: none"
           id="confirm-wallet-btn"
+          type="button"
         >
           I wrote it down
         </button>
@@ -166,6 +180,7 @@
           class="btn btn-lg btn-secondary"
           style="display: none"
           id="go-back-btn"
+          type="button"
         >
           Go back
         </button>
@@ -173,6 +188,7 @@
           class="btn btn-lg btn-primary"
           style="display: none"
           id="check-balance-btn"
+          type="button"
         >
           Reload Balance
         </button>

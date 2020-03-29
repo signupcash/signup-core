@@ -3,7 +3,12 @@ import BigNumber from "bignumber.js";
 
 import bitbox from "./libs/bitbox";
 import showToast from "./showToast";
-import { isUserWalletExist, getWalletAddr, getWalletHdNode } from "./wallet";
+import {
+  isUserWalletExist,
+  getWalletAddr,
+  getWalletHdNode,
+  makeUsername
+} from "./wallet";
 import { validateConfig, validateReqType } from "./utils/validators";
 import {
   isInSatoshis,
@@ -45,7 +50,26 @@ function receiveMessage(event) {
     case "AUTH":
       try {
         if (isUserWalletExist()) {
-          handleMessageBackToClient("AUTHENTICATED", reqId);
+          let cashAccount;
+          let accountEmoji;
+          let bchAddress = getWalletAddr();
+
+          (async () => {
+            // get cash account details
+            let reverseLookup = await bitbox.CashAccounts.reverseLookup(
+              bchAddress
+            );
+            if (reverseLookup && reverseLookup.results) {
+              cashAccount = makeUsername(reverseLookup.results[0]);
+              accountEmoji = reverseLookup.results[0].accountEmoji;
+            }
+
+            handleMessageBackToClient("AUTHENTICATED", reqId, {
+              cashAccount,
+              accountEmoji,
+              bchAddress
+            });
+          })();
           return;
         }
       } catch (e) {

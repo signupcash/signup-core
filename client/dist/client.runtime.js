@@ -5,8 +5,12 @@ const SignupCash = function () {
   const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
   const LOGIN_URL = SIGNUP_ORIGIN + "/account";
   const config = {};
+  let identity = {};
   let iframe;
   let userRequestManager = {
+    getIdentity: function () {
+      return identity;
+    },
     pay: async function (amount, unit) {
       return new Promise(function (resolve, reject) {
         const newReqId = uuidv4(); // first set a listener to receive the response back from signer
@@ -113,6 +117,12 @@ const SignupCash = function () {
         }
 
         if (payloadFromSigner.status === "AUTHENTICATED") {
+          if (payloadFromSigner.cashAccount) {
+            identity.cashAccount = payloadFromSigner.cashAccount;
+            identity.accountEmoji = payloadFromSigner.accountEmoji;
+          }
+
+          identity.bchAddress = payloadFromSigner.bchAddress;
           resolve(userRequestManager);
         } else {
           // Signin failed

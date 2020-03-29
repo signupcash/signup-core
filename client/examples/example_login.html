@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>SIGNUP.cash Client Login Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Signup.cash Login Demo</h1>
+
+      <p id="msg">Please log in to use our Dapp</p>
+      <button type="button" class="btn btn-primary" id="signupcash_button">
+        Login with SIGNUP
+      </button>
+    </div>
+
+    <script
+      type="text/javascript"
+      src="https://cdn.signup.cash/client.runtime.js"
+    ></script>
+    <script>
+      const signup = new SignupCash({
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67"
+      });
+
+      const loginButton = document.querySelector("#signupcash_button");
+      const msgText = document.querySelector("#msg");
+
+      loginButton.addEventListener("click", login);
+
+      function login(e) {
+        // change the state of button
+        loginButton.innerHTML = "Loggin in..";
+        loginButton.setAttribute("disabled", 1);
+
+        signup.cash.authenticate().then(user => {
+          const userIdentity = user.getIdentity();
+
+          // always check, cash account is optional for users
+          if (userIdentity.cashAccount) {
+            msgText.innerHTML =
+              "Welcome " +
+              userIdentity.accountEmoji +
+              " " +
+              userIdentity.cashAccount;
+          } else {
+            // user has no cash account, use bchAddress
+            msgText.innerHTML =
+              "Welcome <b>" + userIdentity.bchAddress + "</b>";
+          }
+          loginButton.style.display = "none";
+        });
+      }
+    </script>
+  </body>
+</html>
