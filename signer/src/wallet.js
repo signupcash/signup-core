@@ -157,7 +157,7 @@ export function initWallet() {
   function onCheckBalanceBtnPressed(e) {
     e.preventDefault();
 
-    q("#show-balance").innerText = "<b>Updating ...</b>";
+    q("#show-balance").innerHTML = "<b>Updating ...</b>";
     q("#check-balance-btn").setAttribute("disabled", true);
 
     let balances;
@@ -184,12 +184,6 @@ export function initWallet() {
     storeWalletIsVerified();
     let cashAccountResult;
 
-    try {
-      cashAccountResult = await createCashAccount();
-    } catch (e) {
-      console.log("[SIGNUP ERROR] cash account cannot be created", e);
-    }
-
     const walletAddress = getWalletAddr();
 
     if (!walletAddress) return;
@@ -208,6 +202,13 @@ export function initWallet() {
     q("#go-back-btn").style.display = "block";
 
     showQR(walletAddress);
+
+    // create cash account
+    try {
+      cashAccountResult = await createCashAccount();
+    } catch (e) {
+      console.log("[SIGNUP ERROR] cash account cannot be created", e);
+    }
     return false;
   }
 
