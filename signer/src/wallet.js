@@ -57,6 +57,10 @@ function createWallet(mnemonic) {
   return bitbox.HDNode.fromSeed(seedBuffer);
 }
 
+export function makeUsername(cashAccountPayload) {
+  return `${cashAccountPayload.nameText}#${cashAccountPayload.accountNumber}`;
+}
+
 export function initWallet() {
   if (document.location.pathname !== "/account") return;
 
@@ -81,7 +85,7 @@ export function initWallet() {
 
           if (nameText && accountCollisionLength === 0) {
             // show the cash account user
-            let username = `${nameText}#${accountNumber}`;
+            let username = makeUsername(cashAccountLookup.results[0]);
             q(
               "#cashaccount-user"
             ).innerHTML = `Your Cash Account Username: <b>${username}</b>`;
