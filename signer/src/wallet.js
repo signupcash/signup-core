@@ -63,13 +63,42 @@ export function initWallet() {
   if (isUserWalletExist()) {
     // just show the balances
     showBalancesOnly();
-    return;
-  }
+    // load cash account
+    const walletAddress = getWalletAddr();
+    (async () => {
+      try {
+        const cashAccountLookup = await bitbox.CashAccounts.reverseLookup(
+          walletAddress
+        );
+        if (cashAccountLookup && cashAccountLookup.results) {
+          // update the UI
+          const {
+            accountEmoji,
+            accountNumber,
+            nameText,
+            accountCollisionLength
+          } = cashAccountLookup.results[0];
 
-  q("#create-wallet-btn").style.display = "block";
-  q("#content").style.display = "block";
-  q("#disclaimer1").style.display = "block";
-  q("#logo").style.display = "block";
+          if (nameText && accountCollisionLength === 0) {
+            // show the cash account user
+            let username = `${nameText}#${accountNumber}`;
+            q(
+              "#cashaccount-user"
+            ).innerHTML = `Your Cash Account Username: <b>${username}</b>`;
+            q("#cashaccount-user").style.display = "block";
+          }
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    })();
+  } else {
+    q("#create-wallet-btn").style.display = "block";
+    q("#content").style.display = "block";
+    q("#disclaimer1").style.display = "block";
+    q("#logo").style.display = "block";
+    q("#cashaccount-container").style.display = "flex";
+  }
 
   function showBalancesOnly() {
     q("#logo").style.display = "none";
@@ -83,7 +112,7 @@ export function initWallet() {
     q("#show-balance").style.display = "block";
     q("#check-balance-btn").style.display = "block";
 
-    q("#show-balance").innerText = "Updating ...";
+    q("#show-balance").innerHTML = "<b>Updating ...</b>";
     q("#check-balance-btn").setAttribute("disabled", true);
 
     showQR(getWalletAddr());
@@ -92,8 +121,9 @@ export function initWallet() {
     (async function() {
       balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(getWalletAddr());
       q("#check-balance-btn").removeAttribute("disabled");
-      q("#show-balance").innerText =
-        balances.satoshis_available_bch * 0.00000001 + " BCH";
+      q("#show-balance").innerHTML = `Balance: <b>${(
+        balances.satoshis_available_bch * 0.00000001
+      ).toFixed(8)} BCH</b>`;
 
       q("#qr-explainer").style.display = "block";
       q("#qr-disclaimer").style.display = "block";
@@ -110,6 +140,7 @@ export function initWallet() {
     q("#recovery-phrases").innerText = mnemonic;
 
     q("#create-wallet-btn").style.display = "none";
+    q("#cashaccount-container").style.display = "none";
     q("#content").style.display = "none";
     q("#disclaimer1").style.display = "none";
 
@@ -122,16 +153,20 @@ export function initWallet() {
   function onCheckBalanceBtnPressed(e) {
     e.preventDefault();
 
-    q("#show-balance").innerText = "Updating ...";
+    q("#show-balance").innerText = "<b>Updating ...</b>";
     q("#check-balance-btn").setAttribute("disabled", true);
 
     let balances;
+    const walletAddress = getWalletAddr();
+
     (async function() {
-      balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(getWalletAddr());
+      balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(walletAddress);
       console.log("balances: ", balances);
+
       q("#check-balance-btn").removeAttribute("disabled");
-      q("#show-balance").innerText =
-        balances.satoshis_available_bch * 0.00000001 + " BCH";
+      q("#show-balance").innerHTML = `Balance: <b>${(
+        balances.satoshis_available_bch * 0.00000001
+      ).toFixed(8)} BCH</b>`;
     })();
     return false;
   }
@@ -140,9 +175,17 @@ export function initWallet() {
     window.close();
   }
 
-  function onMnemonicConfirmationBtnPressed(e) {
+  async function onMnemonicConfirmationBtnPressed(e) {
     e.preventDefault();
     storeWalletIsVerified();
+    let cashAccountResult;
+
+    try {
+      cashAccountResult = await createCashAccount();
+    } catch (e) {
+      console.log("[SIGNUP ERROR] cash account cannot be created", e);
+    }
+
     const walletAddress = getWalletAddr();
 
     if (!walletAddress) return;
@@ -162,6 +205,28 @@ export function initWallet() {
 
     showQR(walletAddress);
     return false;
+  }
+
+  function createCashAccount() {
+    let chosenUsername = document.querySelector("#cashaccount-input").value;
+    if (!chosenUsername) return Promise.reject("No username is chosen by user");
+
+    // remove spaces
+    chosenUsername = chosenUsername.replace(/\s/g, "");
+
+    const walletAddress = getWalletAddr();
+    const bchAddress = walletAddress.replace("bitcoincash:", "");
+
+    return fetch("https://api.cashaccount.info/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: chosenUsername,
+        payments: [bchAddress]
+      })
+    }).then(res => res.json());
   }
 
   function showQR(walletAddress) {
