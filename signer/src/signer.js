@@ -7,7 +7,8 @@ import {
   isUserWalletExist,
   getWalletAddr,
   getWalletHdNode,
-  makeUsername
+  makeUsername,
+  getUserAttemptedCashAccount
 } from "./wallet";
 import { validateConfig, validateReqType } from "./utils/validators";
 import {
@@ -56,12 +57,24 @@ function receiveMessage(event) {
 
           (async () => {
             // get cash account details
-            let reverseLookup = await bitbox.CashAccounts.reverseLookup(
-              bchAddress
-            );
-            if (reverseLookup && reverseLookup.results) {
-              cashAccount = makeUsername(reverseLookup.results[0]);
-              accountEmoji = reverseLookup.results[0].accountEmoji;
+            try {
+              let reverseLookup = await bitbox.CashAccounts.reverseLookup(
+                bchAddress
+              );
+              if (reverseLookup && reverseLookup.results) {
+                cashAccount = makeUsername(reverseLookup.results[0]);
+                accountEmoji = reverseLookup.results[0].accountEmoji;
+              }
+            } catch (e) {
+              console.log("[SIGNUP] No cash account found for user");
+              // in case user just registered for cash account it might be not found yet
+              // in that scenario we use the predicted username
+              const userAttemptedCashAccount = getUserAttemptedCashAccount();
+              if (userAttemptedCashAccount) {
+                cashAccount = userAttemptedCashAccount;
+                // assign default emoji until cash account is created
+                accountEmoji = "🏅";
+              }
             }
 
             handleMessageBackToClient("AUTHENTICATED", reqId, {

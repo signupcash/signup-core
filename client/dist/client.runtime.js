@@ -1,5 +1,5 @@
 const SignupCash = function () {
-  const SIGNUP_ORIGIN = "production" === "development" ? "http://localhost:5050" : "https://secure.signup.cash";
+  const SIGNUP_ORIGIN = "development" === "development" ? "http://localhost:5050" : "https://secure.signup.cash";
   const isPhone = window.innerWidth < 625;
   const SIGNUP_IFRAME_WIDTH = isPhone ? "100%" : "500px";
   const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
@@ -109,14 +109,12 @@ const SignupCash = function () {
         if (payloadFromSigner.status === "CONSENT-TO-LOGIN") {
           // redirect user for auth
           window.open(LOGIN_URL + "?reqId=" + newReqId);
-        }
-
-        if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
+          reject("User failed to Signin with a wallet");
+        } else if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
           // redirect user to docs, guides, etc
           window.open(payloadFromSigner.link);
-        }
-
-        if (payloadFromSigner.status === "AUTHENTICATED") {
+          reject("User failed to Signin with a wallet");
+        } else if (payloadFromSigner.status === "AUTHENTICATED") {
           if (payloadFromSigner.cashAccount) {
             identity.cashAccount = payloadFromSigner.cashAccount;
             identity.accountEmoji = payloadFromSigner.accountEmoji;
