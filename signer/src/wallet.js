@@ -61,6 +61,21 @@ export function makeUsername(cashAccountPayload) {
   return `${cashAccountPayload.nameText}#${cashAccountPayload.accountNumber}`;
 }
 
+export function getUserAttemptedCashAccount() {
+  let username;
+  try {
+    const predictedUsername = localStorage.getItem(
+      "SIGNUP_PREDICTED_CASH_ACCOUNT"
+    );
+    if (predictedUsername) {
+      username = predictedUsername;
+    }
+  } catch (e) {
+    // do nothing probably third party cookie is not allowed in the browser
+  }
+  return username;
+}
+
 export function initWallet() {
   if (document.location.pathname !== "/account") return;
 
@@ -212,15 +227,24 @@ export function initWallet() {
     return false;
   }
 
-  function createCashAccount() {
+  async function createCashAccount() {
     let chosenUsername = document.querySelector("#cashaccount-input").value;
     if (!chosenUsername) return Promise.reject("No username is chosen by user");
 
     // remove spaces
     chosenUsername = chosenUsername.replace(/\s/g, "");
+    const blockHeight = await bitbox.Blockchain.getBlockCount();
 
     const walletAddress = getWalletAddr();
     const bchAddress = walletAddress.replace("bitcoincash:", "");
+
+    // store
+    try {
+      localStorage.setItem(
+        "SIGNUP_PREDICTED_CASH_ACCOUNT",
+        `${chosenUsername}#${blockHeight}`
+      );
+    } catch (e) {}
 
     return fetch("https://api.cashaccount.info/register", {
       method: "POST",
