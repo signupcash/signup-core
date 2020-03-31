@@ -1,6 +1,7 @@
 const slpjs = require("slpjs");
 import VanillaQR from "./vanillaQR";
 import bitbox from "./libs/bitbox";
+import { heightModifier } from "./config";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
@@ -59,6 +60,21 @@ function createWallet(mnemonic) {
 
 export function makeUsername(cashAccountPayload) {
   return `${cashAccountPayload.nameText}#${cashAccountPayload.accountNumber}`;
+}
+
+export function getUserAttemptedCashAccount() {
+  let username;
+  try {
+    const predictedUsername = localStorage.getItem(
+      "SIGNUP_PREDICTED_CASH_ACCOUNT"
+    );
+    if (predictedUsername) {
+      username = predictedUsername;
+    }
+  } catch (e) {
+    // do nothing probably third party cookie is not allowed in the browser
+  }
+  return username;
 }
 
 export function initWallet() {
@@ -212,15 +228,25 @@ export function initWallet() {
     return false;
   }
 
-  function createCashAccount() {
+  async function createCashAccount() {
     let chosenUsername = document.querySelector("#cashaccount-input").value;
     if (!chosenUsername) return Promise.reject("No username is chosen by user");
 
     // remove spaces
     chosenUsername = chosenUsername.replace(/\s/g, "");
+    const blockHeight = await bitbox.Blockchain.getBlockCount();
+    const predictedAccountNumber = blockHeight - heightModifier + 1;
 
     const walletAddress = getWalletAddr();
     const bchAddress = walletAddress.replace("bitcoincash:", "");
+
+    // store
+    try {
+      localStorage.setItem(
+        "SIGNUP_PREDICTED_CASH_ACCOUNT",
+        `${chosenUsername}#${predictedAccountNumber}`
+      );
+    } catch (e) {}
 
     return fetch("https://api.cashaccount.info/register", {
       method: "POST",

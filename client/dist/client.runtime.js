@@ -109,14 +109,12 @@ const SignupCash = function () {
         if (payloadFromSigner.status === "CONSENT-TO-LOGIN") {
           // redirect user for auth
           window.open(LOGIN_URL + "?reqId=" + newReqId);
-        }
-
-        if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
+          reject("User failed to Signin with a wallet");
+        } else if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
           // redirect user to docs, guides, etc
           window.open(payloadFromSigner.link);
-        }
-
-        if (payloadFromSigner.status === "AUTHENTICATED") {
+          reject("User failed to Signin with a wallet");
+        } else if (payloadFromSigner.status === "AUTHENTICATED") {
           if (payloadFromSigner.cashAccount) {
             identity.cashAccount = payloadFromSigner.cashAccount;
             identity.accountEmoji = payloadFromSigner.accountEmoji;
