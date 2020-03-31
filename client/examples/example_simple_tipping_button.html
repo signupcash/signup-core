@@ -65,9 +65,12 @@
             })
             .catch(({ status, message }) => {
               // error handling
-              // e.status could be 'REJECTED' which means user refused to pay
-              // e.status === 'ERROR' means transaction failed. the reason is explained in e.message
-              console.log("error", status, message);
+              if (status === "REJECTED") {
+                msgText.innerHTML = "Not willing to tip us today? All good 😅";
+              }
+              if (status === "ERROR") {
+                msgText.innerHTML = "Oops, " + message + " 😱";
+              }
             })
             .finally(() => {
               payButton.innerHTML = "Send 600 sats";
