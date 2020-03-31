@@ -1,6 +1,7 @@
 const slpjs = require("slpjs");
 import VanillaQR from "./vanillaQR";
 import bitbox from "./libs/bitbox";
+import { heightModifier } from "./config";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
@@ -234,6 +235,7 @@ export function initWallet() {
     // remove spaces
     chosenUsername = chosenUsername.replace(/\s/g, "");
     const blockHeight = await bitbox.Blockchain.getBlockCount();
+    const predictedAccountNumber = blockHeight - heightModifier + 1;
 
     const walletAddress = getWalletAddr();
     const bchAddress = walletAddress.replace("bitcoincash:", "");
@@ -242,7 +244,7 @@ export function initWallet() {
     try {
       localStorage.setItem(
         "SIGNUP_PREDICTED_CASH_ACCOUNT",
-        `${chosenUsername}#${blockHeight}`
+        `${chosenUsername}#${predictedAccountNumber}`
       );
     } catch (e) {}
 

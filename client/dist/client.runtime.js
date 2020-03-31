@@ -1,5 +1,5 @@
 const SignupCash = function () {
-  const SIGNUP_ORIGIN = "development" === "development" ? "http://localhost:5050" : "https://secure.signup.cash";
+  const SIGNUP_ORIGIN = "production" === "development" ? "http://localhost:5050" : "https://secure.signup.cash";
   const isPhone = window.innerWidth < 625;
   const SIGNUP_IFRAME_WIDTH = isPhone ? "100%" : "500px";
   const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
