@@ -20,6 +20,8 @@ import { notionLinkToBrowserCompatibility } from "./config";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
+let latestBalance;
+
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
   const requestOrigin = event.origin.replace(/https?:\/\//, "");
@@ -32,7 +34,6 @@ function receiveMessage(event) {
     case "PAY":
       const amountInBCH = convertAmountToBCHUnit(amount, unit);
 
-      // pay
       showToast(
         `Do you agree to pay ${amount} ${unit} (${amountInBCH} BCH) to ${requestOrigin}?`,
         "Pay",
@@ -47,6 +48,14 @@ function receiveMessage(event) {
           ),
         () => handleMessageBackToClient("REJECTED", reqId)
       );
+
+      (async () => {
+        // start fetching UTXOs for faster transactions
+        latestBalance = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
+          getWalletAddr()
+        );
+        console.log("[SIGNUP][BALANCES]", latestBalance);
+      })();
       break;
     case "AUTH":
       try {
@@ -134,12 +143,7 @@ async function handleRequestToPayIsAccepted(
   // BigNumber is used only because SLP.js depends on it
   amountInSatoshis = new BigNumber(amountInSatoshis);
 
-  const balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-    getWalletAddr()
-  );
-  console.log(balances);
-
-  if (balances.satoshis_available_bch < amountInSatoshis) {
+  if (latestBalance.satoshis_available_bch < amountInSatoshis) {
     // early exit because there is not enough bch to spend
     handleMessageBackToClient("ERROR", reqId, {
       message: "Not enough bch available"
@@ -152,7 +156,7 @@ async function handleRequestToPayIsAccepted(
   const fundingWIF = bitbox.HDNode.toWIF(hdNode);
 
   const sendAmounts = [amountInSatoshis];
-  const inputUtxos = balances.nonSlpUtxos.map(utxo => ({
+  const inputUtxos = latestBalance.nonSlpUtxos.map(utxo => ({
     ...utxo,
     wif: fundingWIF
   }));
