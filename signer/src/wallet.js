@@ -1,4 +1,5 @@
 const slpjs = require("slpjs");
+import localforage from "localforage";
 import VanillaQR from "./vanillaQR";
 import bitbox from "./libs/bitbox";
 import { heightModifier } from "./config";
@@ -12,18 +13,18 @@ function q(selector, el) {
   return el.querySelector(selector);
 }
 
-export function storeWallet(mnemonic) {
-  localStorage.setItem("SIGNUP", btoa(mnemonic));
+export async function storeWallet(mnemonic) {
+  await localforage.setItem("SIGNUP_WALLET", btoa(mnemonic));
 }
 
-export function storeWalletIsVerified() {
-  localStorage.setItem("SIGNUP_WALLET_STATUS", "VERIFIED");
+export async function storeWalletIsVerified() {
+  await localforage.setItem("SIGNUP_WALLET_STATUS", "VERIFIED");
 }
 
-export function retrieveWalletCredentials() {
-  const userWallet = atob(localStorage.getItem("SIGNUP"));
-  const isVerified =
-    localStorage.getItem("SIGNUP_WALLET_STATUS") === "VERIFIED";
+export async function retrieveWalletCredentials() {
+  const userWallet = atob(await localforage.getItem("SIGNUP_WALLET"));
+  const walletStatus = await localforage.getItem("SIGNUP_WALLET_STATUS");
+  const isVerified = walletStatus === "VERIFIED";
   return { userWallet, isVerified };
 }
 
@@ -62,10 +63,10 @@ export function makeUsername(cashAccountPayload) {
   return `${cashAccountPayload.nameText}#${cashAccountPayload.accountNumber}`;
 }
 
-export function getUserAttemptedCashAccount() {
+export async function getUserAttemptedCashAccount() {
   let username;
   try {
-    const predictedUsername = localStorage.getItem(
+    const predictedUsername = await localforage.getItem(
       "SIGNUP_PREDICTED_CASH_ACCOUNT"
     );
     if (predictedUsername) {
@@ -96,7 +97,7 @@ export function initWallet() {
             accountEmoji,
             accountNumber,
             nameText,
-            accountCollisionLength
+            accountCollisionLength,
           } = cashAccountLookup.results[0];
 
           if (nameText && accountCollisionLength === 0) {
@@ -138,7 +139,7 @@ export function initWallet() {
     showQR(getWalletAddr());
 
     let balances;
-    (async function() {
+    (async function () {
       balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(getWalletAddr());
       q("#check-balance-btn").removeAttribute("disabled");
       q("#show-balance").innerHTML = `Balance: <b>${(
@@ -179,7 +180,7 @@ export function initWallet() {
     let balances;
     const walletAddress = getWalletAddr();
 
-    (async function() {
+    (async function () {
       balances = await bitboxWithSLP.getAllSlpBalancesAndUtxos(walletAddress);
       console.log("balances: ", balances);
 
@@ -242,7 +243,7 @@ export function initWallet() {
 
     // store
     try {
-      localStorage.setItem(
+      await localforage.setItem(
         "SIGNUP_PREDICTED_CASH_ACCOUNT",
         `${chosenUsername}#${predictedAccountNumber}`
       );
@@ -251,13 +252,13 @@ export function initWallet() {
     return fetch("https://api.cashaccount.info/register", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name: chosenUsername,
-        payments: [bchAddress]
-      })
-    }).then(res => res.json());
+        payments: [bchAddress],
+      }),
+    }).then((res) => res.json());
   }
 
   function showQR(walletAddress) {
@@ -278,7 +279,7 @@ export function initWallet() {
       noBorder: true,
 
       //Border size to output at
-      borderSize: 4
+      borderSize: 4,
     });
     q("#qr-contianer").appendChild(qr.toImage("png"));
   }
