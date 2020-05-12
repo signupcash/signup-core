@@ -13,7 +13,7 @@
   "dependencies": {
     "bignumber.js": "^9.0.0",
     "bitbox-sdk": "^8.11.2",
-    "slpjs": "^0.24.3"
+    "slpjs": "^0.27.2"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
