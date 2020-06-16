@@ -35,13 +35,10 @@
       </button>
     </div>
 
-    <script
-      type="text/javascript"
-      src="https://cdn.signup.cash/client.runtime.js"
-    ></script>
+    <script type="text/javascript" src="../dist/client.runtime.js"></script>
     <script>
-      const signup = new SignupCash({
-        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67"
+      const signup = new Signup.cash({
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
       });
 
       const loginButton = document.querySelector("#signupcash_button");
@@ -54,9 +51,9 @@
         loginButton.innerHTML = "Loggin in..";
         loginButton.setAttribute("disabled", 1);
 
-        signup.cash
+        signup
           .authenticate()
-          .then(user => {
+          .then((user) => {
             const userIdentity = user.getIdentity();
 
             // always check, cash account is optional for users
@@ -75,7 +72,7 @@
             }
             loginButton.style.display = "none";
           })
-          .catch(e => {
+          .catch((e) => {
             // probably user has no signup account yet and is registering now
             // change the state of button
             msgText.innerHTML = "Try to login again?";

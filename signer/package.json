@@ -4,15 +4,29 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "serve -l 5050 ./public",
-    "build": "webpack",
+    "start": "serve -l 5050 -s ./public",
+    "build": "NODE_ENV=production webpack",
+    "build:dev": "NODE_ENV=development webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "p0o",
   "license": "MPL-2.0",
   "dependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.9.4",
+    "axios": "^0.19.2",
+    "base58check": "^2.0.0",
     "bignumber.js": "^9.0.0",
     "bitbox-sdk": "^8.11.2",
+    "bitcore-lib-cash": "^8.20.4",
+    "core-js": "^3.6.5",
+    "dexie": "^2.0.4",
+    "emotion": "^10.0.27",
+    "localforage": "^1.7.3",
+    "preact": "^10.4.4",
+    "preact-compat": "^3.19.0",
+    "preact-router": "^3.2.1",
+    "qrcode.react": "^1.0.0",
+    "regenerator-runtime": "^0.13.5",
     "slpjs": "^0.24.3"
   },
   "devDependencies": {
@@ -20,6 +34,7 @@
     "@babel/preset-env": "^7.8.4",
     "babel-loader": "^8.0.6",
     "babel-polyfill": "^6.26.0",
+    "file-loader": "^6.0.0",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.3"

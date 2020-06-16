@@ -1,5 +1,5 @@
 import "babel-polyfill";
-import css from "@emotion/css";
+import { css } from "emotion";
 
 const SIGNUP_ORIGIN =
   process.env.NODE_ENV === "development"
@@ -7,15 +7,14 @@ const SIGNUP_ORIGIN =
     : "https://secure.signup.cash";
 
 const isPhone = window.innerWidth < 625;
-const SIGNUP_IFRAME_WIDTH = isPhone ? "100%" : "500px";
-const SIGNUP_IFRAME_HEIGHT = isPhone ? "90%" : "230px";
-const LOGIN_URL = SIGNUP_ORIGIN + "/account";
+const LOGIN_URL = SIGNUP_ORIGIN + "/";
 const DEFAULT_BITDB_URL = "https://bitdb.bch.sx";
 
 const config = {};
 let identity = {};
 
-let iframe;
+let popupWindowRef = null;
+let rootDiv;
 
 let userRequestManager = {
   getIdentity: function () {
@@ -39,63 +38,146 @@ let userRequestManager = {
         resolve(payloadFromSigner);
       });
 
-      requestFromUser({
+      /*requestFromUser({
         reqType: "PAY",
         reqId: newReqId,
         amount,
         unit,
-      });
+      });*/
     });
   },
 };
 
-// create the iframe and toast and keep it invisible
+// create the rootDiv and toast and keep it invisible
 function buildDOMObjects() {
-  iframe = document.createElement("iframe");
-  iframe.setAttribute("src", SIGNUP_ORIGIN);
-  iframe.style.cssText = `
-      position: absolute;
-      border: none;
-      left: 0;
-      display: none;
-    `;
+  rootDiv = document.createElement("div");
+  rootDiv.setAttribute("id", "signupcash_container");
+  let rootDivClassName = css`
+    position: fixed;
+    background: #3a3d99;
+    width: 330px;
+    right: ${isPhone ? "5%" : "5%"};
+    bottom: ${isPhone ? "5%" : "5%"};
+    padding: 20px;
+    border-radius: 3px;
+    display: none;
+  `;
 
-  if (isPhone) {
-    iframe.style.setProperty("top", "20");
-  } else {
-    iframe.style.setProperty("bottom", "0");
+  rootDiv.classList.add(rootDivClassName);
+
+  // load the font
+  const link = document.createElement("link");
+  link.setAttribute(
+    "href",
+    "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400&display=swap"
+  );
+  link.setAttribute("rel", "stylesheet");
+  const headElement = document.querySelector("head");
+  if (headElement) {
+    headElement.appendChild(link);
   }
 
-  iframe.setAttribute("width", SIGNUP_IFRAME_WIDTH);
-  iframe.setAttribute("height", SIGNUP_IFRAME_HEIGHT);
-  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+  const h1 = document.createElement("h1");
+  h1.innerText = "SIGNup";
+  h1.classList.add(css`
+    font-size: 1.15rem;
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    margin: 0 0 25px 0;
+    color: #fff;
+    text-align: left;
+  `);
 
-  // create container
-  const container = document.createElement("div");
-  container.setAttribute("id", "signupcash_container");
+  const h4 = document.createElement("h4");
+  h4.innerText = "Your gateway into the rabbit hole of blockchain";
+  h4.classList.add(css`
+    font-size: 1.3rem;
+    font-family: "Poppins", sans-serif;
+    margin: 20px 0;
+    font-weight: 400;
+    text-align: center;
+    color: #fff;
+  `);
 
-  document.querySelector("body").prepend(container);
-  container.appendChild(iframe);
+  const p = document.createElement("p");
+  p.innerText =
+    "Signup is a universal login for blockchain. Create or import a wallet with a few clicks!";
+  p.classList.add(css`
+    font-size: 0.8rem;
+    font-weight: 300;
+    font-family: "Poppins", sans-serif;
+    margin: 12px 0;
+    color: #fff;
+  `);
 
-  return { iframe };
+  const button = document.createElement("button");
+  button.innerText = "Login with SIGNUP";
+  button.classList.add(css`
+    background: white;
+    color: #3a3d99;
+    user-select: none;
+    padding: 0.375rem 0.75rem;
+    line-height: 1.5;
+    margin: 35px auto 10px;
+    display: block;
+    border: 0;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    &:hover {
+      background: #b2a2d7;
+      color: white;
+    }
+  `);
+
+  button.addEventListener("click", () => {
+    const newReqId = uuidv4();
+    // open a new popup window or focus the current one
+    if (popupWindowRef == null || popupWindowRef.closed) {
+      const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
+      popupWindowRef = window.open(
+        LOGIN_URL + "?reqId=" + newReqId,
+        "Signup Wallet",
+        popupParams
+      );
+
+      listenForMessage(null, (payload) => {
+        if (payload.status === "READY") {
+          requestFromUserWallet({ reqType: "AUTH", reqId: newReqId });
+        }
+      });
+    } else {
+      popupWindowRef.focus();
+      requestFromUserWallet({ reqType: "AUTH", reqId: newReqId });
+    }
+  });
+
+  rootDiv.appendChild(h1);
+  rootDiv.appendChild(h4);
+  rootDiv.appendChild(p);
+  rootDiv.appendChild(button);
+  document.querySelector("body").prepend(rootDiv);
+
+  return rootDiv;
 }
 
-function hideIframe() {
+function hideRootDiv() {
   setTimeout(function () {
-    iframe.style.setProperty("display", "none");
+    rootDiv.style.setProperty("display", "none");
   }, 500);
 }
 
-function showIframe() {
+function showRootDiv() {
   setTimeout(function () {
-    iframe.style.setProperty("display", "block");
+    rootDiv.style.setProperty("display", "block");
   }, 500);
 }
 
 function authenticate() {
+  showRootDiv();
   return new Promise(function (resolve, reject) {
     const newReqId = uuidv4();
-    requestFromUser({ reqType: "AUTH", reqId: newReqId });
+    //requestFromUser({ reqType: "AUTH", reqId: newReqId });
 
     // first set a listener to receive the response back from signer
     listenForMessage(newReqId, function (payloadFromSigner) {
@@ -135,10 +217,9 @@ function uuidv4() {
   });
 }
 
-function requestFromUser(requestPayload) {
-  showIframe();
+function requestFromUserWallet(requestPayload) {
   requestPayload.config = config;
-  iframe.contentWindow.postMessage(requestPayload, SIGNUP_ORIGIN);
+  popupWindowRef.postMessage(requestPayload, SIGNUP_ORIGIN);
 }
 
 function handleMessageReceivedFromSigner(event, targetReqId, cb) {
@@ -168,7 +249,7 @@ function listenForMessage(targetReqId, cb) {
 
 function removeListeningForMessage() {
   if (!window) return null;
-  hideIframe();
+  hideRootDiv();
   window.removeEventListener("message", handleMessageReceivedFromSigner);
 }
 
@@ -176,6 +257,8 @@ export function cash(params) {
   if (!(this instanceof cash)) {
     return new cash(params);
   }
+
+  buildDOMObjects();
 
   // origin's BCH address, optional
   if (params.addr) {

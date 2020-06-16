@@ -35,13 +35,10 @@
       </button>
     </div>
 
-    <script
-      type="text/javascript"
-      src="https://cdn.signup.cash/client.runtime.js"
-    ></script>
+    <script type="text/javascript" src="../dist/client.runtime.js"></script>
     <script>
       const signup = new SignupCash({
-        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67"
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
       });
 
       const payButton = document.querySelector("#signupcash_button");
@@ -51,14 +48,14 @@
 
       function tipMe(e) {
         e.preventDefault();
-        const user = signup.cash.authenticate().then(user => {
+        const user = signup.cash.authenticate().then((user) => {
           // change the state of button
           payButton.innerHTML = "Processing...";
           payButton.setAttribute("disabled", 1);
 
           user
             .pay(600, "SAT")
-            .then(res => {
+            .then((res) => {
               console.log("PAY RESP =>", res);
               // update the UI
               msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${res.txId}'>TX ID</a>`;
