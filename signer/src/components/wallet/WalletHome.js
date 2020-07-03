@@ -29,11 +29,11 @@ export default function ({ clientPayload }) {
       <Heading number={2}>Your Wallet</Heading>
       <p>Recent transactions:</p>
 
-      <Button type="button" disabled primary>
-        Send
+      <Button type="button" primary linkTo="/top-up">
+        Top up
       </Button>
-      <Button type="button" primary linkTo="/receive">
-        Receive
+      <Button type="button" primary linkTo="/send">
+        Send
       </Button>
     </Article>
   );

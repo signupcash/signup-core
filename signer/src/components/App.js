@@ -4,7 +4,8 @@ import Router from "preact-router";
 import { validateConfig, validateReqType } from "../utils/validators";
 import { handleMessageBackToClient } from "../signer";
 import NewWallet from "./new-wallet/NewWallet";
-import Receive from "./wallet/Receive";
+import Topup from "./wallet/Topup";
+import Send from "./wallet/Send";
 
 import Home from "./home/Home";
 
@@ -34,7 +35,8 @@ export default function () {
     <Router>
       <Home path="/" clientPayload={clientPayload} />
       <NewWallet path="/new-wallet" clientPayload={clientPayload} />
-      <Receive path="/receive" clientPayload={clientPayload} />
+      <Topup path="/top-up" clientPayload={clientPayload} />
+      <Send path="/send" clientPayload={clientPayload} />
     </Router>
   );
 }

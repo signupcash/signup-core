@@ -67,8 +67,8 @@ export default function ({ clientPayload }) {
       </header>
       <main>
         <form onSubmit={handleReload}>
-          <Article ariaLabel="Receive to Your Wallet">
-            <Heading number={2}>Receive</Heading>
+          <Article ariaLabel="Top up Your Wallet">
+            <Heading number={2}>Top up with BCH</Heading>
             {walletExist && bchAddr && (
               <>
                 <QRCode
