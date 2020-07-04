@@ -8,8 +8,10 @@ export default function useWallet() {
 
   useEffect(() => {
     (async () => {
-      const walletExist = await wallet.isUserWalletExist();
-      setUserWalletExist(walletExist);
+      const doesWalletExist = await wallet.isUserWalletExist();
+      if (typeof walletExist === "undefined") {
+        setUserWalletExist(doesWalletExist);
+      }
 
       const myBchAddr = await wallet.getWalletAddr();
 
@@ -27,7 +29,7 @@ export default function useWallet() {
     })();
   });
 
-  console.log("[Signup][Wallet]", bchAddr, cashAccount);
+  console.log("[Signup][Wallet Hook]", bchAddr, cashAccount);
 
   return { walletExist, bchAddr, cashAccount };
 }
