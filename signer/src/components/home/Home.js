@@ -1,14 +1,19 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import { css } from "emotion";
+import { slide as Menu } from "react-burger-menu";
+import menuStyles from "../wallet/menuStyles";
 import Logo from "../common/Logo";
+import Heading from "../common/Heading";
 import Authenticate from "./Authenticate";
 import * as wallet from "../../utils/wallet";
 import WalletHome from "../wallet/WalletHome";
 import useWallet from "../../hooks/useWallet";
 import defaultProfilePicture from "../../assets/profile.png";
 
-const headerStyle = css``;
+const headerStyle = css`
+  min-height: 40px;
+`;
 
 export default function ({ clientPayload }) {
   const { bchAddr, cashAccount, walletExist } = useWallet();
@@ -16,30 +21,21 @@ export default function ({ clientPayload }) {
   return (
     <>
       <header class={headerStyle}>
-        <div
-          class={css`
-            font-size: 15px;
-            color: #3a3d99;
-            font-weight: 400;
-            display: flex;
-            flex-direction: row-reverse;
-          `}
-        >
-          <img
-            class={css`
-              width: 50px;
-              height: 50px;
-            `}
-            src={defaultProfilePicture}
-          />
-          <span
-            class={css`
-              margin: 15px 8px;
-            `}
+        {walletExist && (
+          <Menu
+            styles={menuStyles}
+            width={"260px"}
+            right
+            pageWrapId="body-wrap"
           >
-            {cashAccount && `${cashAccount}`}
-          </span>
-        </div>
+            {cashAccount && <Heading number={5}>{cashAccount}</Heading>}
+            <a href="/">Home</a>
+
+            <a href="/send">Topup</a>
+            <a href="/top-up">Send</a>
+            <a href="/logout">Logout</a>
+          </Menu>
+        )}
       </header>
       <main>
         {typeof walletExist === "undefined" && <div>Loading</div>}

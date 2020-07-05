@@ -1,6 +1,7 @@
 import { h, Fragment } from "preact";
 import { useState } from "preact/hooks";
 import { css } from "emotion";
+
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -25,16 +26,29 @@ export default function ({ clientPayload }) {
   console.log("here=>", clientPayload);
 
   return (
-    <Article ariaLabel="Your Wallet">
-      <Heading number={2}>Your Wallet</Heading>
-      <p>Recent transactions:</p>
+    <>
+      <Article ariaLabel="Your Wallet">
+        <Heading number={2}>Your Wallet</Heading>
 
-      <Button type="button" primary linkTo="/top-up">
-        Top up
-      </Button>
-      <Button type="button" primary linkTo="/send">
-        Send
-      </Button>
-    </Article>
+        <Heading number={5} highlight>
+          We are in beta! Make sure to follow us in Twitter @0xSIGNUP for more
+          exciting news.
+        </Heading>
+
+        <Button
+          customStyle={css`
+            margin-top: 24px;
+          `}
+          type="button"
+          primary
+          linkTo="/top-up"
+        >
+          Top up
+        </Button>
+        <Button type="button" primary linkTo="/send">
+          Send
+        </Button>
+      </Article>
+    </>
   );
 }

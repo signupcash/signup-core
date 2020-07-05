@@ -9,9 +9,9 @@ const articleStyle = css`
   margin-top: 32px;
 `;
 
-export default function ({ ariaLabel, children }) {
+export default function ({ ariaLabel, id, children }) {
   return (
-    <article class={articleStyle} aria-label={ariaLabel}>
+    <article class={articleStyle} id={id} aria-label={ariaLabel}>
       {children}
     </article>
   );

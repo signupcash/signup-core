@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { css } from "emotion";
+import { css, cx } from "emotion";
 
 export default function ({
   type,
@@ -8,6 +8,7 @@ export default function ({
   linkTo,
   onClick,
   disabled,
+  customStyle,
   children,
 }) {
   const isPrimary = primary || !secondary;
@@ -61,7 +62,7 @@ export default function ({
   return (
     <>
       {linkTo ? (
-        <a href={linkTo} class={buttonStyle}>
+        <a href={linkTo} class={cx(buttonStyle, customStyle)}>
           {children}
         </a>
       ) : (
@@ -69,7 +70,7 @@ export default function ({
           disabled={disabled}
           type={type || "button"}
           onClick={disabled ? () => null : onClick}
-          class={buttonStyle}
+          class={cx(buttonStyle, customStyle)}
         >
           {children}
         </button>

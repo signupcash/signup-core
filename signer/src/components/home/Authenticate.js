@@ -14,7 +14,7 @@ const buttonGroups = css`
 export default function () {
   return (
     <Article ariaLabel="Register New Wallet">
-      <Heading number={2}>Login once, use everywhere!</Heading>
+      <Heading number={3}>Login once, use everywhere!</Heading>
       <Logo block />
       <p>
         Signup is a universal non-custodial <b>Bitcoin Cash</b> authorization
