@@ -22,6 +22,18 @@ export function isInBCH(unit) {
   return unit.toUpperCase() === "BCH";
 }
 
+export function sats(amount) {
+  return bitbox.BitcoinCash.toBitcoinCash(amount);
+}
+
+export function isCashAddress(bchAddr) {
+  try {
+    return bitbox.Address.isCashAddress(bchAddr);
+  } catch (e) {
+    return false;
+  }
+}
+
 export function isInSatoshis(unit) {
   return (
     unit.toUpperCase() === "SAT" ||
