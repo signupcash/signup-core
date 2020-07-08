@@ -52,22 +52,20 @@
         loginButton.setAttribute("disabled", 1);
 
         signup
-          .authenticate()
-          .then((user) => {
-            const userIdentity = user.getIdentity();
-
+          .requestAccess(["bchAddress", "cashAccount"])
+          .then((userProfile) => {
             // always check, cash account is optional for users
-            if (userIdentity.cashAccount) {
+            if (userProfile.cashAccount) {
               msgText.innerHTML =
                 "Welcome " +
-                userIdentity.accountEmoji +
+                userProfile.accountEmoji +
                 " " +
-                userIdentity.cashAccount;
+                userProfile.cashAccount;
             } else {
               // user has no cash account, use bchAddress
               msgText.innerHTML =
                 "<span class='small'>Welcome <b>" +
-                userIdentity.bchAddress +
+                userProfile.bchAddress +
                 "</b></span>";
             }
             loginButton.style.display = "none";
