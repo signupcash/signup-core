@@ -15,38 +15,11 @@ let identity = {};
 
 let popupWindowRef = null;
 let rootDiv;
+let latestPayload = [];
 
-let userRequestManager = {
-  getIdentity: function () {
-    return identity;
-  },
-  pay: async function (amount, unit) {
-    return new Promise(function (resolve, reject) {
-      const newReqId = uuidv4();
-      // first set a listener to receive the response back from signer
-      listenForMessage(newReqId, function (payloadFromSigner) {
-        // remove the listener
-        removeListeningForMessage();
-
-        if (
-          payloadFromSigner.status === "REJECTED" ||
-          payloadFromSigner.status === "ERROR"
-        ) {
-          return reject(payloadFromSigner);
-        }
-
-        resolve(payloadFromSigner);
-      });
-
-      /*requestFromUser({
-        reqType: "PAY",
-        reqId: newReqId,
-        amount,
-        unit,
-      });*/
-    });
-  },
-};
+function getRequestPayload() {
+  return latestPayload;
+}
 
 // create the rootDiv and toast and keep it invisible
 function buildDOMObjects() {
@@ -114,6 +87,7 @@ function buildDOMObjects() {
   button.innerText = "Login with SIGNUP";
   button.classList.add(css`
     background: white;
+    font-family: "Poppins", sans-serif;
     color: #3a3d99;
     user-select: none;
     padding: 0.375rem 0.75rem;
@@ -131,24 +105,21 @@ function buildDOMObjects() {
   `);
 
   button.addEventListener("click", () => {
-    const newReqId = uuidv4();
     // open a new popup window or focus the current one
     if (popupWindowRef == null || popupWindowRef.closed) {
       const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
-      popupWindowRef = window.open(
-        LOGIN_URL + "?reqId=" + newReqId,
-        "Signup Wallet",
-        popupParams
-      );
+      popupWindowRef = window.open(LOGIN_URL, "Signup Wallet", popupParams);
 
-      listenForMessage(null, (payload) => {
-        if (payload.status === "READY") {
-          requestFromUserWallet({ reqType: "AUTH", reqId: newReqId });
+      listenForMessage(null, function (payloadFromSigner) {
+        console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+        removeListeningForMessage();
+        if (payloadFromSigner.status === "READY") {
+          requestFromUserWallet({ ...getRequestPayload() });
         }
       });
     } else {
+      requestFromUserWallet({ ...getRequestPayload() });
       popupWindowRef.focus();
-      requestFromUserWallet({ reqType: "AUTH", reqId: newReqId });
     }
   });
 
@@ -173,32 +144,63 @@ function showRootDiv() {
   }, 500);
 }
 
-function authenticate() {
+function makeUserControllerWithToken(token) {
+  return {
+    pay: function (amount, unit) {
+      return null;
+    },
+    payTo: function (address, amount, unit) {
+      return null;
+    },
+  };
+}
+
+function requestAccess() {
   showRootDiv();
+  const newReqId = uuidv4();
+
+  latestPayload = {
+    reqId: newReqId,
+    reqType: "access",
+    budget,
+    deadline,
+  };
   return new Promise(function (resolve, reject) {
     const newReqId = uuidv4();
-    //requestFromUser({ reqType: "AUTH", reqId: newReqId });
 
     // first set a listener to receive the response back from signer
     listenForMessage(newReqId, function (payloadFromSigner) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
       removeListeningForMessage();
-      if (payloadFromSigner.status === "CONSENT-TO-LOGIN") {
-        // redirect user for auth
-        window.open(LOGIN_URL + "?reqId=" + newReqId);
+      if (payloadFromSigner.status === "GRANTED") {
+        resolve(payloadFromSigner);
+      } else {
+        // Signin failed
         reject("User failed to Signin with a wallet");
-      } else if (payloadFromSigner.status === "CONSENT-TO-OPEN-LINK") {
-        // redirect user to docs, guides, etc
-        window.open(payloadFromSigner.link);
-        reject("User failed to Signin with a wallet");
-      } else if (payloadFromSigner.status === "AUTHENTICATED") {
-        if (payloadFromSigner.cashAccount) {
-          identity.cashAccount = payloadFromSigner.cashAccount;
-          identity.accountEmoji = payloadFromSigner.accountEmoji;
-        }
+      }
+    });
+  });
+}
 
-        identity.bchAddress = payloadFromSigner.bchAddress;
+function requestSpendToken({ budget, deadline }) {
+  showRootDiv();
+  const newReqId = uuidv4();
 
-        resolve(userRequestManager);
+  latestPayload = {
+    reqId: newReqId,
+    reqType: "spend_token",
+    budget,
+    deadline,
+  };
+
+  return new Promise((resolve, reject) => {
+    listenForMessage(newReqId, function (payloadFromSigner) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+      removeListeningForMessage();
+      if (payloadFromSigner.status === "GRANTED") {
+        const token = "0";
+        const user = makeUserControllerWithToken(token);
+        resolve(token, user);
       } else {
         // Signin failed
         reject("User failed to Signin with a wallet");
@@ -266,7 +268,8 @@ export function cash(params) {
   }
 
   return {
-    authenticate,
+    requestAccess,
+    requestSpendToken,
   };
 }
 
