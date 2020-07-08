@@ -23,7 +23,7 @@ export default function ({ clientPayload }) {
     e.preventDefault();
   }
 
-  console.log("here=>", clientPayload);
+  console.log("[Payload] =>", clientPayload);
 
   return (
     <>
@@ -31,8 +31,15 @@ export default function ({ clientPayload }) {
         <Heading number={2}>Your Wallet</Heading>
 
         <Heading number={5} highlight>
-          We are in beta! Make sure to follow us in Twitter @0xSIGNUP for more
-          exciting news.
+          We are in beta! Make sure to follow us in Twitter{" "}
+          <a
+            href="https://twitter.com/0xSIGNUP"
+            target="_blank"
+            rel="noopener noreferer"
+          >
+            @0xSIGNUP
+          </a>{" "}
+          for more exciting news.
         </Heading>
 
         <Button
