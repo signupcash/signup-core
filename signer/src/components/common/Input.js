@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { css } from "emotion";
+import { css, cx } from "emotion";
 
 export default function ({
   type,
@@ -7,16 +7,19 @@ export default function ({
   onChange,
   value,
   width,
+  small,
   placeholder,
   children,
+  customCss,
 }) {
   const inputStyle = css`
     color: #3a3d99;
     width: ${width || "100%"};
     font-family: Poppins, sans-serif;
-    padding: 0.9rem 1.2rem;
+    padding: ${small ? "5px" : "0.9rem 1.2rem"};
     line-height: 1.5rem;
     margin: 16px;
+    height: ${small ? "30px" : "45px"};
     box-sizing: border-box;
     text-align: left;
     display: block;
@@ -34,7 +37,7 @@ export default function ({
 
   return (
     <input
-      class={inputStyle}
+      class={cx(inputStyle, customCss)}
       type={type}
       value={value}
       onInput={onInput}
