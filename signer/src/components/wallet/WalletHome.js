@@ -2,6 +2,8 @@ import { h, Fragment } from "preact";
 import { useState } from "preact/hooks";
 import { css } from "emotion";
 
+import RequestPermission from "./RequestPermission";
+
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -19,6 +21,8 @@ const labelStyle = css`
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 
 export default function ({ clientPayload }) {
+  const { reqType } = clientPayload;
+
   function handleReload(e) {
     e.preventDefault();
   }
@@ -30,31 +34,39 @@ export default function ({ clientPayload }) {
       <Article ariaLabel="Your Wallet">
         <Heading number={2}>Your Wallet</Heading>
 
-        <Heading number={5} highlight>
-          We are in beta! Make sure to follow us in Twitter{" "}
-          <a
-            href="https://twitter.com/0xSIGNUP"
-            target="_blank"
-            rel="noopener noreferer"
-          >
-            @0xSIGNUP
-          </a>{" "}
-          for more exciting news.
-        </Heading>
+        {reqType === "spend_token" && (
+          <RequestPermission clientPayload={clientPayload} />
+        )}
 
-        <Button
-          customStyle={css`
-            margin-top: 24px;
-          `}
-          type="button"
-          primary
-          linkTo="/top-up"
-        >
-          Top up
-        </Button>
-        <Button type="button" primary linkTo="/send">
-          Send
-        </Button>
+        {reqType !== "spend_token" && reqType !== "access" && (
+          <>
+            <Heading number={5} highlight>
+              We are in beta! Make sure to follow us in Twitter{" "}
+              <a
+                href="https://twitter.com/0xSIGNUP"
+                target="_blank"
+                rel="noopener noreferer"
+              >
+                @0xSIGNUP
+              </a>{" "}
+              for more exciting news.
+            </Heading>
+
+            <Button
+              customStyle={css`
+                margin-top: 24px;
+              `}
+              type="button"
+              primary
+              linkTo="/top-up"
+            >
+              Top up
+            </Button>
+            <Button type="button" primary linkTo="/send">
+              Send
+            </Button>
+          </>
+        )}
       </Article>
     </>
   );
