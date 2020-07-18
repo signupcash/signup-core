@@ -21,8 +21,8 @@ const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 export default function ({ email, optinForEmails, username, isAnonymous }) {
   async function handleStoreWallet(e) {
     e.preventDefault();
-    wallet.storeWalletIsVerified();
     setMakingCashAcc(true);
+    await wallet.storeWalletIsVerified();
     const res = await wallet.createCashAccount(username);
     console.log("Cash Account Create]", res);
     setMakingCashAcc(false);
