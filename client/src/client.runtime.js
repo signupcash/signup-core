@@ -24,10 +24,12 @@ function getRequestPayload() {
 // create the rootDiv and toast and keep it invisible
 function buildDOMObjects() {
   rootDiv = document.createElement("div");
-  rootDiv.setAttribute("id", "signupcash_container");
+  rootDiv.setAttribute("id", "_SIGNUP__CONTAINER");
   let rootDivClassName = css`
     position: fixed;
     background: #3a3d99;
+    height: 280px;
+    transition: height 0.5s ease-out;
     width: 330px;
     right: ${isPhone ? "5%" : "5%"};
     bottom: ${isPhone ? "5%" : "5%"};
@@ -62,6 +64,7 @@ function buildDOMObjects() {
   `);
 
   const h4 = document.createElement("h4");
+  h4.setAttribute("id", "_SIGNUP__rootDiv_h4");
   h4.innerText = "Your gateway into the rabbit hole of blockchain";
   h4.classList.add(css`
     font-size: 1.3rem;
@@ -73,6 +76,7 @@ function buildDOMObjects() {
   `);
 
   const p = document.createElement("p");
+  p.setAttribute("id", "_SIGNUP__rootDiv_p");
   p.innerText =
     "Signup is a universal login for blockchain. Create or import a wallet with a few clicks!";
   p.classList.add(css`
@@ -84,6 +88,7 @@ function buildDOMObjects() {
   `);
 
   const button = document.createElement("button");
+  button.setAttribute("id", "_SIGNUP__rootDiv_button");
   button.innerText = "Login with SIGNUP";
   button.classList.add(css`
     background: white;
@@ -134,23 +139,40 @@ function buildDOMObjects() {
 
 function hideRootDiv() {
   setTimeout(function () {
-    rootDiv.style.setProperty("display", "none");
-  }, 500);
+    rootDiv.remove();
+  }, 50);
 }
 
 function showRootDiv() {
   setTimeout(function () {
     rootDiv.style.setProperty("display", "block");
-  }, 500);
+  }, 50);
 }
 
-function makeUserControllerWithToken(token) {
+function setStateForRootDiv(state) {
+  const p = document.querySelector("#_SIGNUP__rootDiv_p");
+  const h4 = document.querySelector("#_SIGNUP__rootDiv_h4");
+  const btn = document.querySelector("#_SIGNUP__rootDiv_button");
+
+  if (state === "LOGGED-IN") {
+    rootDiv.classList.add(
+      css`
+        height: 150px;
+      `
+    );
+    p.innerText = "Continuing to the app...";
+    h4.innerText = "Great! You're logged in!";
+    btn.setAttribute("style", "display: none");
+  }
+}
+
+function withSpendToken(token) {
   return {
     pay: function (amount, unit) {
-      return null;
+      return Promise.resolve({ success: true, txId: "0" });
     },
     payTo: function (address, amount, unit) {
-      return null;
+      return Promise.resolve({ success: true, txId: "0" });
     },
   };
 }
@@ -198,12 +220,20 @@ function requestSpendToken({ budget, deadline }) {
       console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
       removeListeningForMessage();
       if (payloadFromSigner.status === "GRANTED") {
-        const token = "0";
-        const user = makeUserControllerWithToken(token);
-        resolve(token, user);
+        // TODO show user is logged in inside rootDiv and disappear
+        setStateForRootDiv("LOGGED-IN");
+        setTimeout(() => {
+          hideRootDiv();
+        }, 2000);
+
+        const spendToken = payloadFromSigner.spendToken;
+        resolve(spendToken);
       } else {
         // Signin failed
-        reject("User failed to Signin with a wallet");
+        reject({
+          status: "ERROR",
+          message: "User failed to Signin with a wallet",
+        });
       }
     });
   });
@@ -251,7 +281,6 @@ function listenForMessage(targetReqId, cb) {
 
 function removeListeningForMessage() {
   if (!window) return null;
-  hideRootDiv();
   window.removeEventListener("message", handleMessageReceivedFromSigner);
 }
 
@@ -270,6 +299,7 @@ export function cash(params) {
   return {
     requestAccess,
     requestSpendToken,
+    withSpendToken,
   };
 }
 
