@@ -41,47 +41,61 @@
         addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
       });
 
+      let userSpendToken;
+
+      initSignup();
+
       const payButton = document.querySelector("#signupcash_button");
       const msgText = document.querySelector("#msg");
 
       payButton.addEventListener("click", tipMe);
 
-      function tipMe(e) {
-        e.preventDefault();
-        const tenMin = 1000 * 60 * 10;
-
+      function initSignup() {
+        const nowInSeconds = Math.floor(Date.now() / 1000);
+        const tenMins = 60 * 10;
+        // You need to obtain a spend token if you want to request tx to user's wallet
         signup
           .requestSpendToken({
             budget: "$1.0",
-            deadline: Date.now() + tenMin,
+            deadline: nowInSeconds + tenMins,
           })
-          .then((token, user) => {
-            // change the state of button
-            payButton.innerHTML = "Processing...";
-            payButton.setAttribute("disabled", 1);
-
-            user
-              .pay(1000, "SAT")
-              .then((res) => {
-                console.log("PAY RESP =>", res);
-                // update the UI
-                msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${res.txId}'>TX ID</a>`;
-              })
-              .catch(({ status, message }) => {
-                // error handling
-                if (status === "REJECTED") {
-                  msgText.innerHTML =
-                    "Not willing to tip us today? All good 😅";
-                }
-                if (status === "ERROR") {
-                  msgText.innerHTML = "Oops, " + message + " 😱";
-                }
-              })
-              .finally(() => {
-                payButton.innerHTML = "Send 600 sats";
-                payButton.removeAttribute("disabled");
-              });
+          .then((spendToken) => {
+            console.log("Token received", spendToken);
+            // store token somewhere (memory, local storage, your servers etc)
+            userSpendToken = spendToken;
           });
+      }
+
+      function tipMe(e) {
+        e.preventDefault();
+
+        // change the state of button
+        payButton.innerHTML = "Processing...";
+
+        if (userSpendToken) {
+          payButton.setAttribute("disabled", 1);
+
+          signup
+            .withSpendToken(userSpendToken)
+            .pay(1000, "SAT")
+            .then((res) => {
+              console.log("PAY RESP =>", res);
+              // update the UI
+              msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${res.txId}'>TX ID</a>`;
+            })
+            .catch(({ status, message }) => {
+              // error handling
+              if (status === "ERROR") {
+                msgText.innerHTML = "Oops, " + message + " 😱";
+              }
+            })
+            .finally(() => {
+              payButton.innerHTML = "Send 1000 sats";
+              payButton.removeAttribute("disabled");
+            });
+        } else {
+          msgText.innerHTML = "You need to login with Signup to tip 😅";
+        }
       }
     </script>
   </body>
