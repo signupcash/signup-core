@@ -24,6 +24,12 @@ export async function storeWalletIsVerified() {
   await localforage.setItem("SIGNUP_WALLET_STATUS", "VERIFIED");
 }
 
+export async function deleteWallet(mnemonic) {
+  await localforage.removeItem("SIGNUP_WALLET");
+  await localforage.removeItem("SIGNUP_WALLET_STATUS");
+  await localforage.removeItem("SIGNUP_PREDICTED_CASH_ACCOUNT");
+}
+
 export async function getBalance(bchAddr) {
   const { data } = await axios.post(
     `https://bchd.fountainhead.cash/v1/GetAddressUnspentOutputs`,
@@ -95,6 +101,11 @@ export async function getWalletHdNode() {
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
   const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
   return hdNode;
+}
+
+export async function getWalletEntropy() {
+  const { userWallet } = await retrieveWalletCredentials();
+  return bitbox.Mnemonic.toEntropy(userWallet);
 }
 
 export function createRecoveryPhrase() {
