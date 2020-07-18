@@ -31,8 +31,8 @@ export default function ({ clientPayload }) {
             {cashAccount && <Heading number={5}>{cashAccount}</Heading>}
             <a href="/">Home</a>
 
-            <a href="/send">Topup</a>
-            <a href="/top-up">Send</a>
+            <a href="/top-up">Topup</a>
+            <a href="/send">Send</a>
             <a href="/logout">Logout</a>
           </Menu>
         )}
