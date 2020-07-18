@@ -5,6 +5,7 @@ export default function ({
   type,
   primary,
   secondary,
+  alert,
   linkTo,
   onClick,
   disabled,
@@ -18,6 +19,9 @@ export default function ({
     if (disabled) {
       return "#aa91ee";
     }
+    if (alert) {
+      return "#f74476";
+    }
     if (isPrimary) {
       return "#3a3d99";
     }
@@ -27,6 +31,9 @@ export default function ({
   function getHoverBgColor() {
     if (disabled) {
       return "#aa91ee";
+    }
+    if (alert) {
+      return "#c41a4a";
     }
     if (isPrimary) {
       return "#815de3";
@@ -42,7 +49,7 @@ export default function ({
     font-family: Poppins, sans-serif;
     padding: 0.6rem 1.2rem;
     line-height: 1.5rem;
-    margin: 8px;
+    margin: 8px auto;
     text-decoration: none;
     box-sizing: border-box;
     text-align: center;
