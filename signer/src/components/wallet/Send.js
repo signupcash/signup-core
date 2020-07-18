@@ -4,6 +4,7 @@ import { Link } from "preact-router";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import { css } from "emotion";
+import { toast } from "react-toastify";
 
 import { sats, isCashAddress } from "../../utils/unitUtils";
 import { sendBchTx } from "../../utils/transactions";
@@ -50,6 +51,7 @@ export default function ({ clientPayload }) {
       setStatus("TX PROCESSING");
       await sendBchTx(amountToSend, "BCH", targetAddr);
       setStatus("TX ACCOMPLISHED");
+      toast.success("Cool! Your money is sent successfully! 🍾");
     } catch (e) {
       console.log("[SIGNUP][ERROR]", e);
     }
