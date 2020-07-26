@@ -1,10 +1,16 @@
 import "babel-polyfill";
+import axios from "axios";
 import { css } from "emotion";
 
 const SIGNUP_ORIGIN =
   process.env.NODE_ENV === "development"
     ? "http://localhost:5050"
-    : "https://secure.signup.cash";
+    : "https://wallet.signup.cash";
+
+const SIGNUP_TX_BRIDGE =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5044"
+    : "https://bridge.signup.cash";
 
 const isPhone = window.innerWidth < 625;
 const LOGIN_URL = SIGNUP_ORIGIN + "/";
@@ -139,7 +145,7 @@ function buildDOMObjects() {
 
 function hideRootDiv() {
   setTimeout(function () {
-    rootDiv.remove();
+    rootDiv.style.setProperty("display", "none");
   }, 50);
 }
 
@@ -166,15 +172,34 @@ function setStateForRootDiv(state) {
   }
 }
 
-function withSpendToken(token) {
-  return {
-    pay: function (amount, unit) {
-      return Promise.resolve({ success: true, txId: "0" });
-    },
-    payTo: function (address, amount, unit) {
-      return Promise.resolve({ success: true, txId: "0" });
-    },
-  };
+function getSpendToken() {
+  return localStorage.getItem("SIGNUP_SPEND_TOKEN");
+}
+
+function getSessionId() {
+  return localStorage.getItem("SIGNUP_SESSION_ID");
+}
+
+function spendTokenExist() {
+  return !!getSpendToken();
+}
+
+function pay(amount, unit, bchAddr = config.addr) {
+  const spendToken = getSpendToken();
+  const sessionId = getSessionId();
+
+  return axios
+    .post(`${SIGNUP_TX_BRIDGE}/dapp/tx-request`, {
+      spendToken,
+      sessionId,
+      action: {
+        type: "P2PK",
+        unit,
+        amount,
+        bchAddr,
+      },
+    })
+    .then((x) => x.data);
 }
 
 function requestAccess() {
@@ -226,8 +251,12 @@ function requestSpendToken({ budget, deadline }) {
           hideRootDiv();
         }, 2000);
 
-        const spendToken = payloadFromSigner.spendToken;
-        resolve(spendToken);
+        const { spendToken, sessionId } = payloadFromSigner;
+        // store in localstorage
+        localStorage.setItem("SIGNUP_SPEND_TOKEN", spendToken);
+        localStorage.setItem("SIGNUP_SESSION_ID", sessionId);
+
+        resolve({ status: payloadFromSigner.status });
       } else {
         // Signin failed
         reject({
@@ -299,7 +328,8 @@ export function cash(params) {
   return {
     requestAccess,
     requestSpendToken,
-    withSpendToken,
+    spendTokenExist,
+    pay,
   };
 }
 
