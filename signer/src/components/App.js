@@ -8,6 +8,7 @@ import { handleMessageBackToClient } from "../signer";
 import NewWallet from "./new-wallet/NewWallet";
 import Topup from "./wallet/Topup";
 import Send from "./wallet/Send";
+import Backup from "./wallet/Backup";
 import Logout from "./wallet/Logout";
 
 import Home from "./home/Home";
@@ -41,6 +42,7 @@ export default function () {
         <NewWallet path="/new-wallet" clientPayload={clientPayload} />
         <Topup path="/top-up" clientPayload={clientPayload} />
         <Send path="/send" clientPayload={clientPayload} />
+        <Backup path="/backup" />
         <Logout path="/logout" />
       </Router>
 

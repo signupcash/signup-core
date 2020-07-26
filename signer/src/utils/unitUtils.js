@@ -1,4 +1,5 @@
 import bitbox from "../libs/bitbox";
+import { getBCHPrice } from "./price";
 
 export function convertAmountToBCHUnit(amount, unit) {
   if (isInSatoshis(unit)) {
@@ -44,4 +45,32 @@ export function isInSatoshis(unit) {
 
 export function isInFiat(unit) {
   // TODO have to make it use an API to retreive the rates
+}
+
+export async function fiatToBCH(amount, unit) {
+  return amount / (await getBCHPrice(unit));
+}
+
+export function parseMoney(moneyValue) {
+  let parsedMoney;
+
+  if (moneyValue.match(/^\$/)) {
+    parsedMoney = {
+      unit: "USD",
+      value: parseFloat(moneyValue.replace("$", "")),
+    };
+  }
+
+  if (moneyValue.match(/bch/i)) {
+    parsedMoney = {
+      unit: "BCH",
+      value: parseFloat(moneyValue.replace(/bch/i, "")),
+    };
+  }
+
+  if (isNaN(parsedMoney.value)) {
+    throw new Error("[SIGNUP] invalid money value => %s", moneyValue);
+  }
+
+  return parsedMoney;
 }

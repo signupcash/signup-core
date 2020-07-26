@@ -8,6 +8,7 @@ import axios from "axios";
 import localforage from "localforage";
 import VanillaQR from "./vanillaQR";
 import { heightModifier, isDevEnv } from "../config";
+import { getBCHPrice } from "./price";
 
 function q(selector, el) {
   if (!el) {
@@ -57,8 +58,10 @@ export async function getBalance(bchAddr) {
   balance = utxos.reduce((acc, current) => acc + parseInt(current.value), 0);
 
   if (balance > 0) {
+    const bchPriceInUSD = await getBCHPrice();
+    console.log(bchPriceInUSD);
     balance = (balance * 0.00000001).toFixed(8);
-    balanceInUSD = (230 * balance).toFixed(2);
+    balanceInUSD = (bchPriceInUSD * balance).toFixed(2);
   }
 
   return { balance, balanceInUSD };
@@ -89,7 +92,10 @@ export async function getWalletAddr() {
   try {
     const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
     const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
-    bchAddr = bitbox.HDNode.toCashAddress(hdNode);
+
+    const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+    const legacyAddr = path.keyPair.getAddress();
+    bchAddr = bitbox.Address.toCashAddress(legacyAddr);
   } catch (e) {
     console.log("[SIGNUP][ERROR] =>", e);
   }
@@ -100,7 +106,7 @@ export async function getWalletHdNode() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
   const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
-  return hdNode;
+  return bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
 }
 
 export async function getWalletEntropy() {

@@ -96,8 +96,12 @@ export default function ({ clientPayload }) {
                 </Checkbox>
               )}
 
-              <Button type="submit" primary>
-                Create Wallet
+              <Button
+                type="submit"
+                disabled={!(email || isAnonymous) || !username}
+                primary
+              >
+                Create Wallet 🤖
               </Button>
             </Article>
           </form>

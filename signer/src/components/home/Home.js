@@ -30,9 +30,9 @@ export default function ({ clientPayload }) {
           >
             {cashAccount && <Heading number={5}>{cashAccount}</Heading>}
             <a href="/">Home</a>
-
             <a href="/top-up">Topup</a>
             <a href="/send">Send</a>
+            <a href="/backup">Backup</a>
             <a href="/logout">Logout</a>
           </Menu>
         )}
@@ -43,7 +43,9 @@ export default function ({ clientPayload }) {
           <Authenticate clientPayload={clientPayload} />
         )}
 
-        {walletExist === true && <WalletHome clientPayload={clientPayload} />}
+        {walletExist === true && (
+          <WalletHome bchAddr={bchAddr} clientPayload={clientPayload} />
+        )}
       </main>
     </>
   );

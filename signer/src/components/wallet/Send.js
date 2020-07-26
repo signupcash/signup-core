@@ -54,6 +54,8 @@ export default function ({ clientPayload }) {
       toast.success("Cool! Your money is sent successfully! 🍾");
     } catch (e) {
       console.log("[SIGNUP][ERROR]", e);
+      setStatus("ERROR");
+      toast.error(e.error);
     }
   }
 
@@ -114,18 +116,24 @@ export default function ({ clientPayload }) {
               `}
             >
               {status === "FETCHED" && (
-                <Heading number={5}>
+                <Heading number={4}>
                   Balance: {balance} BCH (${balanceInUSD})
                 </Heading>
               )}
               {status === "FETCHING" && (
-                <Heading number={5}>Fetching Balance...</Heading>
+                <Heading number={4}>Fetching Balance...</Heading>
               )}
               {status === "TX PROCESSING" && (
-                <Heading number={5}>Sending...</Heading>
+                <Heading number={4}>Sending... give us a second 🥶</Heading>
               )}
               {status === "TX ACCOMPLISHED" && (
-                <Heading number={4}>Transaction is Sent!</Heading>
+                <Heading number={4}>Transaction is Sent! 😼</Heading>
+              )}
+              {status === "ERROR" && (
+                <Heading number={4}>
+                  Something went wrong! Please report this issue to us so we can
+                  fix it 😥
+                </Heading>
               )}
             </div>
 

@@ -20,7 +20,7 @@ const labelStyle = css`
 `;
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 
-export default function ({ clientPayload }) {
+export default function ({ clientPayload, bchAddr }) {
   const { reqType } = clientPayload;
 
   function handleReload(e) {
@@ -35,7 +35,7 @@ export default function ({ clientPayload }) {
         <Heading number={2}>Your Wallet</Heading>
 
         {reqType === "spend_token" && (
-          <RequestPermission clientPayload={clientPayload} />
+          <RequestPermission bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
 
         {reqType !== "spend_token" && reqType !== "access" && (
