@@ -59,10 +59,16 @@
             budget: "$1.0",
             deadline: nowInSeconds + tenMins,
           })
-          .then((spendToken) => {
-            console.log("Token received", spendToken);
-            // store token somewhere (memory, local storage, your servers etc)
-            userSpendToken = spendToken;
+          .then((res) => {
+            console.log(res);
+            if (res.status === "GRANTED") {
+              msgText.innerHTML = "Thanks! you are logged in";
+            } else {
+              msgText.innerHTML = "Access denied!";
+            }
+          })
+          .catch(() => {
+            msgText.innerHTML = "You don't want to login?";
           });
       }
 
@@ -72,16 +78,15 @@
         // change the state of button
         payButton.innerHTML = "Processing...";
 
-        if (userSpendToken) {
+        if (signup.spendTokenExist()) {
           payButton.setAttribute("disabled", 1);
 
           signup
-            .withSpendToken(userSpendToken)
             .pay(1000, "SAT")
-            .then((res) => {
-              console.log("PAY RESP =>", res);
+            .then(({ txResult }) => {
+              console.log("PAY RESP =>", txResult);
               // update the UI
-              msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${res.txId}'>TX ID</a>`;
+              msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${txResult.txId}'>TX ID</a>`;
             })
             .catch(({ status, message }) => {
               // error handling
