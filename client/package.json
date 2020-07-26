@@ -29,6 +29,7 @@
   "dependencies": {
     "@babel/preset-env": "^7.9.6",
     "@emotion/css": "^10.0.27",
+    "axios": "^0.19.2",
     "babel-loader": "^8.1.0",
     "babel-polyfill": "^6.26.0",
     "emotion": "^10.0.27",
