@@ -4,7 +4,7 @@ import Router from "preact-router";
 import { ToastContainer } from "react-toastify";
 import { css } from "emotion";
 import { validateConfig, validateReqType } from "../utils/validators";
-import { handleMessageBackToClient } from "../signer";
+import { handleMessageBackToClient, initWorker } from "../signer";
 import NewWallet from "./new-wallet/NewWallet";
 import Topup from "./wallet/Topup";
 import Send from "./wallet/Send";
@@ -12,8 +12,11 @@ import Backup from "./wallet/Backup";
 import Logout from "./wallet/Logout";
 
 import Home from "./home/Home";
+import WithUtxos from "./WithUtxos";
 
-export default function () {
+import "../css/base.css";
+
+function App() {
   const [clientPayload, setClientPayload] = useState({});
 
   useEffect(() => {
@@ -33,6 +36,8 @@ export default function () {
       // send a message back to confirm this is ready
       handleMessageBackToClient("READY", null);
     }
+
+    initWorker();
   }, []);
 
   return (
@@ -50,3 +55,5 @@ export default function () {
     </>
   );
 }
+
+export default WithUtxos(App);
