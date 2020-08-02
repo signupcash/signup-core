@@ -1,6 +1,7 @@
 import { h, Fragment } from "preact";
 import { useState } from "preact/hooks";
 import { css } from "emotion";
+import axios from "axios";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -24,9 +25,16 @@ export default function ({ clientPayload }) {
   const [username, setUsername] = useState("");
   const [step, setStep] = useState(1);
   const [isAnonymous, setIsAonymous] = useState(false);
+  const [TOSAccepted, setTOSAccepted] = useState(false);
 
   function handleCreateWallet(e) {
     e.preventDefault();
+    if (email && optinForEmails) {
+      axios.post("/api/subscribe-email", {
+        email,
+      });
+    }
+
     setStep(2);
   }
 
@@ -96,9 +104,22 @@ export default function ({ clientPayload }) {
                 </Checkbox>
               )}
 
+              <Checkbox
+                onClick={() => {
+                  setTOSAccepted(!TOSAccepted);
+                }}
+              >
+                I did read and agree with Signup's{" "}
+                <a href="" target="_blank" rel="noreferer noopener">
+                  terms of service
+                </a>
+              </Checkbox>
+
               <Button
                 type="submit"
-                disabled={!(email || isAnonymous) || !username}
+                disabled={
+                  !(email || isAnonymous) || (!username && !TOSAccepted)
+                }
                 primary
               >
                 Create Wallet 🤖
