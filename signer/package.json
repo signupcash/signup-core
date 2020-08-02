@@ -1,12 +1,13 @@
 {
   "name": "signupcash-signer",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "public/index.html",
   "scripts": {
     "start": "serve -l 5050 -s ./public",
     "build": "NODE_ENV=production webpack",
     "build:dev": "NODE_ENV=development webpack",
+    "dev": "echo \"Signup\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "p0o",
@@ -17,9 +18,7 @@
     "base58check": "^2.0.0",
     "bignumber.js": "^9.0.0",
     "bitbox-sdk": "^8.11.2",
-    "bitcore-lib-cash": "^8.20.4",
     "core-js": "^3.6.5",
-    "dexie": "^2.0.4",
     "emotion": "^10.0.27",
     "jsonwebtoken": "^8.5.1",
     "localforage": "^1.7.3",
