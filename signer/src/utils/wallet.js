@@ -59,7 +59,6 @@ export async function getBalance(bchAddr) {
 
   if (balance > 0) {
     const bchPriceInUSD = await getBCHPrice();
-    console.log(bchPriceInUSD);
     balance = (balance * 0.00000001).toFixed(8);
     balanceInUSD = (bchPriceInUSD * balance).toFixed(2);
   }
@@ -82,12 +81,6 @@ export async function isUserWalletExist() {
 export async function getWalletAddr() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   let bchAddr;
-
-  if (isDevEnv) {
-    console.log("[SIGNUP] getWalletCredentials =>", userWallet, isVerified);
-  } else {
-    console.log("[SIGNUP] Is wallet verified =>", isVerified);
-  }
 
   try {
     const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
