@@ -21,7 +21,19 @@ let identity = {};
 
 let popupWindowRef = null;
 let rootDiv;
-let latestPayload = [];
+let latestPayload = {};
+
+const height150 = css`
+  height: 150px;
+`;
+
+const height220 = css`
+  height: 220px;
+`;
+
+const height280 = css`
+  height: 280px;
+`;
 
 function getRequestPayload() {
   return latestPayload;
@@ -34,7 +46,6 @@ function buildDOMObjects() {
   let rootDivClassName = css`
     position: fixed;
     background: #3a3d99;
-    height: 280px;
     transition: height 0.5s ease-out;
     width: 330px;
     right: ${isPhone ? "5%" : "5%"};
@@ -45,6 +56,7 @@ function buildDOMObjects() {
   `;
 
   rootDiv.classList.add(rootDivClassName);
+  setRootDivHeight(height280);
 
   // load the font
   const link = document.createElement("link");
@@ -115,7 +127,7 @@ function buildDOMObjects() {
     }
   `);
 
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (e) => {
     // open a new popup window or focus the current one
     if (popupWindowRef == null || popupWindowRef.closed) {
       const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
@@ -146,29 +158,78 @@ function buildDOMObjects() {
 function hideRootDiv() {
   setTimeout(function () {
     rootDiv.style.setProperty("display", "none");
-  }, 50);
+  }, 0);
+}
+
+function setRootDivHeight(newHeight) {
+  rootDiv.classList.remove(height150, height220, height280);
+  rootDiv.classList.add(newHeight);
 }
 
 function showRootDiv() {
   setTimeout(function () {
     rootDiv.style.setProperty("display", "block");
-  }, 50);
+  }, 0);
 }
 
-function setStateForRootDiv(state) {
+function setStateForRootDiv(state, meta = {}) {
+  showRootDiv();
   const p = document.querySelector("#_SIGNUP__rootDiv_p");
   const h4 = document.querySelector("#_SIGNUP__rootDiv_h4");
   const btn = document.querySelector("#_SIGNUP__rootDiv_button");
 
+  setRootDivHeight(height150);
+
+  function disappear(miliSeconds = 2000) {
+    setTimeout(() => {
+      hideRootDiv();
+    }, miliSeconds);
+  }
+
   if (state === "LOGGED-IN") {
-    rootDiv.classList.add(
-      css`
-        height: 150px;
-      `
-    );
     p.innerText = "Continuing to the app...";
     h4.innerText = "Great! You're logged in!";
     btn.setAttribute("style", "display: none");
+    disappear();
+  }
+
+  if (state === "PAYMENT_PENDING") {
+    h4.innerText = "Making a transaction...";
+    p.innerText = "Connecting to your wallet...";
+    btn.setAttribute("style", "display: none");
+    disappear(5000);
+  }
+
+  if (state === "PAYMENT_SUCCESS") {
+    h4.innerText = "Transaction is done! 👍🏻";
+    p.innerText = "Continuing to the app...";
+    btn.setAttribute("style", "display: none");
+    disappear(1000);
+  }
+
+  if (state === "PAYMENT_ERROR") {
+    setRootDivHeight(height220);
+    // wallet is not connected
+    console.log("ere", meta);
+    if (meta.errCode === 101) {
+      h4.innerText = "";
+      p.innerText = "You wallet is disconnected! Login first";
+      btn.setAttribute("style", "display: block");
+      btn.innerText = "Login with SIGNUP";
+      return;
+    }
+    if (meta.errCode === 102) {
+      h4.innerText = "";
+      p.innerText =
+        "You don't have enough balance in your wallet for this transaction. Wanna top-up your wallet?";
+      btn.setAttribute("style", "display: block");
+      btn.innerText = "Top-up Wallet";
+      return;
+    }
+    h4.innerText = "Error! Transaction didn't go through 😓";
+    p.innerText = "";
+    btn.setAttribute("style", "display: none");
+    disappear(3000);
   }
 }
 
@@ -188,18 +249,28 @@ function pay(amount, unit, bchAddr = config.addr) {
   const spendToken = getSpendToken();
   const sessionId = getSessionId();
 
+  setStateForRootDiv("PAYMENT_PENDING");
+
   return axios
     .post(`${SIGNUP_TX_BRIDGE}/dapp/tx-request`, {
       spendToken,
       sessionId,
       action: {
-        type: "P2PK",
+        type: "P2PKH",
         unit,
         amount,
         bchAddr,
       },
     })
-    .then((x) => x.data);
+    .then((x) => {
+      setStateForRootDiv("PAYMENT_SUCCESS");
+      return x.data;
+    })
+    .catch((err) => {
+      const errorData = err.response.data;
+      setStateForRootDiv("PAYMENT_ERROR", errorData);
+      throw new Error(e);
+    });
 }
 
 function requestAccess() {
@@ -247,9 +318,6 @@ function requestSpendToken({ budget, deadline }) {
       if (payloadFromSigner.status === "GRANTED") {
         // TODO show user is logged in inside rootDiv and disappear
         setStateForRootDiv("LOGGED-IN");
-        setTimeout(() => {
-          hideRootDiv();
-        }, 2000);
 
         const { spendToken, sessionId } = payloadFromSigner;
         // store in localstorage
