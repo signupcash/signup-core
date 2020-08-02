@@ -9,11 +9,12 @@ import { SIGNUP_TX_BRIDGE } from "../config";
 let latestUtxos = [];
 let latestSatoshisBalance;
 
-async function throwTxErrorToApp(sessionId, reason) {
+async function throwTxErrorToApp(sessionId, reason, errCode) {
   return await axios.post(`${SIGNUP_TX_BRIDGE}/wallet/tx-response`, {
     sessionId: sessionId,
     success: false,
     reason,
+    errCode,
   });
 }
 
@@ -66,7 +67,7 @@ function listenToBridgeForEvents(sessionId) {
     const { spendToken, action } = messageData;
     if (!messageData || !spendToken || !action) {
       // inform the app that action is failed
-      throwTxErrorToApp(sessionId, "invalid parameters");
+      throwTxErrorToApp(sessionId, "invalid parameters", 100);
       return;
     }
     console.log(
@@ -83,7 +84,7 @@ function listenToBridgeForEvents(sessionId) {
       console.log("decoded JWT", decodedToken);
 
       if (!decodedToken.verified) {
-        throwTxErrorToApp(sessionId, decodedToken.reason);
+        throwTxErrorToApp(sessionId, "Spend Token is not valid!", 103);
         postMessage({
           event: "tx",
           status: "ERROR",
@@ -101,7 +102,7 @@ function listenToBridgeForEvents(sessionId) {
           console.log("TX Finished, result=>", txResult);
         } catch (e) {
           console.log(e);
-          throwTxErrorToApp(sessionId, e);
+          throwTxErrorToApp(sessionId, "Not enough balance", 102);
           return;
         }
       }
