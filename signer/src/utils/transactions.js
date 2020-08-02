@@ -15,12 +15,22 @@ import { isInSatoshis, convertAmountToSatoshiUnits } from "../utils/unitUtils";
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
 // perform the transaction right away
-export async function sendBchTx(amount, unit, receiverAddress) {
+export async function sendBchTx(
+  amount,
+  unit,
+  receiverAddress,
+  latestSatoshisBalance,
+  latestUtxos = []
+) {
   const changeReceiverAddress = await getWalletAddr();
   let amountInSatoshis = amount;
 
   if (!isInSatoshis(unit)) {
     amountInSatoshis = convertAmountToSatoshiUnits(amount, unit);
+  }
+
+  if (latestSatoshisBalance < amountInSatoshis) {
+    // TODO Re-fetch All SLP judged UTXOs
   }
 
   // BigNumber is used only because SLP.js depends on it
@@ -31,11 +41,7 @@ export async function sendBchTx(amount, unit, receiverAddress) {
   const hdNode = await getWalletHdNode();
   const fundingWIF = bitbox.HDNode.toWIF(hdNode);
 
-  // Get All SLP judged UTXOs
-  let latestBalance = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-    changeReceiverAddress
-  );
-  const inputUtxos = latestBalance.nonSlpUtxos.map((utxo) => ({
+  const inputUtxos = latestUtxos.map((utxo) => ({
     ...utxo,
     wif: fundingWIF,
   }));
