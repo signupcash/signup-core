@@ -44,6 +44,7 @@ export function initWorker() {
 }
 
 export function handleMessageBackToClient(status, reqId, meta = {}) {
+  if (!window.opener) return;
   window.opener.postMessage({ status, reqId, ...meta }, "*");
 }
 
