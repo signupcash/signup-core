@@ -59,7 +59,7 @@ export async function getBalance(bchAddr) {
 
   if (balance > 0) {
     const bchPriceInUSD = await getBCHPrice();
-    balance = (balance * 0.00000001).toFixed(8);
+    balance = bitbox.BitcoinCash.toBitcoinCash(balance);
     balanceInUSD = (bchPriceInUSD * balance).toFixed(2);
   }
 

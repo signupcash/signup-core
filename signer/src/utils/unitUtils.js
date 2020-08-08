@@ -19,6 +19,14 @@ export function convertAmountToSatoshiUnits(amount, unit) {
   }
 }
 
+export function satsToBch(amount) {
+  return bitbox.BitcoinCash.toBitcoinCash(amount);
+}
+
+export function bchToSats(amount) {
+  return bitbox.BitcoinCash.toSatoshi(amount);
+}
+
 export function isInBCH(unit) {
   return unit.toUpperCase() === "BCH";
 }

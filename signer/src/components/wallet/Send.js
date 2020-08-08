@@ -6,9 +6,14 @@ import QRCode from "qrcode.react";
 import { css } from "emotion";
 import { toast } from "react-toastify";
 import { UtxosContext } from "../WithUtxos";
-import { sats, isCashAddress } from "../../utils/unitUtils";
+import {
+  sats,
+  isCashAddress,
+  satsToBch,
+  bchToSats,
+} from "../../utils/unitUtils";
 import { sendBchTx } from "../../utils/transactions";
-
+import { DUST } from "../../config";
 import slpLogo from "../../assets/slp-logo-2.png";
 import bchLogo from "../../assets/bch-icon-qrcode.png";
 import Logo from "../common/Logo";
@@ -40,7 +45,7 @@ export default function ({ clientPayload }) {
 
   const [shouldSendAll, setShouldSendAll] = useState(false);
   const [targetAddr, setTargetAddr] = useState("");
-  const [amountToSend, setAmountToSend] = useState("0");
+  const [amountToSend, setAmountToSend] = useState(0);
 
   const { latestUtxos, latestSatoshisBalance, refetchUtxos } = useContext(
     UtxosContext
@@ -80,7 +85,13 @@ export default function ({ clientPayload }) {
     } else {
       setShouldSendAll(true);
       // deduct 700 sats for tx fee
-      setAmountToSend(balance - sats(hardCodedTxFee));
+      const satsToSend = bchToSats(balance) - hardCodedTxFee;
+      if (satsToSend <= DUST) {
+        toast.info("Your balance is too little to be sent! Maybe Top-up more?");
+        setAmountToSend(0);
+      } else {
+        setAmountToSend(satsToBch(satsToSend));
+      }
     }
   }
 
@@ -109,7 +120,7 @@ export default function ({ clientPayload }) {
     const addrIsCorrect = isCashAddress(targetAddr);
     const amountIsCorrect = amountToSend + sats(hardCodedTxFee) <= balance;
 
-    setCanSendTx(addrIsCorrect && amountIsCorrect);
+    setCanSendTx(addrIsCorrect && amountIsCorrect && amountToSend !== 0);
   }, [amountToSend, targetAddr]);
 
   return (
@@ -163,12 +174,12 @@ export default function ({ clientPayload }) {
               type="text"
               width="100%"
               value={`${amountToSend}` || "0"}
-              onInput={(e) => {
+              onChange={(e) => {
                 let { value } = e.target;
                 if (typeof value === "string" && value.match(/[^0-9.]/g)) {
                   value = value.replaceAll(/[^0-9.]/g, "");
                 }
-                setAmountToSend(value);
+                setAmountToSend(parseFloat(value));
               }}
               placeholder="0.0005"
             />
