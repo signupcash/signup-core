@@ -1,11 +1,11 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { Link } from "preact-router";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import { css } from "emotion";
 import { toast } from "react-toastify";
-
+import { UtxosContext } from "../WithUtxos";
 import { sats, isCashAddress } from "../../utils/unitUtils";
 import { sendBchTx } from "../../utils/transactions";
 
@@ -42,6 +42,10 @@ export default function ({ clientPayload }) {
   const [targetAddr, setTargetAddr] = useState("");
   const [amountToSend, setAmountToSend] = useState("0");
 
+  const { latestUtxos, latestSatoshisBalance, refetchUtxos } = useContext(
+    UtxosContext
+  );
+
   const { bchAddr, cashAccount, walletExist } = useWallet();
 
   async function handleSend(e) {
@@ -49,9 +53,17 @@ export default function ({ clientPayload }) {
     // send the transaction here
     try {
       setStatus("TX PROCESSING");
-      await sendBchTx(amountToSend, "BCH", targetAddr);
+      await sendBchTx(
+        amountToSend,
+        "BCH",
+        targetAddr,
+        latestSatoshisBalance,
+        latestUtxos
+      );
       setStatus("TX ACCOMPLISHED");
       toast.success("Cool! Your money is sent successfully! 🍾");
+      // refetch UTXOs for future transactions
+      refetchUtxos();
     } catch (e) {
       console.log("[SIGNUP][ERROR]", e);
       setStatus("ERROR");
