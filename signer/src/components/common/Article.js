@@ -1,7 +1,7 @@
 import { h, Fragment } from "preact";
-import { css } from "emotion";
+import { css, cx } from "emotion";
 
-const articleStyle = css`
+const articleCss = css`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,9 +9,9 @@ const articleStyle = css`
   margin-top: 32px;
 `;
 
-export default function ({ ariaLabel, id, children }) {
+export default function ({ ariaLabel, id, children, customCss }) {
   return (
-    <article class={articleStyle} id={id} aria-label={ariaLabel}>
+    <article class={cx(articleCss, customCss)} id={id} aria-label={ariaLabel}>
       {children}
     </article>
   );

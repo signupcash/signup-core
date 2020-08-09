@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect, useContext } from "preact/hooks";
+import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
 import {
   handleMessageBackToClient,
@@ -13,24 +13,43 @@ import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
+import Article from "../common/Article";
 import { UtxosContext } from "../WithUtxos";
 
 const permissionCss = css`
   margin: 16px;
-  border: 2px solid #815de3;
   padding: 12px;
-  min-height: 200px;
+  min-height: 350px;
 `;
 
 function connectWalletToTxBridge(sessionId) {
   workerCourier("connect", { sessionId });
 }
 
+function deepClone(data) {
+  try {
+    return JSON.parse(JSON.stringify(data));
+  } catch (e) {
+    console.log("[SIGUP][ERROR]", e);
+  }
+}
+
+const txReducer = function (state, action) {
+  console.log("disptached", action);
+  switch (action.type) {
+    case "TX_PUSH":
+      return [...state, action.value];
+    default:
+      return state;
+  }
+};
+
 export default function ({ clientPayload, bchAddr }) {
+  // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");
   const [balance, setBalance] = useState();
   const [balanceInUSD, setBalanceInUSD] = useState();
-  const [accomplishedTxs, setAccomplishedTxs] = useState([]);
+  const [accomplishedTxs, dispatchTx] = useReducer(txReducer, []);
 
   const { refetchUtxos } = useContext(UtxosContext);
 
@@ -44,11 +63,19 @@ export default function ({ clientPayload, bchAddr }) {
     })();
   }, [bchAddr]);
 
+  function getAccomplishedTxs() {
+    return accomplishedTxs;
+  }
+
   useEffect(() => {
     refetchUtxos();
     onWorkerEvent("tx", (eventData) => {
       if (eventData.status === "DONE") {
-        setAccomplishedTxs([...accomplishedTxs, eventData]);
+        const newTx = deepClone(eventData);
+        dispatchTx({
+          type: "TX_PUSH",
+          value: newTx,
+        });
         refetchUtxos();
       }
     });
@@ -82,20 +109,25 @@ export default function ({ clientPayload, bchAddr }) {
     self.close();
   }
 
+  const balanceIsLoaded = typeof balanceInUSD !== "undefined";
+
   return (
     <>
       <div class={permissionCss}>
         {status === "WAITING" && (
           <form onSubmit={handleAllow}>
-            {typeof balanceInUSD !== "undefined" &&
-              balanceInUSD < parseMoney(clientPayload.budget).value && (
-                <Heading highlight number={4} alert>
-                  Your balance is only ${balanceInUSD}, it is not enough to meet
-                  the required budget requested by the application. Click{" "}
-                  <a href="/top-up">here</a> to top up your wallet with some
-                  BCH.
-                </Heading>
-              )}
+            {balanceIsLoaded &&
+            balanceInUSD < parseMoney(clientPayload.budget).value ? (
+              <Heading highlight number={5} alert>
+                Your balance is only ${balanceInUSD}, it is not enough to meet
+                the required budget requested by the application. Click{" "}
+                <a href="/top-up">here</a> to top up your wallet with some BCH.
+              </Heading>
+            ) : (
+              <Heading number={5} highlight>
+                Fetching your wallet's balance...
+              </Heading>
+            )}
             <Heading number={5}>
               Request for permission to spend from your wallet
             </Heading>
@@ -158,31 +190,44 @@ export default function ({ clientPayload, bchAddr }) {
         )}
       </div>
 
-      {accomplishedTxs.map((tx) => (
-        <div
-          class={css`
-            background: #eee;
-            padding: 16px;
-            width: 100%;
-            padding: 16px;
-          `}
-        >
-          <Heading number={5}>Transaction: Done</Heading>
-          <p>
-            Spent {tx.action.amount} {tx.action.unit} to {tx.action.bchAddr}
-          </p>
-          <p>
-            Tx Id:{" "}
-            <a
-              href={`https://blockchair.com/bitcoin-cash/transaction/${tx.txResult.txId}`}
-              target="_blank"
-              rel="noopener noreferer"
-            >
-              {tx.txResult.txId.slice(0, 15)}...
-            </a>
-          </p>
-        </div>
-      ))}
+      {balanceIsLoaded && <Heading number={3}>Spendings on this app:</Heading>}
+
+      {accomplishedTxs &&
+        accomplishedTxs.map((tx, idx) => (
+          <Article
+            key={idx}
+            customCss={css`
+              background: #eee;
+              width: 90%;
+              margin: 16px;
+              border: 1px solid black;
+            `}
+          >
+            <Heading number={5}>Transaction: Sent</Heading>
+            <p>
+              Spent <b>{tx.action.amount}</b> {tx.action.unit} to{" "}
+              <b>
+                <a
+                  href={`https://blockchair.com/bitcoin-cash/address/${tx.action.bchAddr}`}
+                  target="_blank"
+                  rel="noopener noreferer"
+                >
+                  {tx.action.bchAddr.slice(0, 16)}...
+                </a>
+              </b>
+            </p>
+            <p>
+              Tx Id:{" "}
+              <a
+                href={`https://blockchair.com/bitcoin-cash/transaction/${tx.txResult.txId}`}
+                target="_blank"
+                rel="noopener noreferer"
+              >
+                {tx.txResult.txId.slice(0, 15)}...
+              </a>
+            </p>
+          </Article>
+        ))}
     </>
   );
 }
