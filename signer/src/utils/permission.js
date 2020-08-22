@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
+import { BitboxNetwork } from "slpjs";
 
 export function makeSpendToken(budget, deadline, entropy) {
+  // TODO avoid using deadline for now, keep it to 1 hour hard coded
   return jwt.sign(
     {
       data: {
@@ -10,7 +12,7 @@ export function makeSpendToken(budget, deadline, entropy) {
     },
     entropy,
     {
-      expiresIn: deadline,
+      expiresIn: "1h",
     }
   );
 }

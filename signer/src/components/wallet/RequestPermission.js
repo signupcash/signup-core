@@ -47,6 +47,8 @@ const txReducer = function (state, action) {
 export default function ({ clientPayload, bchAddr }) {
   // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");
+  // using this in state so user can change the parameter before accepting it
+  const [budget, setBudget] = useState();
   const [balance, setBalance] = useState();
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [accomplishedTxs, dispatchTx] = useReducer(txReducer, []);
@@ -63,11 +65,12 @@ export default function ({ clientPayload, bchAddr }) {
     })();
   }, [bchAddr]);
 
-  function getAccomplishedTxs() {
-    return accomplishedTxs;
-  }
+  useEffect(() => {
+    setStatus("WAITING");
+  }, [clientPayload.nonce]);
 
   useEffect(() => {
+    setBudget(parseFloat(clientPayload.budget).toFixed(2));
     refetchUtxos();
     onWorkerEvent("tx", (eventData) => {
       if (eventData.status === "DONE") {
@@ -81,26 +84,27 @@ export default function ({ clientPayload, bchAddr }) {
     });
   }, []);
 
-  async function handleAllow(e) {
+  function handleAllow(e) {
     e.preventDefault();
-    // generate sepnd token and send it to the dapp and tx bridge
-    const walletEntropy = await getWalletEntropy();
-    const slicedEntropy = walletEntropy.slice(0, 32);
+    (async () => {
+      // generate sepnd token and send it to the dapp and tx bridge
+      const walletEntropy = await getWalletEntropy();
+      const slicedEntropy = walletEntropy.slice(0, 32);
 
-    const { budget, deadline } = clientPayload;
+      const { deadline } = clientPayload;
 
-    const spendToken = makeSpendToken(budget, deadline, slicedEntropy);
-    const sessionId = makeSessionId();
+      const spendToken = makeSpendToken(budget, deadline, slicedEntropy);
+      const sessionId = makeSessionId();
 
-    handleMessageBackToClient("GRANTED", clientPayload.reqId, {
-      spendToken,
-      sessionId,
-    });
+      handleMessageBackToClient("GRANTED", clientPayload.reqId, {
+        spendToken,
+        sessionId,
+      });
 
-    connectWalletToTxBridge(sessionId);
+      connectWalletToTxBridge(sessionId);
 
-    setStatus("APPROVED");
-
+      setStatus("APPROVED");
+    })();
     // focus?
   }
 
@@ -110,22 +114,29 @@ export default function ({ clientPayload, bchAddr }) {
   }
 
   const balanceIsLoaded = typeof balanceInUSD !== "undefined";
+  const balanceIsEnough = budget && balanceInUSD >= budget;
 
   return (
     <>
       <div class={permissionCss}>
         {status === "WAITING" && (
           <form onSubmit={handleAllow}>
-            {balanceIsLoaded &&
-            balanceInUSD < parseMoney(clientPayload.budget).value ? (
+            {balanceIsLoaded && !balanceIsEnough && (
               <Heading highlight number={5} alert>
-                Your balance is only ${balanceInUSD}, it is not enough to meet
-                the required budget requested by the application. Click{" "}
-                <a href="/top-up">here</a> to top up your wallet with some BCH.
+                Your balance is only ${balanceInUSD}, do you want to{" "}
+                <a href="/top-up">Top-up</a> your wallet?
               </Heading>
-            ) : (
+            )}
+
+            {balanceIsLoaded && balanceIsEnough && (
               <Heading number={5} highlight>
-                Fetching your wallet's balance...
+                Your balance is ${balanceInUSD}
+              </Heading>
+            )}
+
+            {!balanceIsLoaded && (
+              <Heading number={5} highlight>
+                Fetching your current balance...
               </Heading>
             )}
             <Heading number={5}>
@@ -153,16 +164,45 @@ export default function ({ clientPayload, bchAddr }) {
               <Heading number={4}>Budget:</Heading>
               <Input
                 small
-                value={clientPayload.budget}
-                width="80px"
+                value={budget}
+                width="50px"
                 customCss={css`
-                  margin: 8px 0;
+                  margin: 13px 0 8px;
+                  height: 27px;
+                  font-size: 15px;
                 `}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setBudget(e.target.value);
+                }}
               />
+              <Heading
+                number={4}
+                inline
+                customCss={css`
+                  margin-left: -5px;
+                `}
+              >
+                USD
+              </Heading>
             </div>
 
-            <Button type="submit" primary>
-              Allow
+            <Heading number={4} inline>
+              Expires in:
+            </Heading>
+            <Heading
+              number={4}
+              inline
+              customCss={css`
+                color: black;
+                margin: 8px 0;
+              `}
+            >
+              1 hour
+            </Heading>
+
+            <Button type="submit" disabled={!balanceIsEnough} primary>
+              {balanceIsEnough ? `Allow ($${budget})` : `Allow`}
             </Button>
             <Button onClick={handleDeny} type="button" secondary>
               Deny
@@ -176,7 +216,7 @@ export default function ({ clientPayload, bchAddr }) {
             <Heading number={5} highlight>
               You can now go back to the application. Please keep this window
               open to allow {clientPayload.origin} to spend from your wallet up
-              to {clientPayload.budget}
+              to ${budget}
             </Heading>
             <p
               class={css`
