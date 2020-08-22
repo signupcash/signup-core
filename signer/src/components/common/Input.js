@@ -5,6 +5,7 @@ export default function ({
   type,
   onInput,
   onChange,
+  onkeydown,
   value,
   width,
   small,
@@ -42,6 +43,7 @@ export default function ({
       value={value}
       onInput={onInput}
       onChange={onChange}
+      onkeydown={onkeydown}
       placeholder={placeholder}
     />
   );
