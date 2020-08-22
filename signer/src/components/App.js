@@ -18,17 +18,18 @@ import "../css/base.css";
 
 function App() {
   const [clientPayload, setClientPayload] = useState({});
+  let nonce = 0;
 
   useEffect(() => {
     function receiveMessage(event) {
       console.log("[SIGNUP] event received", event.data);
-
+      nonce++;
       const requestOrigin = event.origin.replace(/https?:\/\//, "");
       const { reqType, reqId, config, budget, deadline } = event.data;
 
       validateConfig(config);
       validateReqType(reqType);
-      setClientPayload({ ...event.data, origin: event.origin });
+      setClientPayload({ ...event.data, origin: event.origin, nonce });
     }
 
     if (window) {
