@@ -27,6 +27,10 @@ const height150 = css`
   height: 150px;
 `;
 
+const height180 = css`
+  height: 180px;
+`;
+
 const height220 = css`
   height: 220px;
 `;
@@ -212,6 +216,7 @@ function setStateForRootDiv(state, meta = {}) {
     // wallet is not connected
     console.log("ere", meta);
     if (meta.errCode === 101) {
+      setRootDivHeight(height180);
       h4.innerText = "";
       p.innerText = "You wallet is disconnected! Login first";
       btn.setAttribute("style", "display: block");
@@ -281,7 +286,6 @@ function requestAccess() {
     reqId: newReqId,
     reqType: "access",
     budget,
-    deadline,
   };
   return new Promise(function (resolve, reject) {
     const newReqId = uuidv4();
@@ -300,7 +304,7 @@ function requestAccess() {
   });
 }
 
-function requestSpendToken({ budget, deadline }) {
+function requestSpendToken({ budget }) {
   showRootDiv();
   const newReqId = uuidv4();
 
@@ -308,7 +312,6 @@ function requestSpendToken({ budget, deadline }) {
     reqId: newReqId,
     reqType: "spend_token",
     budget,
-    deadline,
   };
 
   return new Promise((resolve, reject) => {
