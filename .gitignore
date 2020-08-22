@@ -1,3 +1,4 @@
 .DS_Store
 signer/public/js
 signer/public/images
+client/dist
