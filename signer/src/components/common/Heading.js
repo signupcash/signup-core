@@ -4,6 +4,7 @@ import { css, cx } from "emotion";
 export default function ({
   number,
   highlight,
+  alert,
   customCss,
   inline,
   size,
@@ -15,7 +16,11 @@ export default function ({
       color: ${highlight ? "black" : "#3a3d99"};
       margin: ${number > 3 ? "8px" : "16px"};
       padding: 6px 12px;
-      background: ${highlight ? "#f7e9ff" : "white"};
+      background: ${highlight
+        ? alert
+          ? "#ffd0e2"
+          : "#f7e9ff"
+        : "transparent"};
       font-weight: ${number > 4 ? 400 : 500};
       transition: color 0.15s ease-in-out;
       ${inline && "display: inline-block;"}
