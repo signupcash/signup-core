@@ -196,3 +196,39 @@ export async function createCashAccount(chosenUsername) {
     }),
   }).then((res) => res.json());
 }
+
+export async function storeSpending(sessionId, amountInSats) {
+  try {
+    let spendings = await localforage.getItem("SIGNUP_SPENDINGS");
+    if (spendings) {
+      spendings = JSON.parse(spendings);
+    } else {
+      spendings = {};
+    }
+
+    const pastSpendings = spendings[sessionId]
+      ? parseInt(spendings[sessionId].spent)
+      : 0;
+
+    spendings[sessionId] = {
+      spent: pastSpendings + amountInSats,
+      lastUsed: Date.now(),
+    };
+    await localforage.setItem("SIGNUP_SPENDINGS", JSON.stringify(spendings));
+    return Promise.resolve();
+  } catch (e) {
+    console.log(e);
+    return Promise.reject("[SIGNUP] Failed to store spending");
+  }
+}
+
+export async function getWalletSpendingsBySessionId(sessionId) {
+  try {
+    let spendings = await localforage.getItem("SIGNUP_SPENDINGS");
+    spendings = JSON.parse(spendings);
+    return (spendings[sessionId] && spendings[sessionId].spent) || 0;
+  } catch (e) {
+    console.log(e);
+    return 0;
+  }
+}

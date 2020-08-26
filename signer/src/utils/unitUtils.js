@@ -31,10 +31,6 @@ export function isInBCH(unit) {
   return unit.toUpperCase() === "BCH";
 }
 
-export function sats(amount) {
-  return bitbox.BitcoinCash.toBitcoinCash(amount);
-}
-
 export function isCashAddress(bchAddr) {
   try {
     return bitbox.Address.isCashAddress(bchAddr);
@@ -59,26 +55,18 @@ export async function fiatToBCH(amount, unit) {
   return amount / (await getBCHPrice(unit));
 }
 
-export function parseMoney(moneyValue) {
-  let parsedMoney;
+export async function fiatToSats(amount, unit) {
+  const amountInBch = amount / (await getBCHPrice(unit));
+  return bitbox.BitcoinCash.toSatoshi(amountInBch);
+}
 
-  if (moneyValue.match(/^\$/)) {
-    parsedMoney = {
-      unit: "USD",
-      value: parseFloat(moneyValue.replace("$", "")),
-    };
+export async function sats(amount, unit) {
+  if (isInSatoshis(unit)) {
+    return amount;
+  } else if (isInBCH(unit)) {
+    return bchToSats(amount);
+  } else {
+    // it's in FIAT
+    return fiatToSats(amount, unit);
   }
-
-  if (moneyValue.match(/bch/i)) {
-    parsedMoney = {
-      unit: "BCH",
-      value: parseFloat(moneyValue.replace(/bch/i, "")),
-    };
-  }
-
-  if (isNaN(parsedMoney.value)) {
-    throw new Error("[SIGNUP] invalid money value => %s", moneyValue);
-  }
-
-  return parsedMoney;
 }

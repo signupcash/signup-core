@@ -10,7 +10,7 @@ import {
   getUserAttemptedCashAccount,
 } from "./wallet";
 
-import { isInSatoshis, convertAmountToSatoshiUnits } from "../utils/unitUtils";
+import { isInSatoshis, sats } from "../utils/unitUtils";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
@@ -23,11 +23,7 @@ export async function sendBchTx(
   latestUtxos = []
 ) {
   const changeReceiverAddress = await getWalletAddr();
-  let amountInSatoshis = amount;
-
-  if (!isInSatoshis(unit)) {
-    amountInSatoshis = convertAmountToSatoshiUnits(amount, unit);
-  }
+  let amountInSatoshis = await sats(amount, unit);
 
   if (latestSatoshisBalance < amountInSatoshis) {
     // TODO Re-fetch All SLP judged UTXOs
@@ -54,5 +50,5 @@ export async function sendBchTx(
     receiverAddress,
     changeReceiverAddress
   );
-  return { txId: sendTxId };
+  return { txId: sendTxId, spent: amountInSatoshis.toNumber() };
 }
