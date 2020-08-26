@@ -58,6 +58,13 @@ function listenToBridgeForEvents(sessionId) {
     `${SIGNUP_TX_BRIDGE}/wallet/connect/${sessionId}`
   );
 
+  // Retry for connection every 3 seconds
+  sseSource.addEventListener("error", (e) => {
+    setTimeout(() => {
+      listenToBridgeForEvents(sessionId);
+    }, 3000);
+  });
+
   sseSource.addEventListener("message", (e) => {
     const messageData = e.data;
     console.log(messageData);
