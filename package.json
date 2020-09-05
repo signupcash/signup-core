@@ -4,7 +4,7 @@
   "description": "A non-custodial easy-to-use platform to build DApps on top of Bitcoin Cash blockchain",
   "main": "index.js",
   "scripts": {
-    "start": "cd ./client && npm start & cd ./signer && npm start",
+    "start": "cd ./runtime && npm start & cd ./wallet && npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
