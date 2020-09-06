@@ -278,24 +278,35 @@ function pay(amount, unit, bchAddr = config.addr) {
     });
 }
 
-function requestAccess() {
+function requestAccess(permissions) {
   showRootDiv();
   const newReqId = uuidv4();
 
   latestPayload = {
     reqId: newReqId,
     reqType: "access",
-    budget,
+    permissions,
   };
   return new Promise(function (resolve, reject) {
-    const newReqId = uuidv4();
-
     // first set a listener to receive the response back from signer
-    listenForMessage(newReqId, function (payloadFromSigner) {
-      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
       removeListeningForMessage();
-      if (payloadFromSigner.status === "GRANTED") {
-        resolve(payloadFromSigner);
+      if (payloadFromWallet.status === "GRANTED") {
+        // TODO show user is logged in inside rootDiv and disappear
+        setStateForRootDiv("LOGGED-IN");
+
+        const { accessToken, sessionId } = payloadFromWallet;
+        const oneHour = 1000 * 60 * 60;
+
+        // store in localstorage
+        localStorage.setItem("SIGNUP_ACCESS_TOKEN", accessToken);
+        localStorage.setItem(
+          "SIGNUP_ACCESS_TOKEN_EXPIRES_AT",
+          Date.now() + oneHour
+        );
+        localStorage.setItem("SIGNUP_SESSION_ID", sessionId);
+        resolve(payloadFromWallet);
       } else {
         // Signin failed
         reject("User failed to Signin with a wallet");
@@ -315,19 +326,25 @@ function requestSpendToken({ budget }) {
   };
 
   return new Promise((resolve, reject) => {
-    listenForMessage(newReqId, function (payloadFromSigner) {
-      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
       removeListeningForMessage();
-      if (payloadFromSigner.status === "GRANTED") {
+      if (payloadFromWallet.status === "GRANTED") {
         // TODO show user is logged in inside rootDiv and disappear
         setStateForRootDiv("LOGGED-IN");
 
-        const { spendToken, sessionId } = payloadFromSigner;
+        const { spendToken, sessionId } = payloadFromWallet;
+        const oneHour = 1000 * 60 * 60;
+
         // store in localstorage
         localStorage.setItem("SIGNUP_SPEND_TOKEN", spendToken);
+        localStorage.setItem(
+          "SIGNUP_SPEND_TOKEN_EXPIRES_AT",
+          Date.now() + oneHour
+        );
         localStorage.setItem("SIGNUP_SESSION_ID", sessionId);
 
-        resolve({ status: payloadFromSigner.status });
+        resolve({ status: payloadFromWallet.status });
       } else {
         // Signin failed
         reject({
@@ -368,7 +385,6 @@ function handleMessageReceivedFromSigner(event, targetReqId, cb) {
   if (reqId === targetReqId) {
     cb(event.data);
   }
-  console.log("STATUS FROM SIGNER: " + status);
 }
 
 // Receiving messages from the signer
