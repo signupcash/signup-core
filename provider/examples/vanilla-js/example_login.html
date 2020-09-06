@@ -35,7 +35,9 @@
       </button>
     </div>
 
-    <script type="text/javascript" src="../dist/client.runtime.js"></script>
+    <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
+    <script type="text/javascript" src="../../dist/provider.js"></script>
+
     <script>
       const signup = new Signup.cash({
         addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
@@ -52,20 +54,18 @@
         loginButton.setAttribute("disabled", 1);
 
         signup
-          .requestAccess(["bchAddress", "cashAccount", "signature"])
-          .then((userProfile) => {
+          .requestAccess(["bch_address", "cash_account"])
+          .then((user) => {
+            console.log(user);
             // always check, cash account is optional for users
-            if (userProfile.cashAccount) {
+            if (user.cashAccount) {
               msgText.innerHTML =
-                "Welcome " +
-                userProfile.accountEmoji +
-                " " +
-                userProfile.cashAccount;
+                "Welcome " + user.accountEmoji + " " + user.cashAccount;
             } else {
               // user has no cash account, use bchAddress
               msgText.innerHTML =
                 "<span class='small'>Welcome <b>" +
-                userProfile.bchAddress +
+                user.bchAddr +
                 "</b></span>";
             }
             loginButton.style.display = "none";

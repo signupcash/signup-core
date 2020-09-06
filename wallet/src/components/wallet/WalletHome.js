@@ -2,7 +2,8 @@ import { h, Fragment } from "preact";
 import { useState } from "preact/hooks";
 import { css } from "emotion";
 
-import RequestPermission from "./RequestPermission";
+import RequestSpendToken from "./RequestSpendToken";
+import RequestAccess from "./RequestAccess";
 
 import Logo from "../common/Logo";
 import Article from "../common/Article";
@@ -35,7 +36,11 @@ export default function ({ clientPayload, bchAddr }) {
         <Heading number={2}>Your Wallet</Heading>
 
         {reqType === "spend_token" && (
-          <RequestPermission bchAddr={bchAddr} clientPayload={clientPayload} />
+          <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
+        )}
+
+        {reqType === "access" && (
+          <RequestAccess bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
 
         {reqType !== "spend_token" && reqType !== "access" && (

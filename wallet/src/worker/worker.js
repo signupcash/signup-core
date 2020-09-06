@@ -15,7 +15,7 @@ import {
   sats,
 } from "../utils/unitUtils";
 import { sendBchTx } from "../utils/transactions";
-import { decodeSpendToken } from "../utils/permission";
+import { decodeToken } from "../utils/permission";
 import axios from "axios";
 import { SIGNUP_TX_BRIDGE } from "../config";
 
@@ -89,9 +89,7 @@ function listenToBridgeForEvents(sessionId) {
 
     (async () => {
       // check the validity of spend token
-      const walletEntropy = await getWalletEntropy();
-      const slicedEntropy = walletEntropy.slice(0, 32);
-      const decodedToken = decodeSpendToken(spendToken, slicedEntropy);
+      const decodedToken = await decodeToken(spendToken);
 
       if (!decodedToken.verified) {
         throwTxErrorToApp(sessionId, "Spend Token is not valid!", 103);

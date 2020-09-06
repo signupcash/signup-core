@@ -7,7 +7,7 @@ import {
   onWorkerEvent,
 } from "../../signer";
 import { makeSpendToken, makeSessionId } from "../../utils/permission";
-import { getWalletEntropy, getBalance } from "../../utils/wallet";
+import { getBalance } from "../../utils/wallet";
 import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
@@ -86,13 +86,9 @@ export default function ({ clientPayload, bchAddr }) {
   function handleAllow(e) {
     e.preventDefault();
     (async () => {
-      // generate sepnd token and send it to the dapp and tx bridge
-      const walletEntropy = await getWalletEntropy();
-      const slicedEntropy = walletEntropy.slice(0, 32);
-
       const { deadline } = clientPayload;
 
-      const spendToken = makeSpendToken(budget, deadline, slicedEntropy);
+      const spendToken = await makeSpendToken(budget, deadline);
       const sessionId = makeSessionId();
 
       handleMessageBackToClient("GRANTED", clientPayload.reqId, {
