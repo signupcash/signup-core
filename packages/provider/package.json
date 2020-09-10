@@ -1,8 +1,8 @@
 {
-  "name": "signup-cash-client",
-  "version": "0.8.0",
+  "name": "signup-cash-provider",
+  "version": "1.0.0",
   "description": "Client side library for interacting with Signup",
-  "main": "client.runtime.js",
+  "main": "dist/provider.js",
   "browserslist": [
     "last 2 version",
     "> 1%"
