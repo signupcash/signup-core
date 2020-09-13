@@ -4,7 +4,7 @@
   "description": "A non-custodial easy-to-use platform to build DApps on top of Bitcoin Cash blockchain",
   "main": "index.js",
   "scripts": {
-    "start": "lerna run start",
+    "start": "lerna run start & lerna run build:dev",
     "build:dev": "lerna run build:dev",
     "build": "lerna run build",
     "test": "echo \"Error: no test specified\" && exit 1"
