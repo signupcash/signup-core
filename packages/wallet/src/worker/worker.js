@@ -128,6 +128,7 @@ function listenToBridgeForEvents(sessionId) {
           });
         } catch (e) {
           console.log(e);
+          // TODO figure out if it's actually out of balance or rest.bitcoin.com is down
           throwTxErrorToApp(sessionId, "Not enough balance", 102);
           return;
         }
