@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>SIGNUP.cash Client Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>SIGNUP.cash Simple Tipping Button Demo</h1>
+
+      <p id="msg">Click on the button below to tip me</p>
+      <button type="button" class="btn btn-primary" id="signupcash_button">
+        Tip 1000 Sats
+      </button>
+    </div>
+
+    <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
+    <script type="text/javascript" src="../../dist/provider.js"></script>
+
+    <script>
+      const signup = new Signup.cash({
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
+      });
+
+      let userSpendToken;
+
+      initSignup();
+
+      const payButton = document.querySelector("#signupcash_button");
+      const msgText = document.querySelector("#msg");
+
+      payButton.addEventListener("click", tipMe);
+
+      function initSignup() {
+        // You need to obtain a spend token if you want to request tx to user's wallet
+        signup
+          .requestSpendToken({
+            budget: 1.0,
+          })
+          .then((res) => {
+            console.log(res);
+            if (res.status === "GRANTED") {
+              msgText.innerHTML = "Thanks! you are logged in";
+            } else {
+              msgText.innerHTML = "Access denied!";
+            }
+          })
+          .catch(() => {
+            msgText.innerHTML = "You don't want to login?";
+          });
+      }
+
+      function tipMe(e) {
+        e.preventDefault();
+
+        // change the state of button
+        payButton.innerHTML = "Processing...";
+
+        if (signup.spendTokenExist()) {
+          payButton.setAttribute("disabled", 1);
+
+          signup
+            .pay(1000, "SAT")
+            .then(({ txResult }) => {
+              console.log("PAY RESP =>", txResult);
+              // update the UI
+              msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${txResult.txId}'>TX ID</a>`;
+            })
+            .catch(({ status, message }) => {
+              // error handling
+              if (status === "ERROR") {
+                msgText.innerHTML = "Oops, " + message + " 😱";
+              }
+            })
+            .finally(() => {
+              payButton.innerHTML = "Send 1000 sats";
+              payButton.removeAttribute("disabled");
+            });
+        } else {
+          msgText.innerHTML = "You need to login with Signup to tip 😅";
+        }
+      }
+    </script>
+  </body>
+</html>

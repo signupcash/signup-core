@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>SIGNUP.cash Client Signing Message Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Signup.cash Signing Message Demo</h1>
+
+      <p id="msg">Go ahead and sign a message</p>
+      <input class="input" id="messageInput" value="any message to be signed" />
+      <button type="button" class="btn btn-primary" id="signupcash_button">
+        Sign the Message
+      </button>
+      <br /><br />
+      <input class="input" type="text" value="Any message to sign" />
+      <button type="button" class="btn btn-secondary" id="sign_button">
+        Sign the message
+      </button>
+    </div>
+
+    <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
+    <script type="text/javascript" src="../../dist/provider.js"></script>
+
+    <script>
+      const signup = new Signup.cash({
+        addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
+      });
+
+      const loginButton = document.querySelector("#signupcash_button");
+      const msgText = document.querySelector("#msg");
+
+      signButton.addEventListener("click", function () {
+        signup.sign({ message: document.querySelector("#messageInput") });
+      });
+
+      try {
+        login();
+      } catch (e) {
+        // login failed, request again maybe?
+        login();
+      }
+
+      function login(e) {
+        signup.requestAccess(["bch_address", "signature"]).then((user) => {});
+      }
+    </script>
+  </body>
+</html>
