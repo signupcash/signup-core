@@ -29,20 +29,25 @@ const WithUtxos = (Component) => {
       console.log("Fetching UTXOs");
       cleanseCurrentUtxos();
       const walletAddr = await getWalletAddr();
+      let balancesAndUtxos;
       // Re-fetch All SLP judged UTXOs
-      const balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-        walletAddr
-      );
+      try {
+        balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
+          walletAddr
+        );
+      } catch (e) {
+        console.log("[SIGNUP] While fetching UTXOs ", e);
+      }
 
       if (balancesAndUtxos) {
         setLatestSatoshisBalance(balancesAndUtxos.satoshis_available_bch);
         setLatestUtxos(balancesAndUtxos.nonSlpUtxos);
+        // update data in the web worker
+        workerCourier("update", {
+          latestSatoshisBalance: balancesAndUtxos.satoshis_available_bch,
+          latestUtxos: balancesAndUtxos.nonSlpUtxos,
+        });
       }
-      // update data in the web worker
-      workerCourier("update", {
-        latestSatoshisBalance: balancesAndUtxos.satoshis_available_bch,
-        latestUtxos: balancesAndUtxos.nonSlpUtxos,
-      });
     }
 
     return (
