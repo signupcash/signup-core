@@ -1,15 +1,16 @@
 # Signup Core
 
-This repository contains the official libraries for core functionality of [signup.cash](https://signup.cash), mostly the client side library and key signer.
+This repository contains the official libraries for the core functionality of [signup.cash](https://signup.cash), mostly the client side library and key signer.
 
 ## What is Signup?
 
-Signup is a non-custodial platform to build blockchain apps exclusively for Bitcoin Cash ecosystem. You can use this library to request your users to pay, store their data and perform social network functionalities without having to think about security measures and low level transaction building.
+Signup is a non-custodial platform to build blockchain apps exclusively for Bitcoin Cash ecosystem. You can use this library to request your users to pay, and ask them to sign arbitrary payloads without having to think about security measures and low level transaction building.
+
+You can read [this blog post](https://read.cash/@p0oker/a-sneak-peek-into-signups-new-dapp-architecture-for-bitcoin-cash-ccf6af56) in order to understand how it works better.
 
 ## Demos
 
-1. [Simple BCH Tipping Button](https://examples.p0oker.now.sh/example_simple_tipping_button.html)
-2. [Login Example](https://examples.p0oker.now.sh/example_login.html)
+To be updated...
 
 ## Do I need a specific framework to use it?
 
@@ -17,10 +18,10 @@ Signup is framework agnostic, you can import it in modern environments like Reac
 
 ## API Docs
 
-Please visit [the Notion page](https://www.notion.so/p0oker/SIGNup-Documentation-88024f39e70041e2a5aa33d2da565ddf) for the official docs.
+Please visit the [official docs](https://docs.signup.cash) in order to get started with Signup.
 
 ## Contribution
 
-Signup is a fully open source project and community involvement is highly encouraged. Feel free to open and issue, submit a PR or join our Telegram group for more discussions!
+Signup is a fully open source project and community involvement is highly encouraged. Feel free to open an issue, submit a Pull Request or join [our Telegram group](https://t.me/joinchat/NAXHtw_YK7Qu_MDJt3aOZw) for more discussions!
 
-If you're thinking about a PR with many changes, please first get a confirmation through an issue or a message in Telegram!
+If you're doing a PR with many changes, please first get a confirmation through an issue or a message in Telegram!
