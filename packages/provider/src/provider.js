@@ -204,17 +204,48 @@ function setStateForRootDiv(state, meta = {}) {
     disappear(5000);
   }
 
+  if (state === "SIGNING_PENDING") {
+    h4.innerText = "Signing a payload...";
+    p.innerText = "Connecting to your wallet...";
+    btn.setAttribute("style", "display: none");
+    disappear(3000);
+  }
+
+  if (state === "SIGNING_SUCCESS") {
+    h4.innerText = "Signature received 👍🏻";
+    p.innerText = "Continuing to the app...";
+    btn.setAttribute("style", "display: none");
+    disappear(1200);
+  }
+
+  if (state === "SIGNING_ERROR") {
+    // wallet is not connected
+    if (meta.errCode === 101) {
+      setRootDivHeight(height180);
+      h4.innerText = "";
+      p.innerText = "You wallet is disconnected! Login first";
+      btn.setAttribute("style", "display: block");
+      btn.innerText = "Login with SIGNUP";
+      disappear(3000);
+      return;
+    }
+
+    h4.innerText = "Error 😕";
+    p.innerText = "There is an error while signing...";
+    btn.setAttribute("style", "display: none");
+    disappear(3000);
+  }
+
   if (state === "PAYMENT_SUCCESS") {
     h4.innerText = "Transaction is done! 👍🏻";
     p.innerText = "Continuing to the app...";
     btn.setAttribute("style", "display: none");
-    disappear(1000);
+    disappear(1200);
   }
 
   if (state === "PAYMENT_ERROR") {
     setRootDivHeight(height220);
     // wallet is not connected
-    console.log("ere", meta);
     if (meta.errCode === 101) {
       setRootDivHeight(height180);
       h4.innerText = "";
@@ -240,6 +271,10 @@ function setStateForRootDiv(state, meta = {}) {
 
 function getSpendToken() {
   return localStorage.getItem("SIGNUP_SPEND_TOKEN");
+}
+
+function getAccessToken() {
+  return localStorage.getItem("SIGNUP_ACCESS_TOKEN");
 }
 
 function getSessionId() {
@@ -274,7 +309,48 @@ function pay(amount, unit, bchAddr = config.addr) {
     .catch((err) => {
       const errorData = err.response.data;
       setStateForRootDiv("PAYMENT_ERROR", errorData);
-      throw new Error(e);
+      throw new Error(`[SIGNUP] ${errorData.reason}`);
+    });
+}
+
+function sign(data) {
+  if (!data || typeof data !== "object") {
+    throw new Error(
+      "[SIGNUP] Wrong payload for the signature, the first argument for the sign() function should contain a valid javascript Object.\n Please visit https://docs.signup.cash/signatures for more info"
+    );
+    return;
+  }
+
+  const accessToken = getAccessToken();
+  const sessionId = getSessionId();
+
+  setStateForRootDiv("SIGNING_PENDING");
+
+  return axios
+    .post(`${SIGNUP_TX_BRIDGE}/dapp/signature-request`, {
+      accessToken,
+      sessionId,
+      action: {
+        type: "SIGN",
+        data,
+      },
+    })
+    .then((x) => {
+      setStateForRootDiv("SIGNING_SUCCESS");
+      return x.data;
+    })
+    .catch((err) => {
+      const errorData = err.response && err.response.data;
+
+      setStateForRootDiv("SIGNING_ERROR", errorData);
+
+      if (!errorData) {
+        console.log(err);
+        throw new Error(`[SIGNUP] internal error`, err);
+        return;
+      }
+
+      throw new Error(`[SIGNUP] ${errorData.reason}`);
     });
 }
 
@@ -417,6 +493,7 @@ export function cash(params) {
     requestSpendToken,
     spendTokenExist,
     pay,
+    sign,
   };
 }
 
