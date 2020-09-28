@@ -4,7 +4,11 @@ import Router from "preact-router";
 import { ToastContainer } from "react-toastify";
 import { css } from "emotion";
 import { validateConfig, validateReqType } from "../utils/validators";
-import { handleMessageBackToClient, initWorker } from "../signer";
+import {
+  handleMessageBackToClient,
+  initWorker,
+  workerCourier,
+} from "../signer";
 import NewWallet from "./new-wallet/NewWallet";
 import Topup from "./wallet/Topup";
 import Send from "./wallet/Send";
@@ -29,7 +33,7 @@ function App() {
 
       validateConfig(config);
       validateReqType(reqType);
-      setClientPayload({ ...event.data, origin: event.origin, nonce });
+      setClientPayload({ ...event.data, origin: requestOrigin, nonce });
     }
 
     if (window) {
@@ -40,6 +44,14 @@ function App() {
 
     initWorker();
   }, []);
+
+  useEffect(() => {
+    if (clientPayload && clientPayload.origin) {
+      // update the origin in the worker
+      // TODO: This need to be refactored later to allow usage with multiple origins
+      workerCourier("current_origin", { origin: clientPayload.origin });
+    }
+  }, [clientPayload]);
 
   return (
     <>
