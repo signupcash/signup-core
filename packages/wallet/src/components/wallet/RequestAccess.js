@@ -104,7 +104,7 @@ export default function ({ clientPayload, bchAddr }) {
                 <li>Your Cash Account</li>
               )}
               {permissions.includes("signature") && (
-                <li>To sign CashID signature messages</li>
+                <li>To sign with your wallet</li>
               )}
             </ul>
 
