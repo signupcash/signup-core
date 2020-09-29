@@ -197,6 +197,41 @@ export async function createCashAccount(chosenUsername) {
   }).then((res) => res.json());
 }
 
+// Get an object and sign a standard Signup Signature Payload
+export async function signPayload(data, requestedBy) {
+  if (typeof data !== "object") {
+    throw new Error("data should be a valid object");
+  }
+
+  if (!requestedBy) {
+    throw new Error("requestedBy is not specified");
+  }
+
+  const payload = {
+    signedBy: "Signup.cash",
+    requestedBy,
+    data,
+    timestamp: Date.now(),
+  };
+
+  const walletHdNode = await getWalletHdNode();
+
+  const wif = bitbox.HDNode.toWIF(walletHdNode);
+  const signature = bitbox.BitcoinCash.signMessageWithPrivKey(
+    wif,
+    JSON.stringify(payload)
+  );
+
+  const legacyAddr = walletHdNode.keyPair.getAddress();
+  const bchAddr = bitbox.Address.toCashAddress(legacyAddr);
+
+  return {
+    signature,
+    payload,
+    bchAddr,
+  };
+}
+
 export async function storeSpending(sessionId, amountInSats) {
   try {
     let spendings = await localforage.getItem("SIGNUP_SPENDINGS");

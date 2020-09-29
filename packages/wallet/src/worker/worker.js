@@ -6,6 +6,7 @@ import {
   getWalletEntropy,
   storeSpending,
   getWalletSpendingsBySessionId,
+  signPayload,
 } from "../utils/wallet";
 import {
   isInSatoshis,
@@ -22,9 +23,10 @@ import { SIGNUP_TX_BRIDGE } from "../config";
 let latestUtxos = [];
 let latestSatoshisBalance;
 let utxosAreUpdating = false;
+let currentOrigin;
 
-async function throwTxErrorToApp(sessionId, reason, errCode) {
-  return await axios.post(`${SIGNUP_TX_BRIDGE}/wallet/tx-response`, {
+async function throwErrorToApp(sessionId, reason, errCode) {
+  return await axios.post(`${SIGNUP_TX_BRIDGE}/wallet/response`, {
     sessionId: sessionId,
     success: false,
     reason,
@@ -32,11 +34,11 @@ async function throwTxErrorToApp(sessionId, reason, errCode) {
   });
 }
 
-async function sendTxResponseBackToApp(sessionId, txResult) {
-  return await axios.post(`${SIGNUP_TX_BRIDGE}/wallet/tx-response`, {
+async function sendResponseBackToApp(sessionId, result) {
+  return await axios.post(`${SIGNUP_TX_BRIDGE}/wallet/response`, {
     sessionId: sessionId,
     success: true,
-    txResult,
+    result,
   });
 }
 
@@ -73,53 +75,56 @@ function listenToBridgeForEvents(sessionId) {
     }
   });
 
-  sseSource.addEventListener("WALLET-TX", (e) => {
+  sseSource.addEventListener("WALLET-RESP", (e) => {
     const messageData = JSON.parse(e.data);
-    const { spendToken, action } = messageData;
-    if (!messageData || !spendToken || !action) {
+    const { token, action } = messageData;
+    if (!messageData || !token || !action) {
       // inform the app that action is failed
-      throwTxErrorToApp(sessionId, "invalid parameters", 100);
+      throwErrorToApp(
+        sessionId,
+        "Invalid parameters for the request. Please check the documentation at https://docs.signup.cash to ensure you use the correct params ",
+        100
+      );
       return;
     }
     console.log(
       "[SIGNUP][WORKER] performing action %s in TX-BRIDGE",
       action.type
     );
-    console.log("action => ", action);
 
     (async () => {
-      // check the validity of spend token
-      const decodedToken = await decodeToken(spendToken);
-
-      if (!decodedToken.verified) {
-        throwTxErrorToApp(sessionId, "Spend Token is not valid!", 103);
-        postMessage({
-          event: "tx",
-          status: "ERROR",
-          reason: "Spend Token is not valid!",
-        });
-        return;
-      }
-      // check if action.unit & action.amount are not surpassing the budget
-      const pastSpendings = await getWalletSpendingsBySessionId(sessionId);
-
-      const currentSpending = await sats(action.amount, action.unit);
-
-      // budget is always in USD for now
-      const budgetInSats = await fiatToSats(decodedToken.data.budget, "usd");
-      if (budgetInSats < pastSpendings + currentSpending) {
-        throwTxErrorToApp(sessionId, "Budget exceed!");
-        return;
-      } else {
-        console.log("Budget is OK!", budgetInSats, pastSpendings);
-      }
+      // check the validity of the token
+      const decodedToken = await decodeToken(token);
 
       // process the tx here!
-      let txResult;
+      let result;
 
       if (action.type === "P2PKH") {
+        if (!decodedToken.verified) {
+          throwErrorToApp(sessionId, "Spend Token is not valid!", 103);
+          postMessage({
+            event: "tx",
+            status: "ERROR",
+            reason: "Spend Token is not valid!",
+          });
+          return;
+        }
+        // check if action.unit & action.amount are not surpassing the budget
+        const pastSpendings = await getWalletSpendingsBySessionId(sessionId);
+
+        const currentSpending = await sats(action.amount, action.unit);
+
+        // budget is always in USD for now
+        const budgetInSats = await fiatToSats(decodedToken.data.budget, "usd");
+        if (budgetInSats < pastSpendings + currentSpending) {
+          throwErrorToApp(sessionId, "Budget exceed!");
+          return;
+        } else {
+          console.log("Budget is OK!", budgetInSats, pastSpendings);
+        }
+
         try {
-          txResult = await retry(() => processP2PKHTransaction(action), {
+          result = await retry(() => processP2PKHTransaction(action), {
             retries: 5,
             onFailedAttempt: async () => {
               console.log("Waiting for UTXOs to be fetched...");
@@ -129,24 +134,43 @@ function listenToBridgeForEvents(sessionId) {
         } catch (e) {
           console.log(e);
           // TODO figure out if it's actually out of balance or rest.bitcoin.com is down
-          throwTxErrorToApp(sessionId, "Not enough balance", 102);
+          throwErrorToApp(sessionId, "Not enough balance", 102);
+          return;
+        }
+
+        // inform the wallet to refetch Utxos
+        postMessage({ event: "tx", status: "DONE", result, action });
+        await storeSpending(sessionId, result.spent);
+      }
+
+      if (action.type === "SIGN") {
+        // check if the user is given the permission for signatures or not
+        if (!decodedToken.verified) {
+          throwErrorToApp(sessionId, "[0] Access Token is not valid!", 104);
+          return;
+        }
+
+        if (!decodedToken.data.permissions.includes("signature")) {
+          throwErrorToApp(sessionId, "[1] Access Token is not valid!", 104);
+          return;
+        }
+
+        try {
+          result = await signPayload(action.data, currentOrigin);
+        } catch (e) {
+          console.log(e);
+          // TODO figure out if it's actually out of balance or rest.bitcoin.com is down
+          throwErrorToApp(sessionId, "Error while signing", 100);
           return;
         }
       }
 
-      if (!txResult) {
-        throwTxErrorToApp(sessionId, "Transaction Failed");
+      if (!result) {
+        throwErrorToApp(sessionId, "Action Failed");
         return;
       }
 
-      try {
-        sendTxResponseBackToApp(sessionId, txResult);
-        // inform the wallet to refetch Utxos
-        postMessage({ event: "tx", status: "DONE", txResult, action });
-        await storeSpending(sessionId, txResult.spent);
-      } catch (e) {
-        console.log(e);
-      }
+      sendResponseBackToApp(sessionId, result);
     })();
   });
 }
@@ -163,6 +187,11 @@ onmessage = function ({ data }) {
     latestUtxos = [];
     utxosAreUpdating = true;
   }
+
+  if (data.reqType === "current_origin") {
+    currentOrigin = data.origin;
+  }
+
   if (data.reqType === "connect" && data.sessionId) {
     listenToBridgeForEvents(data.sessionId);
   }

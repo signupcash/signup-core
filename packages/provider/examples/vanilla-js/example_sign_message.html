@@ -21,6 +21,9 @@
         align-items: center;
         padding-top: 100px;
       }
+      #signature {
+        font-size: 12px;
+      }
     </style>
     <title>SIGNUP.cash Client Signing Message Example</title>
   </head>
@@ -30,17 +33,27 @@
       <h1>Signup.cash Signing Message Demo</h1>
 
       <p id="msg">Go ahead and sign a message</p>
-      <input class="input" id="messageInput" value="any message to be signed" />
-      <button type="button" class="btn btn-primary" id="signupcash_button">
-        Sign the Message
-      </button>
-      <br /><br />
-      <input class="input" type="text" value="Any message to sign" />
-      <button type="button" class="btn btn-secondary" id="sign_button">
-        Sign the message
-      </button>
-    </div>
 
+      <div class="input-group mb-3" style="width: 400px; margin: 30px auto">
+        <input
+          type="text"
+          id="messageInput"
+          class="form-control"
+          value="Any message to sign"
+          aria-label="any message to sign"
+        />
+        <div class="input-group-append">
+          <button
+            class="btn btn-outline-secondary"
+            id="sign_button"
+            type="button"
+          >
+            Sign the message
+          </button>
+        </div>
+      </div>
+      <div id="signature"></div>
+    </div>
     <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
     <script type="text/javascript" src="../../dist/provider.js"></script>
 
@@ -49,23 +62,36 @@
         addr: "bitcoincash:qqfnul5ttmqsr32kwv3memcfhfuzmws44q3aapks67",
       });
 
-      const loginButton = document.querySelector("#signupcash_button");
+      signup
+        .requestAccess(["signature"])
+        .then(() => {
+          // Good to go!
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+
+      const signButton = document.querySelector("#sign_button");
       const msgText = document.querySelector("#msg");
 
       signButton.addEventListener("click", function () {
-        signup.sign({ message: document.querySelector("#messageInput") });
+        signup
+          .sign({ message: document.querySelector("#messageInput").value })
+          .then((res) => {
+            console.log(res);
+            // show the signature in the UI
+            document.querySelector("#signature").innerHTML = `
+              Signature: <b>${res.signature}</b><br>
+              Payload: <b class="text-break">${JSON.stringify(
+                res.payload
+              )}</b><br>
+              BCH Address: <b>${res.bchAddr}</b>
+            `;
+          })
+          .catch((e) => {
+            console.log(e);
+          });
       });
-
-      try {
-        login();
-      } catch (e) {
-        // login failed, request again maybe?
-        login();
-      }
-
-      function login(e) {
-        signup.requestAccess(["bch_address", "signature"]).then((user) => {});
-      }
     </script>
   </body>
 </html>
