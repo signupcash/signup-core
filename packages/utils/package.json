@@ -1,0 +1,47 @@
+{
+  "name": "@signupcash/utils",
+  "version": "0.7.0",
+  "description": "Util functions required to use in Signup",
+  "keywords": [
+    "signup",
+    "utils",
+    "bitcoin",
+    "bitcoincash",
+    "dapp",
+    "decentralized",
+    "blockchain",
+    "signatures",
+    "crypto"
+  ],
+  "author": "p0o <p0oker@pm.me>",
+  "homepage": "https://signup.cash",
+  "license": "MPL-2.0",
+  "main": "lib/utils.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signupcash/Signup-Core.git"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/signupcash/Signup-Core/issues"
+  },
+  "dependencies": {
+    "bchaddrjs": "^0.4.9",
+    "bitcore-message": "^1.0.4"
+  },
+  "devDependencies": {
+    "jest": "^26.4.2"
+  }
+}

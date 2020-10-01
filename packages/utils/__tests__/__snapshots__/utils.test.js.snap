@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Verify() should throw an error for invlaid inputs 1`] = `"Payload is not provided"`;
+
+exports[`Verify() should throw an error for invlaid inputs 2`] = `"bchAddr is not provided"`;
+
+exports[`Verify() should throw an error for invlaid inputs 3`] = `"Signature is not provided"`;
+
+exports[`Verify() should throw an error for invlaid inputs 4`] = `"Received an invalid Bitcoin Cash address as input."`;
