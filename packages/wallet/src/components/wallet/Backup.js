@@ -14,6 +14,7 @@ import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
 import * as wallet from "../../utils/wallet";
 import useWallet from "../../hooks/useWallet";
+import RecoveryPhrases from "../new-wallet/RecoveryPhrases";
 
 export default function () {
   const [status, setStatus] = useState("QR_SCAN");
@@ -72,6 +73,7 @@ export default function () {
 
           {status === "RECOVERY_PHRASES" && (
             <>
+              <RecoveryPhrases words={walletMnemonic.split(" ")} />
               <p
                 class={css`
                   margin-top: 32px;
