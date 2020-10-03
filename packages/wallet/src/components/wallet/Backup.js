@@ -76,6 +76,14 @@ export default function () {
               <RecoveryPhrases words={walletMnemonic.split(" ")} />
               <p
                 class={css`
+                  font-size: 11px;
+                `}
+              >
+                We use a derivation key of m/44'/0'/0'/0/0 You will need this
+                value if you are importing your phrases into other wallets.
+              </p>
+              <p
+                class={css`
                   margin-top: 32px;
                 `}
               >
