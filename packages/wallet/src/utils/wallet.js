@@ -25,6 +25,13 @@ export async function storeWalletIsVerified() {
   await localforage.setItem("SIGNUP_WALLET_STATUS", "VERIFIED");
 }
 
+export function isRecoveryKeyValid(mnemonic) {
+  return (
+    bitbox.Mnemonic.validate(mnemonic, bitbox.Mnemonic.wordLists().english) ===
+    "Valid mnemonic"
+  );
+}
+
 export async function deleteWallet(mnemonic) {
   await localforage.removeItem("SIGNUP_WALLET");
   await localforage.removeItem("SIGNUP_WALLET_STATUS");
@@ -111,12 +118,6 @@ export function createRecoveryPhrase() {
   const mnemonic = bitbox.Mnemonic.generate(128);
   storeWallet(mnemonic);
   return { mnemonic };
-}
-
-function createWallet(mnemonic) {
-  const seedBuffer = bitbox.Mnemonic.toSeed(mnemonic);
-  // create HDNode from seed buffer
-  return bitbox.HDNode.fromSeed(seedBuffer);
 }
 
 export function makeUsername(cashAccountPayload) {
