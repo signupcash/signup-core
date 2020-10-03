@@ -48,11 +48,11 @@ export default function ({ clientPayload, bchAddr }) {
             <Heading number={5} highlight>
               We are in beta! Make sure to follow us in Twitter{" "}
               <a
-                href="https://twitter.com/0xSIGNUP"
+                href="https://twitter.com/signupwallet"
                 target="_blank"
                 rel="noopener noreferer"
               >
-                @0xSIGNUP
+                @signupwallet
               </a>{" "}
               for more exciting news.
             </Heading>
