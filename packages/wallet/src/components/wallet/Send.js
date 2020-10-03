@@ -84,7 +84,7 @@ export default function ({ clientPayload }) {
       setAmountToSend(0);
     } else {
       setShouldSendAll(true);
-      // deduct 700 sats for tx fee
+      // deduct 500 sats for tx fee
       const satsToSend = bchToSats(balance) - hardCodedTxFee;
       if (satsToSend <= DUST) {
         toast.info("Your balance is too little to be sent! Maybe Top-up more?");
@@ -118,9 +118,10 @@ export default function ({ clientPayload }) {
   useEffect(() => {
     // validate input values before activating the send button
     const addrIsCorrect = isCashAddress(targetAddr);
-    const amountIsCorrect = amountToSend + sats(hardCodedTxFee) <= balance;
-
-    setCanSendTx(addrIsCorrect && amountIsCorrect && amountToSend !== 0);
+    const amountIsCorrect = amountToSend + satsToBch(hardCodedTxFee) <= balance;
+    setCanSendTx(
+      addrIsCorrect && amountIsCorrect && bchToSats(amountToSend) > DUST
+    );
   }, [amountToSend, targetAddr]);
 
   return (
