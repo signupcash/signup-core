@@ -22,7 +22,7 @@ export default function ({ words }) {
     <div class={divStyle}>
       {words.map((word, idx) => (
         <span aria-label={`Phrase Number ${idx + 1}`} class={wordStyle}>
-          {word}
+          {`${word} `}
         </span>
       ))}
     </div>
