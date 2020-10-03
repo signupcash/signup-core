@@ -24,7 +24,9 @@ export default function () {
       <Button linkTo={"/new-wallet"} primary>
         Create a new wallet
       </Button>
-      <Button secondary>Import an existing wallet</Button>
+      <Button linkTo={"/import"} secondary>
+        Import an existing wallet
+      </Button>
 
       <Heading number={4}>Free the market, free the world.</Heading>
     </Article>

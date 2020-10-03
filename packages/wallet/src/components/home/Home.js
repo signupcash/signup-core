@@ -24,7 +24,7 @@ export default function ({ clientPayload }) {
         {walletExist && (
           <Menu
             styles={menuStyles}
-            width={"260px"}
+            width={"200px"}
             right
             pageWrapId="body-wrap"
           >
@@ -34,6 +34,17 @@ export default function ({ clientPayload }) {
             <a href="/send">Send</a>
             <a href="/backup">Backup</a>
             <a href="/logout">Logout</a>
+            <span
+              class={css`
+                position: absolute;
+                bottom: 40px;
+                right: 10px;
+                text-align: center;
+                font-size: 13px;
+              `}
+            >
+              Support: hello@signup.cash
+            </span>
           </Menu>
         )}
       </header>

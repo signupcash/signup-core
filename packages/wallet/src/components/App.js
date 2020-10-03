@@ -14,6 +14,7 @@ import Topup from "./wallet/Topup";
 import Send from "./wallet/Send";
 import Backup from "./wallet/Backup";
 import Logout from "./wallet/Logout";
+import ImportWallet from "./wallet/ImportWallet";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -62,6 +63,7 @@ function App() {
         <Send path="/send" clientPayload={clientPayload} />
         <Backup path="/backup" />
         <Logout path="/logout" />
+        <ImportWallet path="/import" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />
