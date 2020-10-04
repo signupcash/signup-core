@@ -1,7 +1,7 @@
 {
-  "name": "signup-cash-provider",
+  "name": "@signupcash/provider",
   "version": "1.0.0",
-  "description": "Client side library for interacting with Signup",
+  "description": "Connecting the web apps to Signup DApp wallet",
   "main": "dist/provider.js",
   "browserslist": [
     "last 2 version",
@@ -11,29 +11,33 @@
     "start": "serve ./ -l 5000",
     "build:dev": "NODE_ENV=development webpack",
     "build": "NODE_ENV=production webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "npm run build"
   },
   "keywords": [
     "BCH",
     "Bitcoin",
     "BitcoinCash",
-    "Auth"
+    "Auth",
+    "DApp",
+    "blockchain",
+    "crypto",
+    "wallet"
   ],
   "author": "p0o",
   "license": "MPL-2.0",
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "babel-plugin-transform-inline-environment-variables": "^0.4.3"
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "babel-loader": "^8.1.0",
+    "babel-plugin-transform-inline-environment-variables": "^0.4.3",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
-    "@babel/preset-env": "^7.9.6",
-    "@emotion/css": "^10.0.27",
     "axios": "^0.19.2",
-    "babel-loader": "^8.1.0",
     "babel-polyfill": "^6.26.0",
-    "emotion": "^10.0.27",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "emotion": "^10.0.27"
   }
 }
