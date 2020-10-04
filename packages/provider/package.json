@@ -1,5 +1,5 @@
 {
-  "name": "signup-cash-provider",
+  "name": "@signupcash/provider",
   "version": "1.0.0",
   "description": "Connecting the web apps to Signup DApp wallet",
   "main": "dist/provider.js",
@@ -11,7 +11,8 @@
     "start": "serve ./ -l 5000",
     "build:dev": "NODE_ENV=development webpack",
     "build": "NODE_ENV=production webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "BCH",
