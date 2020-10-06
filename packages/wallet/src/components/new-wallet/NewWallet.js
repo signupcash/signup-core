@@ -95,9 +95,11 @@ export default function ({ clientPayload }) {
 
               {!isAnonymous && (
                 <Checkbox
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setOptinForEmails(!optinForEmails);
                   }}
+                  checked={optinForEmails}
                 >
                   Send me security & product updates
                 </Checkbox>
@@ -105,9 +107,7 @@ export default function ({ clientPayload }) {
 
               <Button
                 type="submit"
-                disabled={
-                  !(email || isAnonymous) || (!username && !TOSAccepted)
-                }
+                disabled={(!email && !isAnonymous) || !username}
                 primary
               >
                 Create Wallet 🤖
