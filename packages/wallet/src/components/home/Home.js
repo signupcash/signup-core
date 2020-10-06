@@ -28,7 +28,18 @@ export default function ({ clientPayload }) {
             right
             pageWrapId="body-wrap"
           >
-            {cashAccount && <Heading number={5}>{cashAccount}</Heading>}
+            {cashAccount && (
+              <Heading
+                highlight
+                customCss={css`
+                  font-size: 12px;
+                  margin: 0;
+                `}
+                number={5}
+              >
+                {cashAccount}
+              </Heading>
+            )}
             <a href="/">Home</a>
             <a href="/top-up">Topup</a>
             <a href="/send">Send</a>
