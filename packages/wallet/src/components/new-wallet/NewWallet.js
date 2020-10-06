@@ -25,7 +25,6 @@ export default function ({ clientPayload }) {
   const [username, setUsername] = useState("");
   const [step, setStep] = useState(1);
   const [isAnonymous, setIsAonymous] = useState(false);
-  const [TOSAccepted, setTOSAccepted] = useState(false);
 
   function handleCreateWallet(e) {
     e.preventDefault();
@@ -96,30 +95,19 @@ export default function ({ clientPayload }) {
 
               {!isAnonymous && (
                 <Checkbox
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setOptinForEmails(!optinForEmails);
                   }}
+                  checked={optinForEmails}
                 >
                   Send me security & product updates
                 </Checkbox>
               )}
 
-              <Checkbox
-                onClick={() => {
-                  setTOSAccepted(!TOSAccepted);
-                }}
-              >
-                I did read and agree with Signup's{" "}
-                <a href="" target="_blank" rel="noreferer noopener">
-                  terms of service
-                </a>
-              </Checkbox>
-
               <Button
                 type="submit"
-                disabled={
-                  !(email || isAnonymous) || (!username && !TOSAccepted)
-                }
+                disabled={(!email && !isAnonymous) || !username}
                 primary
               >
                 Create Wallet 🤖
