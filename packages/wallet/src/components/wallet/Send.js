@@ -1,6 +1,7 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
 import { Link } from "preact-router";
+import * as Sentry from "@sentry/browser";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import { css } from "emotion";
@@ -73,6 +74,7 @@ export default function ({ clientPayload }) {
       console.log("[SIGNUP][ERROR]", e);
       setStatus("ERROR");
       toast.error(e.error);
+      Sentry.captureException(e);
     }
   }
 
@@ -108,6 +110,7 @@ export default function ({ clientPayload }) {
     } catch (e) {
       console.log("[SIGNUP Error]", e);
       setStatus("ERROR");
+      Sentry.captureException(e);
     }
   }
 

@@ -25,14 +25,6 @@ function connectWalletToTxBridge(sessionId) {
   workerCourier("connect", { sessionId });
 }
 
-function deepClone(data) {
-  try {
-    return JSON.parse(JSON.stringify(data));
-  } catch (e) {
-    console.log("[SIGUP][ERROR]", e);
-  }
-}
-
 export default function ({ clientPayload, bchAddr }) {
   // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");

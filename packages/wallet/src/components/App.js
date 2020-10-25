@@ -3,6 +3,8 @@ import { useEffect, useState } from "preact/hooks";
 import Router from "preact-router";
 import { ToastContainer } from "react-toastify";
 import { css } from "emotion";
+import * as Sentry from "@sentry/browser";
+import { Integrations } from "@sentry/tracing";
 import { validateConfig, validateReqType } from "../utils/validators";
 import {
   handleMessageBackToClient,
@@ -20,6 +22,16 @@ import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
 
 import "../css/base.css";
+
+Sentry.init({
+  dsn:
+    "https://ed7dcd826ee742e59b9247fcb1e2a141@o466710.ingest.sentry.io/5481245",
+  integrations: [new Integrations.BrowserTracing()],
+
+  // We recommend adjusting this value in production, or using tracesSampler
+  // for finer control
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 1.0 : 0,
+});
 
 function App() {
   const [clientPayload, setClientPayload] = useState({});
