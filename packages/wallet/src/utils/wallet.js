@@ -4,6 +4,7 @@ const bitbox = new BITBOX();
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
+import * as Sentry from "@sentry/browser";
 import axios from "axios";
 import localforage from "localforage";
 import VanillaQR from "./vanillaQR";
@@ -89,16 +90,13 @@ export async function getWalletAddr() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   let bchAddr;
 
-  try {
-    const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-    const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
+  const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
 
-    const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
-    const legacyAddr = path.keyPair.getAddress();
-    bchAddr = bitbox.Address.toCashAddress(legacyAddr);
-  } catch (e) {
-    console.log("[SIGNUP][ERROR] =>", e);
-  }
+  const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const legacyAddr = path.keyPair.getAddress();
+  bchAddr = bitbox.Address.toCashAddress(legacyAddr);
+
   return bchAddr;
 }
 
@@ -134,7 +132,8 @@ export async function getUserAttemptedCashAccount() {
       username = predictedUsername;
     }
   } catch (e) {
-    // do nothing probably third party cookie is not allowed in the browser
+    Sentry.captureMessage("Localforage not supported in the browser");
+    Sentry.captureException(e);
   }
   return username;
 }
@@ -151,7 +150,7 @@ export async function getWalletCashAccount(bchAddress) {
       accountEmoji = reverseLookup.results[0].accountEmoji;
     }
   } catch (e) {
-    console.log("[SIGNUP] No cash account found for user", e);
+    Sentry.captureException(e);
     // in case user just registered for cash account it might be not found yet
     // in that scenario we use the predicted username
     const userAttemptedCashAccount = await getUserAttemptedCashAccount();
@@ -165,7 +164,6 @@ export async function getWalletCashAccount(bchAddress) {
 }
 
 export async function createCashAccount(chosenUsername) {
-  console.log("[SIGNUP][Creating Cash Account]", chosenUsername);
   if (!chosenUsername) return Promise.reject("No username is chosen by user");
 
   // remove spaces
@@ -184,6 +182,7 @@ export async function createCashAccount(chosenUsername) {
     );
   } catch (e) {
     console.log("[Error] Storing in indexDB", e);
+    Sentry.captureException(e);
   }
 
   return fetch("https://api.cashaccount.info/register", {
@@ -255,6 +254,7 @@ export async function storeSpending(sessionId, amountInSats) {
   } catch (e) {
     console.log(e);
     return Promise.reject("[SIGNUP] Failed to store spending");
+    Sentry.captureException(e);
   }
 }
 
@@ -265,6 +265,7 @@ export async function getWalletSpendingsBySessionId(sessionId) {
     return (spendings[sessionId] && spendings[sessionId].spent) || 0;
   } catch (e) {
     console.log(e);
+    Sentry.captureException(e);
     return 0;
   }
 }

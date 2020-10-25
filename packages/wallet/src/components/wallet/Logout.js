@@ -3,6 +3,7 @@ import { useState, useEffect } from "preact/hooks";
 import { Link } from "preact-router";
 import { css } from "emotion";
 import { toast } from "react-toastify";
+import * as Sentry from "@sentry/browser";
 import { deleteWallet } from "../../utils/wallet";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
@@ -23,6 +24,7 @@ export default function () {
       toast.error(
         "Some error happened! This is strange but you're still not logged in. Please contact us at hello@signup.cash for help"
       );
+      Sentry.captureException(e);
     }
   }
 

@@ -1,6 +1,7 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import { Link } from "preact-router";
+import * as Sentry from "@sentry/browser";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import slpLogo from "../../assets/slp-logo-2.png";
@@ -48,6 +49,7 @@ export default function ({ clientPayload }) {
     } catch (e) {
       console.log("[SIGNUP Error]", e);
       setStatus("ERROR");
+      Sentry.captureException(e);
     }
   }
 

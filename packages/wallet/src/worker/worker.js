@@ -43,7 +43,6 @@ async function sendResponseBackToApp(sessionId, result) {
 }
 
 async function processP2PKHTransaction(action) {
-  console.log("processP2PKHTransaction()", latestUtxos, latestSatoshisBalance);
   if (utxosAreUpdating) throw new Error("Utxos are not fetched yet!");
   if (latestUtxos.length < 1) throw new Error("No input found!");
   return sendBchTx(

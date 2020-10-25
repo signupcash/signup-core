@@ -2,6 +2,7 @@ import { h, Fragment } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import { Link, route } from "preact-router";
 import { css } from "emotion";
+import * as Sentry from "@sentry/browser";
 import { toast } from "react-toastify";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
@@ -50,6 +51,7 @@ export default function () {
       } catch (e) {
         console.log(e);
         toast.error("There is an error while importing your wallet!");
+        Sentry.captureException(e);
       }
     })();
   }

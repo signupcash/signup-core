@@ -1,4 +1,5 @@
 import bitbox from "../libs/bitbox";
+import * as Sentry from "@sentry/browser";
 import { getBCHPrice } from "./price";
 
 export function convertAmountToBCHUnit(amount, unit) {
@@ -10,6 +11,7 @@ export function convertAmountToBCHUnit(amount, unit) {
     // TODO convert to BCH
   } else {
     throw new Error("SINGUP TYPE ERROR: Incorrect unit");
+    Sentry.captureMessage(`Incorrect unit of ${unit}`);
   }
 }
 
@@ -35,6 +37,7 @@ export function isCashAddress(bchAddr) {
   try {
     return bitbox.Address.isCashAddress(bchAddr);
   } catch (e) {
+    Sentry.captureException(e);
     return false;
   }
 }

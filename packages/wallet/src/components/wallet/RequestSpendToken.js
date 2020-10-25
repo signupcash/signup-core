@@ -26,15 +26,10 @@ function connectWalletToTxBridge(sessionId) {
 }
 
 function deepClone(data) {
-  try {
-    return JSON.parse(JSON.stringify(data));
-  } catch (e) {
-    console.log("[SIGUP][ERROR]", e);
-  }
+  return JSON.parse(JSON.stringify(data));
 }
 
 const txReducer = function (state, action) {
-  console.log("disptached", action);
   switch (action.type) {
     case "TX_PUSH":
       return [...state, action.value];
