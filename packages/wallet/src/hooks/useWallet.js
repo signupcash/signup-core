@@ -9,22 +9,19 @@ export default function useWallet() {
   useEffect(() => {
     (async () => {
       const doesWalletExist = await wallet.isUserWalletExist();
-      if (typeof walletExist === "undefined") {
-        setUserWalletExist(doesWalletExist);
-      }
-
       const myBchAddr = await wallet.getWalletAddr();
-
-      if (walletExist && !bchAddr) {
-        // fetch the address & cash accounts
-        setBchAddr(myBchAddr);
-      }
 
       if (walletExist && !cashAccount) {
         const { cashAccount } = await wallet.getWalletCashAccount(myBchAddr);
-        if (!cashAccount) return;
-
         setCashAccount(cashAccount);
+      }
+
+      if (typeof walletExist === "undefined") {
+        setUserWalletExist(doesWalletExist);
+      }
+      if (walletExist && !bchAddr) {
+        // fetch the address & cash accounts
+        setBchAddr(myBchAddr);
       }
     })();
   });
