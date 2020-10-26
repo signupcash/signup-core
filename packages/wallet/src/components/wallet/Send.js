@@ -2,6 +2,8 @@ import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
 import { Link } from "preact-router";
 import * as Sentry from "@sentry/browser";
+import delay from "delay";
+import retry from "p-retry";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import { css } from "emotion";
@@ -56,16 +58,28 @@ export default function ({ clientPayload }) {
 
   async function handleSend(e) {
     e.preventDefault();
-    // send the transaction here
     try {
       setStatus("TX PROCESSING");
-      await sendBchTx(
-        amountToSend,
-        "BCH",
-        targetAddr,
-        latestSatoshisBalance,
-        latestUtxos
+
+      await retry(
+        () =>
+          sendBchTx(
+            amountToSend,
+            "BCH",
+            targetAddr,
+            latestSatoshisBalance,
+            latestUtxos
+          ),
+        {
+          retries: 5,
+          onFailedAttempt: async () => {
+            refetchUtxos();
+            console.log("Waiting for UTXOs to be fetched...");
+            await delay(1000);
+          },
+        }
       );
+
       setStatus("TX ACCOMPLISHED");
       toast.success("Cool! Your money is sent successfully! 🍾");
       // refetch UTXOs for future transactions
@@ -115,6 +129,7 @@ export default function ({ clientPayload }) {
   }
 
   useEffect(() => {
+    refetchUtxos();
     readBalance();
   }, [bchAddr]);
 
