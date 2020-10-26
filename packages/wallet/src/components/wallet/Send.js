@@ -2,6 +2,8 @@ import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
 import { Link } from "preact-router";
 import * as Sentry from "@sentry/browser";
+import delay from "delay";
+import retry from "p-retry";
 import axios from "axios";
 import QRCode from "qrcode.react";
 import { css } from "emotion";
@@ -25,6 +27,7 @@ import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
 import * as wallet from "../../utils/wallet";
 import useWallet from "../../hooks/useWallet";
+import { debounce } from "../../utils/helpers";
 
 const headerStyle = css``;
 
@@ -52,24 +55,41 @@ export default function ({ clientPayload }) {
     UtxosContext
   );
 
-  const { bchAddr, cashAccount, walletExist } = useWallet();
+  const [bchAddr, setBchAddr] = useState();
 
   async function handleSend(e) {
     e.preventDefault();
-    // send the transaction here
     try {
       setStatus("TX PROCESSING");
-      await sendBchTx(
-        amountToSend,
-        "BCH",
-        targetAddr,
-        latestSatoshisBalance,
-        latestUtxos
+
+      await retry(
+        () =>
+          sendBchTx(
+            amountToSend,
+            "BCH",
+            targetAddr,
+            latestSatoshisBalance,
+            latestUtxos
+          ),
+        {
+          retries: 5,
+          onFailedAttempt: async () => {
+            refetchUtxos();
+            console.log("Waiting for UTXOs to be fetched...");
+            await delay(1000);
+          },
+        }
       );
+
       setStatus("TX ACCOMPLISHED");
+      // reset the amount
+      setAmountToSend("0");
+      setShouldSendAll(false);
       toast.success("Cool! Your money is sent successfully! 🍾");
       // refetch UTXOs for future transactions
+      await delay(2500);
       refetchUtxos();
+      readBalance();
     } catch (e) {
       console.log("[SIGNUP][ERROR]", e);
       setStatus("ERROR");
@@ -83,16 +103,16 @@ export default function ({ clientPayload }) {
 
     if (shouldSendAll) {
       setShouldSendAll(false);
-      setAmountToSend(0);
+      setAmountToSend("0");
     } else {
       setShouldSendAll(true);
       // deduct 500 sats for tx fee
       const satsToSend = bchToSats(balance) - hardCodedTxFee;
       if (satsToSend <= DUST) {
         toast.info("Your balance is too little to be sent! Maybe Top-up more?");
-        setAmountToSend(0);
+        setAmountToSend("0");
       } else {
-        setAmountToSend(satsToBch(satsToSend));
+        setAmountToSend(`${satsToBch(satsToSend)}`);
       }
     }
   }
@@ -109,23 +129,39 @@ export default function ({ clientPayload }) {
       setStatus("FETCHED");
     } catch (e) {
       console.log("[SIGNUP Error]", e);
-      setStatus("ERROR");
+      setStatus("BALANCE_ERROR");
       Sentry.captureException(e);
     }
   }
 
   useEffect(() => {
+    refetchUtxos();
     readBalance();
   }, [bchAddr]);
 
   useEffect(() => {
     // validate input values before activating the send button
     const addrIsCorrect = isCashAddress(targetAddr);
-    const amountIsCorrect = amountToSend + satsToBch(hardCodedTxFee) <= balance;
+
+    if (!addrIsCorrect && targetAddr) {
+      toast.error("Target address is not a valid BCH address");
+    }
+
+    // check if the amount + fee is lesser or equal to the balance
+    const amountIsCorrect =
+      parseFloat(amountToSend) + satsToBch(hardCodedTxFee - 1) <= balance;
+
     setCanSendTx(
       addrIsCorrect && amountIsCorrect && bchToSats(amountToSend) > DUST
     );
   }, [amountToSend, targetAddr]);
+
+  useEffect(() => {
+    (async () => {
+      const myBchAddr = await wallet.getWalletAddr();
+      setBchAddr(myBchAddr);
+    })();
+  }, []);
 
   return (
     <>
@@ -162,6 +198,14 @@ export default function ({ clientPayload }) {
                   fix it 😥
                 </Heading>
               )}
+              {status === "BALANCE_ERROR" && (
+                <Heading number={4}>
+                  There was a problem while fetching your balance.{" "}
+                  <a href="#" onClick={readBalance}>
+                    Retry
+                  </a>
+                </Heading>
+              )}
             </div>
 
             <Label>BCH Address</Label>
@@ -178,12 +222,9 @@ export default function ({ clientPayload }) {
               type="text"
               width="100%"
               value={`${amountToSend}` || "0"}
-              onChange={(e) => {
+              onInput={(e) => {
                 let { value } = e.target;
-                if (typeof value === "string" && value.match(/[^0-9.]/g)) {
-                  value = value.replaceAll(/[^0-9.]/g, "");
-                }
-                setAmountToSend(parseFloat(value));
+                setAmountToSend(value);
               }}
               placeholder="0.0005"
             />
