@@ -1,6 +1,9 @@
 import { h, Fragment } from "preact";
-import { useState } from "preact/hooks";
+import { useState, useEffect } from "preact/hooks";
 import { css } from "emotion";
+import * as Sentry from "@sentry/browser";
+
+import * as wallet from "../../utils/wallet";
 
 import RequestSpendToken from "./RequestSpendToken";
 import RequestAccess from "./RequestAccess";
@@ -23,12 +26,33 @@ const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 
 export default function ({ clientPayload, bchAddr }) {
   const { reqType } = clientPayload;
+  const [balance, setBalance] = useState();
+  const [balanceInUSD, setBalanceInUSD] = useState();
+  const [status, setStatus] = useState();
+
+  useEffect(() => {
+    readBalance();
+  }, [bchAddr]);
+
+  async function readBalance() {
+    if (!bchAddr) return;
+    setStatus("FETCHING");
+
+    try {
+      const { balance, balanceInUSD } = await wallet.getBalance(bchAddr);
+
+      setBalance(balance);
+      setBalanceInUSD(balanceInUSD);
+      setStatus("FETCHED");
+    } catch (e) {
+      setStatus("BALANCE_ERROR");
+      Sentry.captureException(e);
+    }
+  }
 
   function handleReload(e) {
     e.preventDefault();
   }
-
-  console.log("[Payload] =>", clientPayload);
 
   return (
     <>
@@ -56,6 +80,23 @@ export default function ({ clientPayload, bchAddr }) {
               </a>{" "}
               for more exciting news.
             </Heading>
+
+            {status === "FETCHED" && (
+              <Heading number={4}>
+                Balance: {balance} BCH (${balanceInUSD})
+              </Heading>
+            )}
+            {status === "FETCHING" && (
+              <Heading number={4}>Fetching Balance...</Heading>
+            )}
+            {status === "BALANCE_ERROR" && (
+              <Heading number={4}>
+                There was a problem while fetching your balance.{" "}
+                <a href="#" onClick={readBalance}>
+                  Retry
+                </a>
+              </Heading>
+            )}
 
             <Button
               customStyle={css`
