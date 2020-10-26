@@ -32,7 +32,7 @@ export default function ({ clientPayload }) {
 
   const [balance, setBalance] = useState();
   const [balanceInUSD, setBalanceInUSD] = useState();
-  const [status, setStatus] = useState();
+  const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
   const { bchAddr, cashAccount, walletExist } = useWallet();
 
@@ -71,6 +71,7 @@ export default function ({ clientPayload }) {
         <form onSubmit={handleReload}>
           <Article ariaLabel="Top up Your Wallet">
             <Heading number={2}>Top up with BCH</Heading>
+            {status === "LOADING" && <p>Loading ...</p>}
             {walletExist && bchAddr && (
               <>
                 <QRCode
@@ -115,7 +116,7 @@ export default function ({ clientPayload }) {
               )}
             </div>
 
-            {status !== "FETCHING" && (
+            {status === "FETCHED" && (
               <Button
                 type="submit"
                 primary
@@ -124,6 +125,14 @@ export default function ({ clientPayload }) {
                 Reload Balance
               </Button>
             )}
+            <p
+              class={css`
+                font-size: 0.9em;
+              `}
+            >
+              Signup is a new wallet, make sure to not store large amount of
+              funds here just to be safe 🔒
+            </p>
           </Article>
         </form>
       </main>
