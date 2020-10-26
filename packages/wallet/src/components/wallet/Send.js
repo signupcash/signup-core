@@ -109,7 +109,7 @@ export default function ({ clientPayload }) {
       setStatus("FETCHED");
     } catch (e) {
       console.log("[SIGNUP Error]", e);
-      setStatus("ERROR");
+      setStatus("BALANCE_ERROR");
       Sentry.captureException(e);
     }
   }
@@ -160,6 +160,14 @@ export default function ({ clientPayload }) {
                 <Heading number={4}>
                   Something went wrong! Please report this issue to us so we can
                   fix it 😥
+                </Heading>
+              )}
+              {status === "BALANCE_ERROR" && (
+                <Heading number={4}>
+                  There was a problem while fetching your balance.{" "}
+                  <a href="#" onClick={readBalance}>
+                    Retry
+                  </a>
                 </Heading>
               )}
             </div>
