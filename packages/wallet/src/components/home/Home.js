@@ -60,7 +60,16 @@ export default function ({ clientPayload }) {
         )}
       </header>
       <main>
-        {typeof walletExist === "undefined" && <div>Loading</div>}
+        {typeof walletExist === "undefined" && (
+          <div
+            class={css`
+              text-align: center;
+              color: #7c3aed;
+            `}
+          >
+            Opening your wallet ... 🔒
+          </div>
+        )}
         {walletExist === false && (
           <Authenticate clientPayload={clientPayload} />
         )}
