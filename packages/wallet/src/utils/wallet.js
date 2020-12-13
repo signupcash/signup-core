@@ -40,18 +40,30 @@ export async function deleteWallet(mnemonic) {
 }
 
 export async function getBalance(bchAddr) {
-  const balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-    bchAddr
+  const { data } = await axios.post(
+    `https://bchd.fountainhead.cash/v1/GetAddressUnspentOutputs`,
+    {
+      address: bchAddr,
+      include_mempool: true,
+    },
+    {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }
   );
+
+  const utxos = data.outputs;
 
   let balance = 0;
   let balanceInUSD = 0;
 
-  if (!balancesAndUtxos.satoshis_available_bch) {
+  if (!utxos) {
     return { balance, balanceInUSD };
   }
 
-  balance = balancesAndUtxos.satoshis_available_bch;
+  balance = utxos.reduce((acc, current) => acc + parseInt(current.value), 0);
 
   if (balance > 0) {
     const bchPriceInUSD = await getBCHPrice();
