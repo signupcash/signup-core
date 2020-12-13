@@ -9,7 +9,7 @@ export default function ({ block }) {
     font-size: 1.45rem;
     font-family: "Poppins", sans-serif;
     font-weight: 500;
-    color: #3a3d99;
+    color: #7c3aed;
     text-align: left;
     text-decoration: none;
   `;
@@ -19,7 +19,7 @@ export default function ({ block }) {
       display: flex;
       width: 170px;
       height: 150px;
-      background: #3a3d99;
+      background: #7c3aed;
       justify-content: center;
       user-select: none;
       margin: 32px;

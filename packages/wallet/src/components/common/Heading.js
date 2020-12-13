@@ -13,7 +13,7 @@ export default function ({
 }) {
   const headerStyle = cx(
     css`
-      color: ${highlight ? "black" : "#3a3d99"};
+      color: ${highlight ? "black" : "#7c3aed"};
       margin: ${number > 3 ? "8px" : "16px"};
       padding: 6px 12px;
       background: ${highlight

@@ -23,7 +23,7 @@ export default function ({
       return "#f74476";
     }
     if (isPrimary) {
-      return "#3a3d99";
+      return "#7c3aed";
     }
     return "lightgray";
   }

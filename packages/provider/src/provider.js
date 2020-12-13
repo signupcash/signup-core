@@ -49,7 +49,7 @@ function buildDOMObjects() {
   rootDiv.setAttribute("id", "_SIGNUP__CONTAINER");
   let rootDivClassName = css`
     position: fixed;
-    background: #3a3d99;
+    background: #7c3aed;
     transition: height 0.5s ease-out;
     width: 330px;
     right: ${isPhone ? "5%" : "5%"};
@@ -115,7 +115,7 @@ function buildDOMObjects() {
   button.classList.add(css`
     background: white;
     font-family: "Poppins", sans-serif;
-    color: #3a3d99;
+    color: #7c3aed;
     user-select: none;
     padding: 0.375rem 0.75rem;
     line-height: 1.5;

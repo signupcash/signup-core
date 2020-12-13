@@ -14,7 +14,7 @@ export default function ({
   customCss,
 }) {
   const inputStyle = css`
-    color: #3a3d99;
+    color: #7c3aed;
     width: ${width || "100%"};
     font-family: Poppins, sans-serif;
     padding: ${small ? "5px" : "0.9rem 1.2rem"};
@@ -24,7 +24,7 @@ export default function ({
     box-sizing: border-box;
     text-align: left;
     display: block;
-    border: 2px solid #3a3d99;
+    border: 2px solid #7c3aed;
     box-shadow: none;
     font-size: 16px;
     font-weight: 400;
