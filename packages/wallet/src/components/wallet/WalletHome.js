@@ -57,7 +57,24 @@ export default function ({ clientPayload, bchAddr }) {
   return (
     <>
       <Article ariaLabel="Your Wallet">
-        <Heading number={2}>Your Wallet</Heading>
+        <Logo />
+
+        {status === "FETCHED" && (
+          <Heading customCss={css(`color: black`)} number={2}>
+            {balance} BCH (${balanceInUSD})
+          </Heading>
+        )}
+        {status === "FETCHING" && (
+          <Heading number={4}>Fetching Balance...</Heading>
+        )}
+        {status === "BALANCE_ERROR" && (
+          <Heading number={4}>
+            There was a problem while fetching your balance.{" "}
+            <a href="#" onClick={readBalance}>
+              Retry
+            </a>
+          </Heading>
+        )}
 
         {reqType === "spend_token" && (
           <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
@@ -69,35 +86,6 @@ export default function ({ clientPayload, bchAddr }) {
 
         {reqType !== "spend_token" && reqType !== "access" && (
           <>
-            <Heading number={5} highlight>
-              We are in beta! Make sure to follow us in Twitter{" "}
-              <a
-                href="https://twitter.com/signupwallet"
-                target="_blank"
-                rel="noopener noreferer"
-              >
-                @signupwallet
-              </a>{" "}
-              for more exciting news.
-            </Heading>
-
-            {status === "FETCHED" && (
-              <Heading number={4}>
-                Balance: {balance} BCH (${balanceInUSD})
-              </Heading>
-            )}
-            {status === "FETCHING" && (
-              <Heading number={4}>Fetching Balance...</Heading>
-            )}
-            {status === "BALANCE_ERROR" && (
-              <Heading number={4}>
-                There was a problem while fetching your balance.{" "}
-                <a href="#" onClick={readBalance}>
-                  Retry
-                </a>
-              </Heading>
-            )}
-
             <Button
               customStyle={css`
                 margin-top: 24px;
@@ -111,6 +99,18 @@ export default function ({ clientPayload, bchAddr }) {
             <Button type="button" primary linkTo="/send">
               Send
             </Button>
+
+            <Heading customCss={css(`margin-top: 32px`)} number={5} highlight>
+              We are in beta! Make sure to follow us in Twitter{" "}
+              <a
+                href="https://twitter.com/signupwallet"
+                target="_blank"
+                rel="noopener noreferer"
+              >
+                @signupwallet
+              </a>{" "}
+              for more exciting news.
+            </Heading>
           </>
         )}
       </Article>
