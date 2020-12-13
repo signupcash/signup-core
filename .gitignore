@@ -3,3 +3,4 @@ signer/public/js
 signer/public/images
 client/dist
 node_modules
+lerna-debug.log
