@@ -448,13 +448,8 @@ function requestFromUserWallet(requestPayload) {
 }
 
 function handleMessageReceivedFromSigner(event, targetReqId, cb) {
-  if (!event.origin.match(SIGNUP_ORIGIN)) {
-    throw new Error(
-      "Unknown Origin blocked! SIGNUP only authorize messages from " +
-        SIGNUP_ORIGIN,
-      event.origin
-    );
-  }
+  if (!event.origin.match(SIGNUP_ORIGIN)) return;
+
   const status = event.data.status;
   const reqId = event.data.reqId;
 
