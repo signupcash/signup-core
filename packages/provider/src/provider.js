@@ -448,13 +448,8 @@ function requestFromUserWallet(requestPayload) {
 }
 
 function handleMessageReceivedFromSigner(event, targetReqId, cb) {
-  if (!event.origin.match(SIGNUP_ORIGIN)) {
-    throw new Error(
-      "Unknown Origin blocked! SIGNUP only authorize messages from " +
-        SIGNUP_ORIGIN,
-      event.origin
-    );
-  }
+  if (!event.origin.match(SIGNUP_ORIGIN)) return;
+
   const status = event.data.status;
   const reqId = event.data.reqId;
 
@@ -476,7 +471,7 @@ function removeListeningForMessage() {
   window.removeEventListener("message", handleMessageReceivedFromSigner);
 }
 
-export function cash(params) {
+function cash(params) {
   if (!(this instanceof cash)) {
     return new cash(params);
   }
@@ -498,3 +493,7 @@ export function cash(params) {
 }
 
 export function read(bitdbURL = DEFAULT_BITDB_URL) {}
+
+export default {
+  cash,
+};
