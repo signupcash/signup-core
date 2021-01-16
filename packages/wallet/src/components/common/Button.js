@@ -9,6 +9,7 @@ export default function ({
   linkTo,
   onClick,
   disabled,
+  inline,
   customStyle,
   children,
 }) {
@@ -53,11 +54,10 @@ export default function ({
     text-decoration: none;
     box-sizing: border-box;
     text-align: center;
-    display: block;
-    border: 0;
+    display: ${inline ? "inline-block" : "block"};
+    border: 0.1rem solid;
     font-size: 16px;
     font-weight: 400;
-    border-radius: 0.12rem;
     cursor: ${disabled ? "default" : "pointer"};
     transition: color 0.1s ease-in-out, background-color 0.1s ease-in-out,
       border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
