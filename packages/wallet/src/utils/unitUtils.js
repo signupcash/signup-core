@@ -58,6 +58,11 @@ export async function fiatToBCH(amount, unit) {
   return amount / (await getBCHPrice(unit));
 }
 
+export async function bchToFiat(amount, unit) {
+  const resultInFiat = amount * (await getBCHPrice(unit));
+  return resultInFiat.toFixed(2);
+}
+
 export async function fiatToSats(amount, unit) {
   const amountInBch = amount / (await getBCHPrice(unit));
   return bitbox.BitcoinCash.toSatoshi(amountInBch);

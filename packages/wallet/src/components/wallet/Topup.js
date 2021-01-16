@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { Link } from "preact-router";
 import * as Sentry from "@sentry/browser";
 import axios from "axios";
@@ -15,6 +15,9 @@ import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
 import * as wallet from "../../utils/wallet";
 import useWallet from "../../hooks/useWallet";
+import Tabs from "../common/Tabs";
+import { UtxosContext } from "../WithUtxos";
+import { satsToBch, bchToFiat } from "../../utils/unitUtils";
 
 const headerStyle = css``;
 
@@ -30,111 +33,116 @@ export default function ({ clientPayload }) {
     e.preventDefault();
   }
 
-  const [balance, setBalance] = useState();
+  const {
+    latestUtxos,
+    latestSatoshisBalance,
+    refetchUtxos,
+    utxoIsFetching,
+  } = useContext(UtxosContext);
+
+  const [balance, setBalance] = useState(0);
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
   const { bchAddr, cashAccount, walletExist } = useWallet();
 
-  async function readBalance() {
-    if (!bchAddr) return;
-    setStatus("FETCHING");
-
-    try {
-      const { balance, balanceInUSD } = await wallet.getBalance(bchAddr);
-
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
-      setStatus("FETCHED");
-    } catch (e) {
-      console.log("[SIGNUP Error]", e);
-      setStatus("ERROR");
-      Sentry.captureException(e);
-    }
-  }
-
   useEffect(() => {
-    if (status === "FETCHED" || status == "ERROR") return;
-    readBalance();
-  }, [bchAddr]);
+    console.log(latestSatoshisBalance);;
+    if (!latestSatoshisBalance) return;
 
-  useEffect(() => {
-    readBalance();
-  }, [reload]);
+    const balance = satsToBch(latestSatoshisBalance);
+    setBalance(balance);
+
+    (async () => {
+      // getting the fiat value
+      const usdBalance = await bchToFiat(balance, "usd");
+      setBalanceInUSD(usdBalance);
+    })();
+  }, [latestSatoshisBalance]);
+
+  const BCHView = (
+    <Article ariaLabel="Top up Your Wallet">
+      <Heading number={2}>Top up with BCH</Heading>
+      <div>
+        {!utxoIsFetching && (
+          <Heading
+            onClick={() => refetchUtxos()}
+            customCss={css(`color: black`)}
+            number={2}
+          >
+            {balance} BCH {balanceInUSD && `($${balanceInUSD})`}
+          </Heading>
+        )}
+
+        {utxoIsFetching && <Heading number={5}>Fetching Balance...</Heading>}
+      </div>
+
+      {walletExist && bchAddr && (
+        <>
+          <QRCode
+            value={bchAddr}
+            renderAs={"png"}
+            size={260}
+            includeMargin
+            imageSettings={{
+              src: bchAddr && bchAddr.includes("bitcoin") ? bchLogo : slpLogo,
+              x: null,
+              y: null,
+              height: 60,
+              width: 60,
+              excavate: false,
+            }}
+          />
+          <Heading
+            size="12px"
+            ariaLabel="Your Bitcoin Cash Address"
+            number={5}
+            highlight
+          >
+            {bchAddr}
+          </Heading>
+        </>
+      )}
+
+      <p
+        class={css`
+          font-size: 0.8em;
+        `}
+      >
+        Signup is a new wallet, make sure to not store large amount of funds
+        here just to be safe 🔒
+      </p>
+    </Article>
+  );
+
+  const SLPView = (
+    <Article ariaLabel="Your SLP Address">
+      <Heading number={2}>Top up with SLP</Heading>
+    </Article>
+  );
 
   return (
     <>
       <header class={headerStyle}>
         <Link href="/">{`< Back to Wallet`}</Link>
       </header>
-      <main>
-        <form onSubmit={handleReload}>
-          <Article ariaLabel="Top up Your Wallet">
-            <Heading number={2}>Top up with BCH</Heading>
-            {status === "LOADING" && <p>Loading ...</p>}
-            {walletExist && bchAddr && (
-              <>
-                <QRCode
-                  value={bchAddr}
-                  renderAs={"png"}
-                  size={260}
-                  includeMargin
-                  imageSettings={{
-                    src:
-                      bchAddr && bchAddr.includes("bitcoin")
-                        ? bchLogo
-                        : slpLogo,
-                    x: null,
-                    y: null,
-                    height: 60,
-                    width: 60,
-                    excavate: false,
-                  }}
-                />
-                <Heading
-                  size="12px"
-                  ariaLabel="Your Bitcoin Cash Address"
-                  number={5}
-                  highlight
-                >
-                  {bchAddr}
-                </Heading>
-              </>
-            )}
-            <div
-              class={css`
-                margin-bottom: 16px;
-              `}
-            >
-              {status === "FETCHED" && (
-                <Label>
-                  Balance: {balance} BCH (${balanceInUSD})
-                </Label>
-              )}
-              {status === "FETCHING" && (
-                <Heading number={5}>Fetching Balance...</Heading>
-              )}
-            </div>
-
-            {status === "FETCHED" && (
-              <Button
-                type="submit"
-                primary
-                onClick={() => setReload(reload + 1)}
-              >
-                Reload Balance
-              </Button>
-            )}
-            <p
-              class={css`
-                font-size: 0.9em;
-              `}
-            >
-              Signup is a new wallet, make sure to not store large amount of
-              funds here just to be safe 🔒
-            </p>
-          </Article>
-        </form>
+      <main
+        class={css`
+          overflow: hidden;
+        `}
+      >
+        <Tabs
+          sections={[
+            {
+              title: "BCH",
+              component: BCHView,
+            },
+            {
+              title: "SLP",
+              component: SLPView,
+            },
+          ]}
+        />
       </main>
     </>
   );

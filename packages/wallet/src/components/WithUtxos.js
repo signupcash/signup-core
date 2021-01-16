@@ -13,6 +13,7 @@ export const UtxosContext = createContext({});
 
 const WithUtxos = (Component) => {
   function WithUtxosComp(props) {
+    const [utxoIsFetching, setUtxoIsFetching] = useState(false);
     const [latestUtxos, setLatestUtxos] = useState([]);
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
 
@@ -27,6 +28,7 @@ const WithUtxos = (Component) => {
 
     async function refetchUtxos() {
       cleanseCurrentUtxos();
+      setUtxoIsFetching(true);
       const walletAddr = await getWalletAddr();
       let balancesAndUtxos;
       // Re-fetch All SLP judged UTXOs
@@ -35,9 +37,12 @@ const WithUtxos = (Component) => {
         walletAddr
       );
 
+      console.log(balancesAndUtxos);
+
       if (balancesAndUtxos) {
         setLatestSatoshisBalance(balancesAndUtxos.satoshis_available_bch);
         setLatestUtxos(balancesAndUtxos.nonSlpUtxos);
+        setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
           latestSatoshisBalance: balancesAndUtxos.satoshis_available_bch,
@@ -48,7 +53,12 @@ const WithUtxos = (Component) => {
 
     return (
       <UtxosContext.Provider
-        value={{ latestUtxos, latestSatoshisBalance, refetchUtxos }}
+        value={{
+          latestUtxos,
+          latestSatoshisBalance,
+          refetchUtxos,
+          utxoIsFetching,
+        }}
       >
         {<Component {...props} />}
       </UtxosContext.Provider>
