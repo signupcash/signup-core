@@ -17,11 +17,13 @@ export default function ({
       color: ${highlight ? "black" : "#7c3aed"};
       margin: ${number > 3 ? "8px" : "16px"};
       padding: 6px 12px;
-      background: ${
-        highlight ? (alert ? "#ffd0e2" : "#f7e9ff") : "transparent"
-      };
+      background: ${highlight
+        ? alert
+          ? "#ffd0e2"
+          : "#f7e9ff"
+        : "transparent"};
       font-weight: ${number > 4 ? 400 : 500};
-      cursor: ${typeof onClick === "function" ? "pointer" : "auto"}
+      cursor: ${typeof onClick === "function" ? "pointer" : "auto"};
       transition: color 0.15s ease-in-out;
       ${inline && "display: inline-block;"}
       ${size && `font-size: ${size};`}

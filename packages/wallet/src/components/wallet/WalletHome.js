@@ -60,7 +60,7 @@ export default function ({ clientPayload, bchAddr }) {
         <Logo />
 
         {status === "FETCHED" && (
-          <Heading customCss={css(`color: black`)} number={2}>
+          <Heading customCss={css(`color: black`)} number={3}>
             {balance} BCH (${balanceInUSD})
           </Heading>
         )}
