@@ -22,7 +22,6 @@ const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 export default function ({ clientPayload }) {
   const [optinForEmails, setOptinForEmails] = useState(false);
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [step, setStep] = useState(1);
   const [isAnonymous, setIsAonymous] = useState(false);
 
@@ -84,15 +83,6 @@ export default function ({ clientPayload }) {
                 </>
               )}
 
-              <Label>Username</Label>
-              <Input
-                type="text"
-                onInput={(e) => {
-                  setUsername(e.target.value);
-                }}
-                placeholder="Cash Account Username"
-              />
-
               {!isAnonymous && (
                 <Checkbox
                   onClick={(e) => {
@@ -107,7 +97,7 @@ export default function ({ clientPayload }) {
 
               <Button
                 type="submit"
-                disabled={(!email && !isAnonymous) || !username}
+                disabled={!email && !isAnonymous}
                 primary
               >
                 Create Wallet 🤖
@@ -118,7 +108,6 @@ export default function ({ clientPayload }) {
         {step === 2 && (
           <ConfirmRecoveryPhrases
             email={email}
-            username={username}
             optinForEmails={optinForEmails}
             isAnonymous={isAnonymous}
           />
