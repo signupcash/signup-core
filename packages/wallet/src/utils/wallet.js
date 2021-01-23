@@ -10,6 +10,7 @@ import localforage from "localforage";
 import VanillaQR from "./vanillaQR";
 import { heightModifier, isDevEnv } from "../config";
 import { getBCHPrice } from "./price";
+import { memoize } from "./helpers";
 
 function q(selector, el) {
   if (!el) {
@@ -86,7 +87,7 @@ export async function isUserWalletExist() {
   return Boolean(userWallet && isVerified);
 }
 
-export async function getWalletAddr() {
+export const getWalletAddr = memoize(async function  () {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   let bchAddr;
 
@@ -98,6 +99,11 @@ export async function getWalletAddr() {
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
   return bchAddr;
+});
+
+export async function getWaletSLPAddr() {
+  const bchAddr = await getWalletAddr();
+  return slpjs.Utils.toSlpAddress(bchAddr);
 }
 
 export async function getWalletHdNode() {

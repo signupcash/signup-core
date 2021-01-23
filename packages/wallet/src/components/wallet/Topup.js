@@ -10,6 +10,7 @@ import { css } from "emotion";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
+import Box from "../common/Box";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
@@ -38,16 +39,18 @@ export default function ({ clientPayload }) {
     latestSatoshisBalance,
     refetchUtxos,
     utxoIsFetching,
+    slpTokenBalances,
+    slpNftGroups,
   } = useContext(UtxosContext);
 
   const [balance, setBalance] = useState(0);
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
-  const { bchAddr, cashAccount, walletExist } = useWallet();
+  const { bchAddr, slpAddr, cashAccount, walletExist } = useWallet();
 
   useEffect(() => {
-    console.log(latestSatoshisBalance);;
+    console.log(latestSatoshisBalance);
     if (!latestSatoshisBalance) return;
 
     const balance = satsToBch(latestSatoshisBalance);
@@ -63,6 +66,29 @@ export default function ({ clientPayload }) {
   const BCHView = (
     <Article ariaLabel="Top up Your Wallet">
       <Heading number={2}>Top up with BCH</Heading>
+      <QRCode
+        value={bchAddr}
+        renderAs={"png"}
+        size={280}
+        includeMargin
+        imageSettings={{
+          src: bchAddr && bchAddr.includes("bitcoin") ? bchLogo : slpLogo,
+          x: null,
+          y: null,
+          height: 50,
+          width: 50,
+          excavate: false,
+        }}
+      />
+      <Heading
+        size="12px"
+        ariaLabel="Your Bitcoin Cash Address"
+        number={5}
+        highlight
+      >
+        {bchAddr}
+      </Heading>
+
       <div>
         {!utxoIsFetching && (
           <Heading
@@ -77,33 +103,6 @@ export default function ({ clientPayload }) {
         {utxoIsFetching && <Heading number={5}>Fetching Balance...</Heading>}
       </div>
 
-      {walletExist && bchAddr && (
-        <>
-          <QRCode
-            value={bchAddr}
-            renderAs={"png"}
-            size={260}
-            includeMargin
-            imageSettings={{
-              src: bchAddr && bchAddr.includes("bitcoin") ? bchLogo : slpLogo,
-              x: null,
-              y: null,
-              height: 60,
-              width: 60,
-              excavate: false,
-            }}
-          />
-          <Heading
-            size="12px"
-            ariaLabel="Your Bitcoin Cash Address"
-            number={5}
-            highlight
-          >
-            {bchAddr}
-          </Heading>
-        </>
-      )}
-
       <p
         class={css`
           font-size: 0.8em;
@@ -117,7 +116,57 @@ export default function ({ clientPayload }) {
 
   const SLPView = (
     <Article ariaLabel="Your SLP Address">
-      <Heading number={2}>Top up with SLP</Heading>
+      <>
+        <Heading number={2}>Top up with SLP</Heading>
+
+        <QRCode
+          value={slpAddr}
+          renderAs={"png"}
+          size={280}
+          includeMargin
+          imageSettings={{
+            src: slpAddr && slpLogo,
+            x: null,
+            y: null,
+            height: 50,
+            width: 50,
+            excavate: false,
+          }}
+        />
+        <Heading size="12px" ariaLabel="Your SLP Address" number={5} highlight>
+          {slpAddr}
+        </Heading>
+
+        <p>Your SLP balances are listed here 👾</p>
+
+        <div
+          class={css`
+            display: flex;
+            flex-direction: row;
+          `}
+        >
+          <Box title="SLP Tokens">
+            <Heading
+              customCss={css`
+                color: black;
+              `}
+              number={2}
+            >
+              {slpTokenBalances && Object.keys(slpTokenBalances).length}
+            </Heading>
+          </Box>
+          <Box title="NFTs">
+            <Heading
+              customCss={css`
+                color: black;
+              `}
+              number={2}
+            >
+              {slpNftGroups && Object.keys(slpNftGroups).length}
+            </Heading>
+          </Box>
+        </div>
+      </>
     </Article>
   );
 
@@ -131,18 +180,30 @@ export default function ({ clientPayload }) {
           overflow: hidden;
         `}
       >
-        <Tabs
-          sections={[
-            {
-              title: "BCH",
-              component: BCHView,
-            },
-            {
-              title: "SLP",
-              component: SLPView,
-            },
-          ]}
-        />
+        {walletExist && bchAddr ? (
+          <Tabs
+            sections={[
+              {
+                title: "BCH",
+                Component: BCHView,
+              },
+              {
+                title: "SLP",
+                Component: SLPView,
+              },
+            ]}
+          />
+        ) : (
+          <div
+            class={css`
+              text-align: center;
+              color: #7c3aed;
+              margin-top: 32px;
+            `}
+          >
+            Opening your wallet ... 🔒
+          </div>
+        )}
       </main>
     </>
   );

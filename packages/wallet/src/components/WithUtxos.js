@@ -15,6 +15,8 @@ const WithUtxos = (Component) => {
   function WithUtxosComp(props) {
     const [utxoIsFetching, setUtxoIsFetching] = useState(false);
     const [latestUtxos, setLatestUtxos] = useState([]);
+    const [slpTokenBalances, setSlpTokenBalances] = useState();
+    const [slpNftGroups, setSlpNftGroups] = useState();
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
 
     useEffect(() => {
@@ -37,11 +39,14 @@ const WithUtxos = (Component) => {
         walletAddr
       );
 
-      console.log(balancesAndUtxos);
+      console.log("SLP balances=>", balancesAndUtxos);
+      console.log(balancesAndUtxos.slpTokenBalances);
 
       if (balancesAndUtxos) {
         setLatestSatoshisBalance(balancesAndUtxos.satoshis_available_bch);
         setLatestUtxos(balancesAndUtxos.nonSlpUtxos);
+        setSlpTokenBalances(balancesAndUtxos.slpTokenBalances);
+        setSlpNftGroups(balancesAndUtxos.nftParentChildBalances);
         setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
@@ -58,6 +63,8 @@ const WithUtxos = (Component) => {
           latestSatoshisBalance,
           refetchUtxos,
           utxoIsFetching,
+          slpTokenBalances,
+          slpNftGroups,
         }}
       >
         {<Component {...props} />}
