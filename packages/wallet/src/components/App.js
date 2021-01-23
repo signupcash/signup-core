@@ -17,6 +17,8 @@ import Send from "./wallet/Send";
 import Backup from "./wallet/Backup";
 import Logout from "./wallet/Logout";
 import ImportWallet from "./wallet/ImportWallet";
+import SLPTokens from "./wallet/SLPTokens";
+import NFTs from "./wallet/NFTs";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -76,6 +78,8 @@ function App() {
         <Backup path="/backup" />
         <Logout path="/logout" />
         <ImportWallet path="/import" />
+        <SLPTokens path="/tokens" />
+        <NFTs path="/NFTs" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />

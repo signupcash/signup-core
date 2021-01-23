@@ -5,6 +5,7 @@ import Button from "./Button";
 
 const tabPageCss = css`
   width: 100%;
+  height: 600px;
 `;
 
 export default function ({ sections }) {
@@ -20,12 +21,12 @@ export default function ({ sections }) {
     transition: left 0.5s;
     left: -${tabIndex * 100}%;
   `;
-
+  console.log(sections);
   return (
-    <>
+    <div>
       <div class={tabContainerCss}>
-        {sections.map(({ component }) => (
-          <div class={tabPageCss}>{component}</div>
+        {sections.map(({ Component }) => (
+          <div class={tabPageCss}>{Component}</div>
         ))}
       </div>
       <div>
@@ -41,6 +42,6 @@ export default function ({ sections }) {
           </Button>
         ))}
       </div>
-    </>
+    </div>
   );
 }

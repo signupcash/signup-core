@@ -1,6 +1,6 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
-import { Link } from "preact-router";
+import { Link, route } from "preact-router";
 import * as Sentry from "@sentry/browser";
 import axios from "axios";
 import QRCode from "qrcode.react";
@@ -143,6 +143,7 @@ export default function ({ clientPayload }) {
           class={css`
             display: flex;
             flex-direction: row;
+            margin-bottom: 10px;
           `}
         >
           <Box title="SLP Tokens">
@@ -151,8 +152,11 @@ export default function ({ clientPayload }) {
                 color: black;
               `}
               number={2}
+              onClick={() => route("/tokens", true)}
             >
-              {slpTokenBalances && Object.keys(slpTokenBalances).length}
+              {slpTokenBalances &&
+                Object.keys(slpTokenBalances).length -
+                  Object.keys(slpNftGroups).length}
             </Heading>
           </Box>
           <Box title="NFTs">
@@ -161,6 +165,7 @@ export default function ({ clientPayload }) {
                 color: black;
               `}
               number={2}
+              onClick={() => route("/NFTs", true)}
             >
               {slpNftGroups && Object.keys(slpNftGroups).length}
             </Heading>
