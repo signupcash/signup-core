@@ -10,27 +10,21 @@ function executeSlpDbQuery(q) {
   return axios.get(endpoint);
 }
 
-export async function getSlpToken(tokenId, limit = 100, skip = 0) {
+export async function getSlpByTokenId(tokenId) {
   const q = {
     v: 3,
     q: {
       db: ["t"],
-      find: {},
-      sort: {
-        "tokenStats.approx_txns_since_genesis": -1,
+      find: {
+        "tokenDetails.tokenIdHex": tokenId,
       },
-      limit: limit,
-      skip: skip,
     },
+    project: { tokenDetails: 1, tokenStats: 1, _id: 0 },
     r: {
       f:
         "[ .[] | { ticker: .tokenDetails.symbol, name: .tokenDetails.name, tokenId: .tokenDetails.tokenIdHex, decimals: .tokenDetails.decimals, documentUrl: .tokenDetails.documentUri, documentHash: .tokenDetails.documentSha256Hex, initialAmount: .tokenDetails.genesisOrMintQuantity } ]",
     },
   };
-
-  if (tokenId) {
-    q["q"]["find"]["tokenDetails.tokenIdHex"] = tokenId;
-  }
 
   return executeSlpDbQuery(q);
 }
