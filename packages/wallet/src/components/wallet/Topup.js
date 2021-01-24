@@ -19,6 +19,7 @@ import useWallet from "../../hooks/useWallet";
 import Tabs from "../common/Tabs";
 import { UtxosContext } from "../WithUtxos";
 import { satsToBch, bchToFiat } from "../../utils/unitUtils";
+import { getSlpBalances } from "../../utils/slp";
 
 const headerStyle = css``;
 
@@ -39,8 +40,6 @@ export default function ({ clientPayload }) {
     latestSatoshisBalance,
     refetchUtxos,
     utxoIsFetching,
-    slpTokenBalances,
-    slpNftGroups,
   } = useContext(UtxosContext);
 
   const [balance, setBalance] = useState(0);
@@ -48,9 +47,29 @@ export default function ({ clientPayload }) {
   const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
   const { bchAddr, slpAddr, cashAccount, walletExist } = useWallet();
+  const [numOfTokens, setNumOfTokens] = useState();
+  const [numOfNfts, setNumOfNfts] = useState();
+
+  // Fetching the number of SLP tokens and NFTs
+  useEffect(() => {
+    (async () => {
+      if (!slpAddr) return;
+
+      const { data } = await getSlpBalances(slpAddr);
+      // g is for Graph collection of SLP db
+      if (data.g) {
+        const numOfTokens = data.g.filter((token) => token.versionType == "1")
+          .length;
+        const numOfNfts = data.g.filter((token) => token.versionType == "65")
+          .length;
+
+        setNumOfTokens(numOfTokens);
+        setNumOfNfts(numOfNfts);
+      }
+    })();
+  }, [slpAddr]);
 
   useEffect(() => {
-    console.log(latestSatoshisBalance);
     if (!latestSatoshisBalance) return;
 
     const balance = satsToBch(latestSatoshisBalance);
@@ -154,9 +173,7 @@ export default function ({ clientPayload }) {
               number={2}
               onClick={() => route("/tokens", true)}
             >
-              {slpTokenBalances &&
-                Object.keys(slpTokenBalances).length -
-                  Object.keys(slpNftGroups).length}
+              {numOfTokens}
             </Heading>
           </Box>
           <Box title="NFTs">
@@ -167,7 +184,7 @@ export default function ({ clientPayload }) {
               number={2}
               onClick={() => route("/NFTs", true)}
             >
-              {slpNftGroups && Object.keys(slpNftGroups).length}
+              {numOfNfts}
             </Heading>
           </Box>
         </div>
