@@ -6,6 +6,9 @@ const boxCss = css`
   text-align: center;
   width: 200px;
   margin-top: 8px;
+  &:hover {
+    background: #f1dfff;
+  }
 `;
 
 export default function ({ ariaLabel, children, customCss, title }) {
