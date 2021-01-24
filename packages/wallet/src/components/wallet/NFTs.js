@@ -7,7 +7,11 @@ import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
 import Button from "../common/Button";
-import { SLP_ICONS_URL, WAIFU_NFT_IMAGE_SERVER } from "../../config";
+import {
+  SLP_ICONS_URL,
+  WAIFU_NFT_IMAGE_SERVER,
+  WAIFU_GROUP_ID,
+} from "../../config";
 import { getSlpBalances, getSlpByTokenId } from "../../utils/slp";
 import { getWaletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
@@ -45,7 +49,6 @@ export default function () {
 
   async function fetchNftGroups(slpBalances) {
     const groups = Array.from(new Set(slpBalances.map((x) => x.nftParentId)));
-    console.log(groups);
     // fetch each parent metadata
     let nftGroups = [];
     await Promise.all(
@@ -76,7 +79,6 @@ export default function () {
       setIsFetching(false);
     })();
   }, []);
-
   return (
     <>
       <header>
@@ -119,13 +121,22 @@ export default function () {
                         margin-right: 16px;
                       `}
                     >
-                      <img
-                        class={css`
-                          width: 150px;
-                          clip-path: inset(0 12px 0 12px);
-                        `}
-                        src={`${WAIFU_NFT_IMAGE_SERVER}/${token.tokenId}.png`}
-                      />
+                      {group.tokenId === WAIFU_GROUP_ID ? (
+                        <img
+                          class={css`
+                            width: 150px;
+                            clip-path: inset(0 12px 0 12px);
+                          `}
+                          src={`${WAIFU_NFT_IMAGE_SERVER}/${token.tokenId}.png`}
+                        />
+                      ) : (
+                        <img
+                          class={css`
+                            width: 126px;
+                          `}
+                          src={token.documentUri}
+                        />
+                      )}
                     </div>
                     <div>
                       <Heading
@@ -136,9 +147,11 @@ export default function () {
                       >
                         {token.name}
                       </Heading>
-                      <Heading highlight number={5}>
-                        {`${token.ticker}`}
-                      </Heading>
+                      {token.ticker && (
+                        <Heading highlight number={5}>
+                          {`${token.ticker}`}
+                        </Heading>
+                      )}
                     </div>
                   </div>
                 ))}
