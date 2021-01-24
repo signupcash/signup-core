@@ -84,7 +84,7 @@ export async function getSlpBalances(slpAddr) {
     },
     r: {
       f:
-        "[ .[] | { value: .slpAmount, ticker: .token[0].tokenDetails.symbol, versionType: .token[0].tokenDetails.versionType, documentUri: .token[0].tokenDetails.documentUri, name: .token[0].tokenDetails.name, tokenId: ._id, } ]",
+        "[ .[] | { value: .slpAmount, ticker: .token[0].tokenDetails.symbol, versionType: .token[0].tokenDetails.versionType, documentUri: .token[0].tokenDetails.documentUri, name: .token[0].tokenDetails.name, tokenId: ._id, nftParentId: .token[0].nftParentId  } ]",
     },
   };
 
