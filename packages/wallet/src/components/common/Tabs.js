@@ -18,7 +18,8 @@ export default function ({ sections }) {
     width: 200%;
     padding: 0;
     margin: 0;
-    transition: left 0.5s;
+    transition: left 0.3s ease;
+    margin-bottom: 23px;
     left: -${tabIndex * 100}%;
   `;
   console.log(sections);
