@@ -1,6 +1,6 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { Link } from "preact-router";
+import { Link, route } from "preact-router";
 import axios from "axios";
 import { css } from "emotion";
 import Logo from "../common/Logo";
@@ -15,6 +15,7 @@ import {
 import { getSlpBalances, getSlpByTokenId } from "../../utils/slp";
 import { getWaletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
+import NFTImage from "./NFTImage";
 
 const nftGroupCss = css`
   display: flex;
@@ -114,29 +115,17 @@ export default function () {
                 .filter((x) => x.versionType == "65")
                 .filter((x) => x.nftParentId === group.tokenId)
                 .map((token) => (
-                  <div class={rowCss}>
+                  <div
+                    class={rowCss}
+                    onClick={() => route(`/token?tokenId=${token.tokenId}`)}
+                  >
                     <div
                       class={css`
                         align-self: center;
                         margin-right: 16px;
                       `}
                     >
-                      {group.tokenId === WAIFU_GROUP_ID ? (
-                        <img
-                          class={css`
-                            width: 150px;
-                            clip-path: inset(0 12px 0 12px);
-                          `}
-                          src={`${WAIFU_NFT_IMAGE_SERVER}/${token.tokenId}.png`}
-                        />
-                      ) : (
-                        <img
-                          class={css`
-                            width: 126px;
-                          `}
-                          src={token.documentUri}
-                        />
-                      )}
+                      <NFTImage token={token} parentId={group.tokenId} />
                     </div>
                     <div>
                       <Heading
