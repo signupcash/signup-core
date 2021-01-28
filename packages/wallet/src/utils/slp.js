@@ -22,7 +22,7 @@ export async function getSlpByTokenId(tokenId) {
     project: { tokenDetails: 1, tokenStats: 1, _id: 0 },
     r: {
       f:
-        "[ .[] | { ticker: .tokenDetails.symbol, name: .tokenDetails.name, tokenId: .tokenDetails.tokenIdHex, versionType: .tokenDetails.versionType, nftParentId: .nftParentId, decimals: .tokenDetails.decimals, documentUrl: .tokenDetails.documentUri, documentHash: .tokenDetails.documentSha256Hex, initialAmount: .tokenDetails.genesisOrMintQuantity } ]",
+        "[ .[] | { ticker: .tokenDetails.symbol, name: .tokenDetails.name, tokenId: .tokenDetails.tokenIdHex, versionType: .tokenDetails.versionType, nftParentId: .nftParentId, decimals: .tokenDetails.decimals, documentUri: .tokenDetails.documentUri, documentHash: .tokenDetails.documentSha256Hex, initialAmount: .tokenDetails.genesisOrMintQuantity } ]",
     },
   };
 
@@ -78,7 +78,7 @@ export async function getSlpBalances(slpAddr) {
     },
     r: {
       f:
-        "[ .[] | { value: .slpAmount, ticker: .token[0].tokenDetails.symbol, versionType: .token[0].tokenDetails.versionType, documentUri: .token[0].tokenDetails.documentUri, name: .token[0].tokenDetails.name, tokenId: ._id, nftParentId: .token[0].nftParentId  } ]",
+        "[ .[] | { value: .slpAmount, ticker: .token[0].tokenDetails.symbol, decimals: .token[0].tokenDetails.decimals, versionType: .token[0].tokenDetails.versionType, documentUri: .token[0].tokenDetails.documentUri, name: .token[0].tokenDetails.name, tokenId: ._id, nftParentId: .token[0].nftParentId  } ]",
     },
   };
 
