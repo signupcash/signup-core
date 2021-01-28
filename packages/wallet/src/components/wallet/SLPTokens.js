@@ -1,6 +1,6 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { Link } from "preact-router";
+import { Link, route } from "preact-router";
 import axios from "axios";
 import { css } from "emotion";
 import Logo from "../common/Logo";
@@ -11,6 +11,7 @@ import { SLP_ICONS_URL } from "../../config";
 import { getSlpBalances } from "../../utils/slp";
 import { getWaletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
+import TokenPage from "./TokenPage";
 
 const rowCss = css`
   display: flex;
@@ -19,6 +20,7 @@ const rowCss = css`
   height: 60px;
   padding: 15px 10px;
   margin-bottom: 15px;
+  cursor: pointer;
 
   &:hover {
     background: #ae7fff;
@@ -61,7 +63,10 @@ export default function () {
           {slpBalances
             .filter((x) => x.versionType == "1")
             .map((token) => (
-              <div class={rowCss}>
+              <div
+                class={rowCss}
+                onClick={() => route(`/token?tokenId=${token.tokenId}`)}
+              >
                 <div
                   class={css`
                     align-self: center;
@@ -74,12 +79,19 @@ export default function () {
                   <Heading
                     customCss={css`
                       color: black;
+                      cursor: pointer;
                     `}
                     number={4}
                   >
                     {token.name}
                   </Heading>
-                  <Heading highlight number={5}>
+                  <Heading
+                    highlight
+                    customCss={css`
+                      cursor: pointer;
+                    `}
+                    number={5}
+                  >
                     {`${token.value} ${token.ticker}`}
                   </Heading>
                 </div>

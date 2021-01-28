@@ -131,13 +131,20 @@ export default function () {
                       <Heading
                         customCss={css`
                           color: black;
+                          cursor: pointer;
                         `}
                         number={4}
                       >
                         {token.name}
                       </Heading>
                       {token.ticker && (
-                        <Heading highlight number={5}>
+                        <Heading
+                          highlight
+                          customCss={css`
+                            cursor: pointer;
+                          `}
+                          number={5}
+                        >
                           {`${token.ticker}`}
                         </Heading>
                       )}

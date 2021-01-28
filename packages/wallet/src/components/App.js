@@ -19,6 +19,7 @@ import Logout from "./wallet/Logout";
 import ImportWallet from "./wallet/ImportWallet";
 import SLPTokens from "./wallet/SLPTokens";
 import NFTs from "./wallet/NFTs";
+import TokenPage from "./wallet/TokenPage";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -80,6 +81,7 @@ function App() {
         <ImportWallet path="/import" />
         <SLPTokens path="/tokens" />
         <NFTs path="/NFTs" />
+        <TokenPage path="/token" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />

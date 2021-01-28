@@ -1,4 +1,5 @@
 import { h, Fragment } from "preact";
+import { css } from "emotion";
 import { WAIFU_NFT_IMAGE_SERVER, WAIFU_GROUP_ID } from "../../config";
 
 export default ({ token, parentId }) => {
