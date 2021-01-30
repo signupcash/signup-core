@@ -1,6 +1,9 @@
-import bitbox from "../libs/bitbox";
+import { BITBOX } from "bitbox-sdk";
+import * as slpjs from "slpjs";
 import * as Sentry from "@sentry/browser";
 import { getBCHPrice } from "./price";
+
+const bitbox = new BITBOX();
 
 export function convertAmountToBCHUnit(amount, unit) {
   if (isInSatoshis(unit)) {
@@ -40,6 +43,10 @@ export function isCashAddress(bchAddr) {
     Sentry.captureException(e);
     return false;
   }
+}
+
+export function isSLPAddress(slpAddr) {
+  return slpjs.Utils.isSlpAddress(slpAddr);
 }
 
 export function isInSatoshis(unit) {
