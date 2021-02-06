@@ -1,6 +1,6 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
-import { Link } from "preact-router";
+import { Link, route } from "preact-router";
 import * as Sentry from "@sentry/browser";
 import delay from "delay";
 import retry from "p-retry";
@@ -11,6 +11,7 @@ import { UtxosContext } from "../WithUtxos";
 import {
   sats,
   isCashAddress,
+  isSLPAddress,
   satsToBch,
   bchToSats,
 } from "../../utils/unitUtils";
@@ -21,6 +22,7 @@ import {
   WAIFU_GROUP_ID,
   WAIFU_NFT_IMAGE_SERVER,
   SLP_EXPLORER,
+  BITCOIN_COM_EXPLORER,
 } from "../../config";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -33,6 +35,7 @@ import useWallet from "../../hooks/useWallet";
 import { getSlpByTokenId, getSlpBalances } from "../../utils/slp";
 import Loading from "../common/Loading";
 import NFTImage from "./NFTImage";
+import { sendSlpTx } from "../../utils/transactions";
 
 const headerStyle = css``;
 
@@ -53,34 +56,82 @@ export default function ({ tokenId }) {
   const [canSendTx, setCanSendTx] = useState(false);
   const [token, setToken] = useState();
   const [nftGroup, setNftGroup] = useState({});
+  // we incriminate it for every refecth
+  const [refetchCurrentToken, setRefetchCurrentToken] = useState(0);
+  const [txInProcess, setTxInProcess] = useState();
+  const [accomplishedTxId, setAccomplishedTxId] = useState();
+
+  const {
+    latestUtxos,
+    slpUtxos,
+    slpBalances,
+    latestSatoshisBalance,
+    refetchUtxos,
+    utxoIsFetching,
+  } = useContext(UtxosContext);
 
   useEffect(() => {
     // load token metadata and balances
     (async () => {
-      const slpAddr = await wallet.getWaletSLPAddr();
+      const slpAddr = await wallet.getWalletSLPAddr();
       if (!slpAddr) return;
 
       const { data } = await getSlpBalances(slpAddr);
       data.g.forEach((token) => {
         if (token.tokenId === tokenId) {
           setToken(token);
+          if (token.versionType === 65) {
+            // amount to send for NFTs is always 1
+            setAmountToSend(1);
+          }
         }
       });
     })();
-  }, []);
+  }, [refetchCurrentToken]);
+
+  useEffect(() => {
+    if (isSendingSlp) {
+      refetchUtxos();
+    }
+  }, [isSendingSlp]);
 
   // Here we fetch the group after the token is loaded
   useEffect(() => {
+    if (!token) return;
     (async () => {
-      const { data: groupData } = await getSlpByTokenId(token.nftParentId);
+      const tokenData = await getSlpByTokenId(token.nftParentId);
 
-      if (groupData && groupData.t[0] && groupData.t[0].tokenId) {
-        setNftGroup(groupData.t[0]);
+      if (tokenData && tokenData.tokenId) {
+        setNftGroup(tokenData);
       }
     })();
   }, [token]);
 
-  function handleSend() {}
+  function handleSend(e) {
+    e.preventDefault();
+    setTxInProcess(true);
+
+    (async () => {
+      const { txId } = await sendSlpTx(
+        amountToSend,
+        token.tokenId,
+        targetAddr,
+        latestSatoshisBalance,
+        latestUtxos,
+        slpUtxos,
+        slpBalances
+      );
+      setIsSendingSlp(false);
+      setTxInProcess(false);
+      setAccomplishedTxId(txId);
+      // 1 seconds delay to avoid race conditions
+      setTimeout(() => {
+        refetchUtxos();
+        // reload current page
+        setRefetchCurrentToken(refetchCurrentToken + 1);
+      }, 1000);
+    })();
+  }
 
   function formatDocumentUri(uri) {
     if (!uri) return <p>Empty!</p>;
@@ -142,16 +193,19 @@ export default function ({ tokenId }) {
                   {formatDocumentUri(token.documentUri)}
                 </p>
 
-                <Button
-                  onClick={() => setIsSendingSlp(!isSendingSlp)}
-                  customCss={css`
-                    margin-bottom: 16px;
-                  `}
-                >
-                  {isSendingSlp ? "Cancel Sending" : "Send"}
-                </Button>
+                {!txInProcess && (
+                  <Button
+                    onClick={() => setIsSendingSlp(!isSendingSlp)}
+                    alert={isSendingSlp}
+                    customCss={css`
+                      margin-bottom: 16px;
+                    `}
+                  >
+                    {isSendingSlp ? "Cancel Sending" : "Send"}
+                  </Button>
+                )}
 
-                {isSendingSlp && (
+                {isSendingSlp && !txInProcess && (
                   <>
                     <Label>SLP Address</Label>
                     <Input
@@ -159,7 +213,7 @@ export default function ({ tokenId }) {
                       onInput={(e) => {
                         setTargetAddr(e.target.value);
                       }}
-                      placeholder="bitcoincash:qpty0gf3mppl8n9alghxkuwhrpqlgkx3uv2gheqq8p"
+                      placeholder="simpleledger:qrmgyfu5552ufd8s4ukkjqylm4lcwa2qfcmlljytt3"
                     />
 
                     {!isNft && (
@@ -175,24 +229,53 @@ export default function ({ tokenId }) {
                           }}
                           placeholder="1"
                         />
+                        <a
+                          href="#"
+                          class={css`
+                            font-size: 0.8em;
+                            align-self: start;
+                            margin-top: -10px;
+                          `}
+                          onClick={() => setAmountToSend(token.value)}
+                        >
+                          Send All
+                        </a>
                       </>
                     )}
 
                     <Button
                       type="submit"
-                      disabled={!canSendTx}
+                      disabled={!amountToSend || !isSLPAddress(targetAddr)}
                       customStyle={css`
                         margin-top: 32px;
                       `}
                       primary
-                      onClick={() => null}
                     >
                       Send
                     </Button>
                   </>
                 )}
 
-                {!isSendingSlp && (
+                {txInProcess && (
+                  <Loading text="Sending SLP transaction 🤞🏼 ..." />
+                )}
+
+                {accomplishedTxId && (
+                  <p
+                    class={css`
+                      font-size: 0.8em;
+                    `}
+                  >
+                    Transaction is sent!
+                    <Button
+                      linkTo={`${BITCOIN_COM_EXPLORER}/tx/${accomplishedTxId}`}
+                    >
+                      View it on block explorer
+                    </Button>
+                  </p>
+                )}
+
+                {!isSendingSlp && !accomplishedTxId && (
                   <>
                     <div
                       class={css`
@@ -227,7 +310,7 @@ export default function ({ tokenId }) {
                   </>
                 )}
 
-                {isNft && !isSendingSlp && (
+                {isNft && !isSendingSlp && !accomplishedTxId && (
                   <div
                     class={css`
                       display: flex;
@@ -264,25 +347,6 @@ export default function ({ tokenId }) {
                     </Box>
                   </div>
                 )}
-
-                <div
-                  class={css`
-                    margin-bottom: 16px;
-                  `}
-                >
-                  {status === "TX PROCESSING" && (
-                    <Heading number={4}>Sending... give us a second 🥶</Heading>
-                  )}
-                  {status === "TX ACCOMPLISHED" && (
-                    <Heading number={4}>Transaction is Sent! 😼</Heading>
-                  )}
-                  {status === "ERROR" && (
-                    <Heading number={4}>
-                      Something went wrong! Please report this issue to us so we
-                      can fix it 😥
-                    </Heading>
-                  )}
-                </div>
               </>
             )}
           </Article>

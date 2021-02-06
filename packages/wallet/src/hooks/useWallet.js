@@ -10,7 +10,7 @@ export default function useWallet() {
     (async () => {
       const doesWalletExist = await wallet.isUserWalletExist();
       const myBchAddr = await wallet.getWalletAddr();
-      const mySlpAddr = await wallet.getWaletSLPAddr();
+      const mySlpAddr = await wallet.getWalletSLPAddr();
 
       if (typeof walletExist === "undefined") {
         setUserWalletExist(doesWalletExist);

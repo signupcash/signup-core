@@ -9,7 +9,7 @@ import Heading from "../common/Heading";
 import Button from "../common/Button";
 import { SLP_ICONS_URL } from "../../config";
 import { getSlpBalances } from "../../utils/slp";
-import { getWaletSLPAddr } from "../../utils/wallet";
+import { getWalletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
 import TokenPage from "./TokenPage";
 
@@ -41,7 +41,7 @@ export default function () {
   useEffect(() => {
     setIsFetching(true);
     (async () => {
-      const slpAddr = await getWaletSLPAddr();
+      const slpAddr = await getWalletSLPAddr();
       if (!slpAddr) return;
 
       const { data } = await getSlpBalances(slpAddr);

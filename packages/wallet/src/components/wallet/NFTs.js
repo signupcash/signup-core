@@ -13,7 +13,7 @@ import {
   WAIFU_GROUP_ID,
 } from "../../config";
 import { getSlpBalances, getSlpByTokenId } from "../../utils/slp";
-import { getWaletSLPAddr } from "../../utils/wallet";
+import { getWalletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
 import NFTImage from "./NFTImage";
 
@@ -56,10 +56,10 @@ export default function () {
       groups.map(async (group) => {
         if (!group) return;
 
-        const { data: groupData } = await getSlpByTokenId(group);
+        const tokenData = await getSlpByTokenId(group);
 
-        if (groupData && groupData.t[0] && groupData.t[0].tokenId) {
-          nftGroups.push(groupData.t[0]);
+        if (tokenData && tokenData.tokenId) {
+          nftGroups.push(tokenData);
         }
       })
     );
@@ -70,7 +70,7 @@ export default function () {
   useEffect(() => {
     setIsFetching(true);
     (async () => {
-      const slpAddr = await getWaletSLPAddr();
+      const slpAddr = await getWalletSLPAddr();
       if (!slpAddr) return;
 
       const { data } = await getSlpBalances(slpAddr);
