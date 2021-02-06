@@ -26,7 +26,8 @@ export async function getSlpByTokenId(tokenId) {
     },
   };
 
-  return executeSlpDbQuery(q);
+  const { data } = await executeSlpDbQuery(q);
+  return data.t[0];
 }
 
 export async function getSlpBalances(slpAddr) {
@@ -83,4 +84,50 @@ export async function getSlpBalances(slpAddr) {
   };
 
   return executeSlpDbQuery(q);
+}
+
+export async function getSlpUtxos(slpAddr) {
+  const q = {
+    v: 3,
+    q: {
+      db: ["g"],
+      aggregate: [
+        {
+          $match: {
+            "graphTxn.outputs.address": slpAddr,
+            "graphTxn.outputs.status": "UNSPENT",
+          },
+        },
+        {
+          $unwind: "$graphTxn.outputs",
+        },
+        {
+          $match: {
+            "graphTxn.outputs.address": slpAddr,
+            "graphTxn.outputs.status": "UNSPENT",
+          },
+        },
+        {
+          $project: {
+            graphTxn: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "tokens",
+            localField: "graphTxn.details.tokenIdHex",
+            foreignField: "tokenDetails.tokenIdHex",
+            as: "token",
+          },
+        },
+      ],
+    },
+    r: {
+      f:
+        "[ .[] | { txid: .graphTxn.txid, vout: .graphTxn.outputs.vout, satoshis: .graphTxn.outputs.bchSatoshis, value: .graphTxn.outputs.slpAmount, decimals: .token[0].tokenDetails.decimals, ticker: .token[0].tokenDetails.symbol, tokenId: .graphTxn.details.tokenIdHex } ]",
+    },
+  };
+
+  const { data } = await executeSlpDbQuery(q);
+  return data.g;
 }
