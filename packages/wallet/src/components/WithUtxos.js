@@ -1,13 +1,15 @@
 import { h, createContext } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { css } from "emotion";
 import * as slpjs from "slpjs";
-import { getWalletAddr } from "../utils/wallet";
+import { getWalletSLPAddr, getWalletAddr } from "../utils/wallet";
 import { workerCourier } from "../signer";
+import { getUtxos } from "../utils/blockchain";
+import { getSlpUtxos } from "../utils/slp";
 
 const BITBOX = require("bitbox-sdk").BITBOX;
 
 const bitbox = new BITBOX();
-const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
 export const UtxosContext = createContext({});
 
@@ -15,9 +17,8 @@ const WithUtxos = (Component) => {
   function WithUtxosComp(props) {
     const [utxoIsFetching, setUtxoIsFetching] = useState(false);
     const [latestUtxos, setLatestUtxos] = useState([]);
-    const [slpTokenBalances, setSlpTokenBalances] = useState();
-    const [slpNftGroups, setSlpNftGroups] = useState();
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
+    const [slpUtxos, setSlpUtxos] = useState({});
 
     useEffect(() => {
       refetchUtxos();
@@ -31,27 +32,47 @@ const WithUtxos = (Component) => {
     async function refetchUtxos() {
       cleanseCurrentUtxos();
       setUtxoIsFetching(true);
-      const walletAddr = await getWalletAddr();
-      let balancesAndUtxos;
-      // Re-fetch All SLP judged UTXOs
 
-      balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-        walletAddr
+      const walletAddr = await getWalletAddr();
+      const walletSlpAddr = await getWalletSLPAddr();
+
+      let utxos;
+      let slpUtxos;
+
+      try {
+        // Fetch normal UTXOs
+        utxos = await getUtxos(walletAddr);
+        // Fetch SLP UTXOs
+        slpUtxos = await getSlpUtxos(walletSlpAddr);
+      } catch (e) {
+        console.log("ERROR with UTXOs");
+      }
+
+      // remove SLP Utxos from normal utxos
+      utxos = utxos.filter(
+        (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
       );
 
-      console.log("SLP balances=>", balancesAndUtxos);
-      console.log(balancesAndUtxos.slpTokenBalances);
+      console.log("Utxos =>", utxos);
+      console.log("SLP Utxos => ", slpUtxos);
 
-      if (balancesAndUtxos) {
-        setLatestSatoshisBalance(balancesAndUtxos.satoshis_available_bch);
-        setLatestUtxos(balancesAndUtxos.nonSlpUtxos);
-        setSlpTokenBalances(balancesAndUtxos.slpTokenBalances);
-        setSlpNftGroups(balancesAndUtxos.nftParentChildBalances);
+      // calculate satoshis available
+      const latestSatoshisBalance = utxos.reduce(
+        (acc, c) => acc + c.satoshis,
+        0
+      );
+
+      if (utxos) {
+        setLatestSatoshisBalance(latestSatoshisBalance);
+        setLatestUtxos(utxos);
+        setSlpUtxos(slpUtxos);
+
         setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
-          latestSatoshisBalance: balancesAndUtxos.satoshis_available_bch,
-          latestUtxos: balancesAndUtxos.nonSlpUtxos,
+          latestSatoshisBalance: latestSatoshisBalance,
+          latestUtxos: utxos,
+          slpUtxos: slpUtxos,
         });
       }
     }
@@ -60,14 +81,38 @@ const WithUtxos = (Component) => {
       <UtxosContext.Provider
         value={{
           latestUtxos,
+          slpUtxos,
           latestSatoshisBalance,
           refetchUtxos,
           utxoIsFetching,
-          slpTokenBalances,
-          slpNftGroups,
         }}
       >
         {<Component {...props} />}
+        {utxoIsFetching && (
+          <div
+            class={css`
+              position: absolute;
+              bottom: 30px;
+              left: 0;
+              width: 100vw;
+              padding: 3px;
+              font-size: 12px;
+              opacity: 0.6;
+            `}
+          >
+            <div
+              class={css`
+                max-width: 400px;
+                margin: 0 auto;
+                background: #797979;
+                text-align: center;
+                color: white;
+              `}
+            >
+              Fetching UTXOs ....
+            </div>
+          </div>
+        )}
       </UtxosContext.Provider>
     );
   }
