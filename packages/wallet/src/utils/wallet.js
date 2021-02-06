@@ -101,7 +101,7 @@ export const getWalletAddr = memoize(async function  () {
   return bchAddr;
 });
 
-export async function getWaletSLPAddr() {
+export async function getWalletSLPAddr() {
   const bchAddr = await getWalletAddr();
   return slpjs.Utils.toSlpAddress(bchAddr);
 }
