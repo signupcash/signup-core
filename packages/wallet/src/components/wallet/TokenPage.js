@@ -193,7 +193,7 @@ export default function ({ tokenId }) {
                   {formatDocumentUri(token.documentUri)}
                 </p>
 
-                {!txInProcess && (
+                {!txInProcess && !accomplishedTxId && (
                   <Button
                     onClick={() => setIsSendingSlp(!isSendingSlp)}
                     alert={isSendingSlp}
@@ -261,13 +261,10 @@ export default function ({ tokenId }) {
                 )}
 
                 {accomplishedTxId && (
-                  <p
-                    class={css`
-                      font-size: 0.8em;
-                    `}
-                  >
-                    Transaction is sent!
+                  <p>
+                    <Heading number={4}>SLP Transaction is done!</Heading>
                     <Button
+                      green
                       linkTo={`${BITCOIN_COM_EXPLORER}/tx/${accomplishedTxId}`}
                     >
                       View it on block explorer
