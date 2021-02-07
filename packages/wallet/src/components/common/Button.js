@@ -1,10 +1,12 @@
 import { h, Fragment } from "preact";
+import { Link } from "preact-router";
 import { css, cx } from "emotion";
 
 export default function ({
   type,
   primary,
   secondary,
+  green,
   alert,
   linkTo,
   onClick,
@@ -23,9 +25,13 @@ export default function ({
     if (alert) {
       return "#f74476";
     }
+    if (green) {
+      return "#28d9a7";
+    }
     if (isPrimary) {
       return "#7c3aed";
     }
+
     return "lightgray";
   }
 
@@ -35,6 +41,9 @@ export default function ({
     }
     if (alert) {
       return "#c41a4a";
+    }
+    if (green) {
+      return "#28d9a7";
     }
     if (isPrimary) {
       return "#815de3";
@@ -68,11 +77,24 @@ export default function ({
 
   return (
     <>
-      {linkTo ? (
-        <a href={linkTo} class={cx(buttonStyle, customStyle)}>
+      {linkTo && linkTo.includes("https") && (
+        <a
+          href={linkTo}
+          target="_blank"
+          rel="noopener noreferrer"
+          class={cx(buttonStyle, customStyle)}
+        >
           {children}
         </a>
-      ) : (
+      )}
+
+      {linkTo && !linkTo.includes("https") && (
+        <Link href={linkTo} class={cx(buttonStyle, customStyle)}>
+          {children}
+        </Link>
+      )}
+
+      {!linkTo && (
         <button
           disabled={disabled}
           type={type || "button"}
