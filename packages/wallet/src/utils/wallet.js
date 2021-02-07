@@ -87,7 +87,7 @@ export async function isUserWalletExist() {
   return Boolean(userWallet && isVerified);
 }
 
-export const getWalletAddr = memoize(async function  () {
+export async function getWalletAddr() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   let bchAddr;
 
@@ -99,7 +99,7 @@ export const getWalletAddr = memoize(async function  () {
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
   return bchAddr;
-});
+}
 
 export async function getWalletSLPAddr() {
   const bchAddr = await getWalletAddr();
