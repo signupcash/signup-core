@@ -88,31 +88,6 @@ const WithUtxos = (Component) => {
         }}
       >
         {<Component {...props} />}
-        {utxoIsFetching && (
-          <div
-            class={css`
-              position: absolute;
-              bottom: 30px;
-              left: 0;
-              width: 100vw;
-              padding: 3px;
-              font-size: 12px;
-              opacity: 0.6;
-            `}
-          >
-            <div
-              class={css`
-                max-width: 400px;
-                margin: 0 auto;
-                background: #797979;
-                text-align: center;
-                color: white;
-              `}
-            >
-              Fetching UTXOs ....
-            </div>
-          </div>
-        )}
       </UtxosContext.Provider>
     );
   }
