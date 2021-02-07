@@ -88,7 +88,7 @@ export default function ({ clientPayload }) {
       <QRCode
         value={bchAddr}
         renderAs={"png"}
-        size={280}
+        size={250}
         includeMargin
         imageSettings={{
           src: bchAddr && bchAddr.includes("bitcoin") ? bchLogo : slpLogo,
@@ -141,7 +141,7 @@ export default function ({ clientPayload }) {
         <QRCode
           value={slpAddr}
           renderAs={"png"}
-          size={280}
+          size={250}
           includeMargin
           imageSettings={{
             src: slpAddr && slpLogo,

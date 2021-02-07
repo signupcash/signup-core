@@ -6,6 +6,8 @@ import Button from "./Button";
 const tabPageCss = css`
   width: 100%;
   height: 600px;
+  box-sizing: border-box;
+  overflow: hidden;
 `;
 
 export default function ({ sections }) {
@@ -22,7 +24,7 @@ export default function ({ sections }) {
     margin-bottom: 23px;
     left: -${tabIndex * 100}%;
   `;
-  console.log(sections);
+
   return (
     <div>
       <div class={tabContainerCss}>
