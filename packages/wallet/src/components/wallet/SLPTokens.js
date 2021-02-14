@@ -1,8 +1,9 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { Link, route } from "preact-router";
 import axios from "axios";
 import { css } from "emotion";
+import Img from "react-image-fallback";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -12,6 +13,8 @@ import { getSlpBalances } from "../../utils/slp";
 import { getWalletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
 import TokenPage from "./TokenPage";
+import { UtxosContext } from "../WithUtxos";
+import placeholderImg from "../../assets/placeholder.jpg";
 
 const rowCss = css`
   display: flex;
@@ -35,21 +38,7 @@ const rowCss = css`
 `;
 
 export default function () {
-  const [slpBalances, setSlpBalances] = useState([]);
-  const [isFetching, setIsFetching] = useState(false);
-
-  useEffect(() => {
-    setIsFetching(true);
-    (async () => {
-      const slpAddr = await getWalletSLPAddr();
-      if (!slpAddr) return;
-
-      const { data } = await getSlpBalances(slpAddr);
-      // g is for Graph collection of SLP db
-      setSlpBalances(data.g);
-      setIsFetching(false);
-    })();
-  }, []);
+  const { utxoIsFetching, slpBalances, slpAddr } = useContext(UtxosContext);
 
   return (
     <>
@@ -59,44 +48,52 @@ export default function () {
       <main>
         <Article ariaLabel="Your SLP Tokens">
           <Heading number={2}>SLP Tokens</Heading>
-          {isFetching && <Loading text="Loading your tokens... 🍇" />}
-          {slpBalances
-            .filter((x) => x.versionType == "1")
-            .map((token) => (
-              <div
-                class={rowCss}
-                onClick={() => route(`/token?tokenId=${token.tokenId}`)}
-              >
+          {utxoIsFetching && <Loading text="Loading your tokens..." />}
+          {!utxoIsFetching &&
+            slpBalances
+              .filter((x) => x.versionType == "1")
+              .map((token) => (
                 <div
-                  class={css`
-                    align-self: center;
-                    margin-right: 16px;
-                  `}
+                  class={rowCss}
+                  onClick={() => route(`/token?tokenId=${token.tokenId}`)}
                 >
-                  <img src={`${SLP_ICONS_URL}/${token.tokenId}.png`} />
-                </div>
-                <div>
-                  <Heading
-                    customCss={css`
-                      color: black;
-                      cursor: pointer;
+                  <div
+                    class={css`
+                      align-self: center;
+                      margin-right: 16px;
                     `}
-                    number={4}
                   >
-                    {token.name}
-                  </Heading>
-                  <Heading
-                    highlight
-                    customCss={css`
-                      cursor: pointer;
-                    `}
-                    number={5}
-                  >
-                    {`${token.value} ${token.ticker}`}
-                  </Heading>
+                    <Img
+                      src={`${SLP_ICONS_URL}/${token.tokenId}.png`}
+                      className={css`
+                        max-height: 60px;
+                      `}
+                      fallbackImage={placeholderImg}
+                      initialImage={placeholderImg}
+                    />
+                  </div>
+                  <div>
+                    <Heading
+                      customCss={css`
+                        color: black;
+                        cursor: pointer;
+                      `}
+                      number={4}
+                    >
+                      {token.name}
+                    </Heading>
+                    <Heading
+                      highlight
+                      customCss={css`
+                        cursor: pointer;
+                      `}
+                      number={5}
+                    >
+                      {`${token.value} ${token.ticker}`}
+                    </Heading>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
         </Article>
       </main>
     </>

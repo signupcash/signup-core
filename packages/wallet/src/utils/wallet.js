@@ -40,41 +40,6 @@ export async function deleteWallet(mnemonic) {
   await localforage.removeItem("SIGNUP_PREDICTED_CASH_ACCOUNT");
 }
 
-export async function getBalance(bchAddr) {
-  const { data } = await axios.post(
-    `https://bchd.fountainhead.cash/v1/GetAddressUnspentOutputs`,
-    {
-      address: bchAddr,
-      include_mempool: true,
-    },
-    {
-      headers: {
-        accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const utxos = data.outputs;
-
-  let balance = 0;
-  let balanceInUSD = 0;
-
-  if (!utxos) {
-    return { balance, balanceInUSD };
-  }
-
-  balance = utxos.reduce((acc, current) => acc + parseInt(current.value), 0);
-
-  if (balance > 0) {
-    const bchPriceInUSD = await getBCHPrice();
-    balance = bitbox.BitcoinCash.toBitcoinCash(balance);
-    balanceInUSD = (bchPriceInUSD * balance).toFixed(2);
-  }
-
-  return { balance, balanceInUSD };
-}
-
 export async function retrieveWalletCredentials() {
   const userWallet = atob(await localforage.getItem("SIGNUP_WALLET"));
   const walletStatus = await localforage.getItem("SIGNUP_WALLET_STATUS");

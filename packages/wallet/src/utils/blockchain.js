@@ -8,3 +8,10 @@ export async function getUtxos(bchAddr) {
 
   return utxos;
 }
+
+export function tiny(value) {
+  if (value.length > 35) {
+    return `${value.slice(0, 20)}...${value.slice(value.length - 10)}`;
+  }
+  return value;
+}

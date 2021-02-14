@@ -25,3 +25,12 @@ export function memoize(method) {
     return cache[args];
   };
 }
+
+// count decimals for number in representation like "0.123456"
+export function countDecimals(value) {
+  if (Math.floor(value) !== value) {
+    const [base, tail] = value.toString().split(".");
+    return tail ? tail.length : 0;
+  }
+  return 0;
+}

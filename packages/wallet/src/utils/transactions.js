@@ -18,7 +18,7 @@ import { getSlpByTokenId, getSlpBalances } from "./slp";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
-function feesFor(inputNum, outputNum) {
+export function feesFor(inputNum, outputNum) {
   return bitbox.BitcoinCash.getByteCount(
     { P2PKH: inputNum },
     { P2PKH: outputNum }
@@ -104,10 +104,9 @@ export async function sendSlpTx(
   slpBalances
 ) {
   const changeReceiverAddress = await getWalletSLPAddr();
-  const fees = 1200;
+  const fees = feesFor(4, 4);
 
-  const { data } = await getSlpBalances(changeReceiverAddress);
-  const balances = data.g;
+  const balances = await getSlpBalances(changeReceiverAddress);
   const targetToken = balances.filter((x) => x.tokenId === tokenId).pop();
 
   if (!targetToken) {
@@ -164,7 +163,7 @@ export async function sendSlpTx(
     tx.addOutput(changeReceiverAddress, DUST);
   }
 
-  const changeAmount = feeUtxo.satoshis - fees;
+  const changeAmount = feeUtxo.satoshis - DUST - fees;
 
   if (changeAmount > DUST) {
     tx.addOutput(changeReceiverAddress, changeAmount);

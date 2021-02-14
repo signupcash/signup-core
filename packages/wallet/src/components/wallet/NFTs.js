@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { Link, route } from "preact-router";
 import axios from "axios";
 import { css } from "emotion";
@@ -16,6 +16,7 @@ import { getSlpBalances, getSlpByTokenId } from "../../utils/slp";
 import { getWalletSLPAddr } from "../../utils/wallet";
 import Loading from "../common/Loading";
 import NFTImage from "./NFTImage";
+import { UtxosContext } from "../WithUtxos";
 
 const nftGroupCss = css`
   display: flex;
@@ -44,9 +45,10 @@ const rowCss = css`
 `;
 
 export default function () {
-  const [slpBalances, setSlpBalances] = useState([]);
   const [nftGroups, setNftGroups] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
+
+  const { utxoIsFetching, slpBalances, slpAddr } = useContext(UtxosContext);
 
   async function fetchNftGroups(slpBalances) {
     const groups = Array.from(new Set(slpBalances.map((x) => x.nftParentId)));
@@ -70,16 +72,11 @@ export default function () {
   useEffect(() => {
     setIsFetching(true);
     (async () => {
-      const slpAddr = await getWalletSLPAddr();
-      if (!slpAddr) return;
-
-      const { data } = await getSlpBalances(slpAddr);
-      // g is for Graph collection of SLP db
-      setSlpBalances(data.g);
-      await fetchNftGroups(data.g);
+      await fetchNftGroups(slpBalances);
       setIsFetching(false);
     })();
   }, []);
+
   return (
     <>
       <header>
@@ -88,7 +85,10 @@ export default function () {
       <main>
         <Article ariaLabel="Your NFTs">
           <Heading number={2}>NFTs 👾</Heading>
-          {isFetching && <Loading text="Loading your NFTs... 🥁" />}
+
+          {(isFetching || utxoIsFetching) && (
+            <Loading text="Loading your NFTs... 🥁" />
+          )}
 
           {nftGroups.map((group) => (
             <div class={nftGroupCss}>

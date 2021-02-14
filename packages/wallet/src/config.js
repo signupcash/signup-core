@@ -11,7 +11,7 @@ export const SIGNUP_TX_BRIDGE = isDevEnv
 export const SLPDB_DEFAULT_URL = "https://slpdb.fountainhead.cash";
 export const SLP_ICONS_URL = "https://icons.fountainhead.cash/64/";
 
-export const SLP_EXPLORER = "https://simpleledger.info/#token";
+export const SLP_EXPLORER = "https://simpleledger.info";
 export const BITCOIN_COM_EXPLORER = "https://explorer.bitcoin.com/bch";
 
 // Waifu is a specific popular NFT group in SLP ecosystem serving their images using:

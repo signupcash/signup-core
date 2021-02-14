@@ -2,6 +2,7 @@ import { h, Fragment } from "preact";
 import { useState, useEffect, useContext } from "preact/hooks";
 import { Link, route } from "preact-router";
 import * as Sentry from "@sentry/browser";
+import Img from "react-image-fallback";
 import delay from "delay";
 import retry from "p-retry";
 import axios from "axios";
@@ -36,6 +37,8 @@ import { getSlpByTokenId, getSlpBalances } from "../../utils/slp";
 import Loading from "../common/Loading";
 import NFTImage from "./NFTImage";
 import { sendSlpTx } from "../../utils/transactions";
+import { countDecimals } from "../../utils/helpers";
+import placeholderImg from "../../assets/placeholder.jpg";
 
 const headerStyle = css``;
 
@@ -68,16 +71,15 @@ export default function ({ tokenId }) {
     latestSatoshisBalance,
     refetchUtxos,
     utxoIsFetching,
+    slpAddr,
   } = useContext(UtxosContext);
 
   useEffect(() => {
     // load token metadata and balances
     (async () => {
-      const slpAddr = await wallet.getWalletSLPAddr();
-      if (!slpAddr) return;
+      if (!slpBalances) return;
 
-      const { data } = await getSlpBalances(slpAddr);
-      data.g.forEach((token) => {
+      slpBalances.forEach((token) => {
         if (token.tokenId === tokenId) {
           setToken(token);
           if (token.versionType === 65) {
@@ -87,7 +89,7 @@ export default function ({ tokenId }) {
         }
       });
     })();
-  }, [refetchCurrentToken]);
+  }, [refetchCurrentToken, slpBalances]);
 
   useEffect(() => {
     if (isSendingSlp) {
@@ -99,16 +101,32 @@ export default function ({ tokenId }) {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      const tokenData = await getSlpByTokenId(token.nftParentId);
+      const tokenGroupData = await getSlpByTokenId(token.nftParentId);
 
-      if (tokenData && tokenData.tokenId) {
-        setNftGroup(tokenData);
+      if (tokenGroupData && tokenGroupData.tokenId) {
+        setNftGroup(tokenGroupData);
       }
     })();
   }, [token]);
 
   function handleSend(e) {
     e.preventDefault();
+
+    // Check if user is sending correct amount
+    if (amountToSend > token.value) {
+      toast.error(`You have only a balance of ${token.value} ${token.ticker}`);
+      return;
+    }
+
+    if (countDecimals(amountToSend) > token.decimals) {
+      toast.error(
+        `The token your are trying to send only accept ${token.decimals} decimals`
+      );
+      return;
+    }
+
+    // TODO check if user has bch to pay the fee
+
     setTxInProcess(true);
 
     (async () => {
@@ -169,14 +187,20 @@ export default function ({ tokenId }) {
                 {isNft ? (
                   <NFTImage token={token} parentId={token.nftParentId} />
                 ) : (
-                  <img src={`${SLP_ICONS_URL}/${token.tokenId}.png`} />
+                  <Img
+                    src={`${SLP_ICONS_URL}/${token.tokenId}.png`}
+                    className={css`
+                      max-width: 120px;
+                    `}
+                    fallbackImage={placeholderImg}
+                    initialImage={placeholderImg}
+                  />
                 )}
 
                 <Heading
                   customCss={css`
                     margin-bottom: 0;
                     padding-bottom: 0;
-                    line-height: 0.6em;
                   `}
                   number={2}
                 >
@@ -296,7 +320,7 @@ export default function ({ tokenId }) {
                         title="Ticker"
                       >
                         <a
-                          href={`${SLP_EXPLORER}/${token.tokenId}`}
+                          href={`${SLP_EXPLORER}/#token/${token.tokenId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -323,7 +347,7 @@ export default function ({ tokenId }) {
                       >
                         {(nftGroup.name && (
                           <a
-                            href={`${SLP_EXPLORER}/${nftGroup.tokenId}`}
+                            href={`${SLP_EXPLORER}/#token/${nftGroup.tokenId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

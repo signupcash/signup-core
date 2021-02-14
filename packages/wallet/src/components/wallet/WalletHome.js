@@ -1,19 +1,21 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { css } from "emotion";
 import * as Sentry from "@sentry/browser";
 
 import * as wallet from "../../utils/wallet";
-
+import { satsToBch, bchToFiat } from "../../utils/unitUtils";
 import RequestSpendToken from "./RequestSpendToken";
 import RequestAccess from "./RequestAccess";
-
+import RequestSlpSend from "./RequestSLPSend";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
+
+import { UtxosContext } from "../WithUtxos";
 
 const headerStyle = css``;
 
@@ -30,25 +32,20 @@ export default function ({ clientPayload, bchAddr }) {
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [status, setStatus] = useState();
 
+  const { latestSatoshisBalance, utxoIsFetching } = useContext(UtxosContext);
+
   useEffect(() => {
-    readBalance();
-  }, [bchAddr]);
+    if (!latestSatoshisBalance) return;
 
-  async function readBalance() {
-    if (!bchAddr) return;
-    setStatus("FETCHING");
+    const balance = satsToBch(latestSatoshisBalance);
+    setBalance(balance);
 
-    try {
-      const { balance, balanceInUSD } = await wallet.getBalance(bchAddr);
-
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
-      setStatus("FETCHED");
-    } catch (e) {
-      setStatus("BALANCE_ERROR");
-      Sentry.captureException(e);
-    }
-  }
+    (async () => {
+      // getting the fiat value
+      const usdBalance = await bchToFiat(balance, "usd");
+      setBalanceInUSD(usdBalance);
+    })();
+  }, [latestSatoshisBalance]);
 
   function handleReload(e) {
     e.preventDefault();
@@ -57,24 +54,7 @@ export default function ({ clientPayload, bchAddr }) {
   return (
     <>
       <Article ariaLabel="Your Wallet">
-        <Logo />
-
-        {status === "FETCHED" && (
-          <Heading customCss={css(`color: black`)} number={3}>
-            {balance} BCH (${balanceInUSD})
-          </Heading>
-        )}
-        {status === "FETCHING" && (
-          <Heading number={4}>Fetching Balance...</Heading>
-        )}
-        {status === "BALANCE_ERROR" && (
-          <Heading number={4}>
-            There was a problem while fetching your balance.{" "}
-            <a href="#" onClick={readBalance}>
-              Retry
-            </a>
-          </Heading>
-        )}
+        {utxoIsFetching && <Heading number={4}>Fetching Balance...</Heading>}
 
         {reqType === "spend_token" && (
           <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
@@ -84,35 +64,48 @@ export default function ({ clientPayload, bchAddr }) {
           <RequestAccess bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
 
-        {reqType !== "spend_token" && reqType !== "access" && (
-          <>
-            <Button
-              customStyle={css`
-                margin-top: 24px;
-              `}
-              type="button"
-              primary
-              linkTo="/top-up"
-            >
-              Top up
-            </Button>
-            <Button type="button" primary linkTo="/send">
-              Send
-            </Button>
-
-            <Heading customCss={css(`margin-top: 32px`)} number={5} highlight>
-              We are in beta! Make sure to follow us in Twitter{" "}
-              <a
-                href="https://twitter.com/signupwallet"
-                target="_blank"
-                rel="noopener noreferer"
-              >
-                @signupwallet
-              </a>{" "}
-              for more exciting news.
-            </Heading>
-          </>
+        {reqType === "send_slp" && (
+          <RequestSlpSend bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
+
+        {reqType !== "spend_token" &&
+          reqType !== "access" &&
+          reqType !== "send_slp" && (
+            <>
+              <Logo />
+
+              {!utxoIsFetching && balance && (
+                <Heading customCss={css(`color: black`)} number={3}>
+                  {balance} BCH (${balanceInUSD})
+                </Heading>
+              )}
+              <Button
+                customStyle={css`
+                  margin-top: 24px;
+                `}
+                type="button"
+                primary
+                linkTo="/top-up"
+              >
+                Top up
+              </Button>
+              <Button type="button" primary linkTo="/send">
+                Send
+              </Button>
+
+              <Heading customCss={css(`margin-top: 32px`)} number={5} highlight>
+                We are in beta! Make sure to follow us in Twitter{" "}
+                <a
+                  href="https://twitter.com/signupwallet"
+                  target="_blank"
+                  rel="noopener noreferer"
+                >
+                  @signupwallet
+                </a>{" "}
+                for more exciting news.
+              </Heading>
+            </>
+          )}
       </Article>
     </>
   );

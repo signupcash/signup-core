@@ -32,6 +32,7 @@
     "preact-router": "^3.2.1",
     "qrcode.react": "^1.0.0",
     "react-burger-menu": "^2.8.0",
+    "react-image-fallback": "^8.0.0",
     "react-toastify": "^6.0.8",
     "regenerator-runtime": "^0.13.7",
     "slp-mdm": "0.0.7",

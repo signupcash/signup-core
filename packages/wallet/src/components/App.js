@@ -42,6 +42,10 @@ function App() {
 
   useEffect(() => {
     function receiveMessage(event) {
+      if (!["access", "spend_token", "send_slp"].includes(event.data.reqType)) {
+        return;
+      }
+
       console.log("[SIGNUP] event received", event.data);
       nonce++;
       const requestOrigin = event.origin.replace(/https?:\/\//, "");

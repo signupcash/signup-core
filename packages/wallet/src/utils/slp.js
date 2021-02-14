@@ -83,7 +83,8 @@ export async function getSlpBalances(slpAddr) {
     },
   };
 
-  return executeSlpDbQuery(q);
+  const { data } = await executeSlpDbQuery(q);
+  return data.g;
 }
 
 export async function getSlpUtxos(slpAddr) {

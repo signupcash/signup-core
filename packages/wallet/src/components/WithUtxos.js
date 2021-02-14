@@ -5,7 +5,7 @@ import * as slpjs from "slpjs";
 import { getWalletSLPAddr, getWalletAddr } from "../utils/wallet";
 import { workerCourier } from "../signer";
 import { getUtxos } from "../utils/blockchain";
-import { getSlpUtxos } from "../utils/slp";
+import { getSlpUtxos, getSlpBalances } from "../utils/slp";
 
 const BITBOX = require("bitbox-sdk").BITBOX;
 
@@ -15,10 +15,13 @@ export const UtxosContext = createContext({});
 
 const WithUtxos = (Component) => {
   function WithUtxosComp(props) {
-    const [utxoIsFetching, setUtxoIsFetching] = useState(false);
+    const [utxoIsFetching, setUtxoIsFetching] = useState(true);
     const [latestUtxos, setLatestUtxos] = useState([]);
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
     const [slpUtxos, setSlpUtxos] = useState({});
+    const [slpBalances, setSlpBalances] = useState();
+    const [bchAddr, setBchAddr] = useState();
+    const [slpAddr, setSlpAddr] = useState();
 
     useEffect(() => {
       refetchUtxos();
@@ -36,25 +39,22 @@ const WithUtxos = (Component) => {
       const walletAddr = await getWalletAddr();
       const walletSlpAddr = await getWalletSLPAddr();
 
-      let utxos;
-      let slpUtxos;
+      let [utxos, slpUtxos, slpBalances] = await Promise.all([
+        getUtxos(walletAddr),
+        getSlpUtxos(walletSlpAddr),
+        getSlpBalances(walletSlpAddr),
+      ]).catch((e) => {
+        console.log("ERROR with UTXOs", e);
+      });
 
-      try {
-        // Fetch normal UTXOs
-        utxos = await getUtxos(walletAddr);
-        // Fetch SLP UTXOs
-        slpUtxos = await getSlpUtxos(walletSlpAddr);
-      } catch (e) {
-        console.log("ERROR with UTXOs");
-      }
+      console.log("Utxos =>", utxos);
+      console.log("SLP Utxos => ", slpUtxos);
+      console.log("SLP Balances =>", slpBalances);
 
       // remove SLP Utxos from normal utxos
       utxos = utxos.filter(
         (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
       );
-
-      console.log("Utxos =>", utxos);
-      console.log("SLP Utxos => ", slpUtxos);
 
       // calculate satoshis available
       const latestSatoshisBalance = utxos.reduce(
@@ -66,6 +66,9 @@ const WithUtxos = (Component) => {
         setLatestSatoshisBalance(latestSatoshisBalance);
         setLatestUtxos(utxos);
         setSlpUtxos(slpUtxos);
+        setSlpBalances(slpBalances);
+        setBchAddr(walletAddr);
+        setSlpAddr(walletSlpAddr);
 
         setUtxoIsFetching(false);
         // update data in the web worker
@@ -85,6 +88,9 @@ const WithUtxos = (Component) => {
           latestSatoshisBalance,
           refetchUtxos,
           utxoIsFetching,
+          slpBalances,
+          bchAddr,
+          slpAddr,
         }}
       >
         {<Component {...props} />}

@@ -20,6 +20,7 @@ import Tabs from "../common/Tabs";
 import { UtxosContext } from "../WithUtxos";
 import { satsToBch, bchToFiat } from "../../utils/unitUtils";
 import { getSlpBalances } from "../../utils/slp";
+import ReloadButton from "../common/ReloadButton";
 
 const headerStyle = css``;
 
@@ -40,34 +41,30 @@ export default function ({ clientPayload }) {
     latestSatoshisBalance,
     refetchUtxos,
     utxoIsFetching,
+    slpBalances,
+    bchAddr,
+    slpAddr,
   } = useContext(UtxosContext);
 
   const [balance, setBalance] = useState(0);
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
-  const { bchAddr, slpAddr, cashAccount, walletExist } = useWallet();
   const [numOfTokens, setNumOfTokens] = useState();
   const [numOfNfts, setNumOfNfts] = useState();
 
   // Fetching the number of SLP tokens and NFTs
   useEffect(() => {
-    (async () => {
-      if (!slpAddr) return;
+    if (!slpBalances) return;
 
-      const { data } = await getSlpBalances(slpAddr);
-      // g is for Graph collection of SLP db
-      if (data.g) {
-        const numOfTokens = data.g.filter((token) => token.versionType == "1")
-          .length;
-        const numOfNfts = data.g.filter((token) => token.versionType == "65")
-          .length;
+    const numOfTokens = slpBalances.filter((token) => token.versionType == "1")
+      .length;
+    const numOfNfts = slpBalances.filter((token) => token.versionType == "65")
+      .length;
 
-        setNumOfTokens(numOfTokens);
-        setNumOfNfts(numOfNfts);
-      }
-    })();
-  }, [slpAddr]);
+    setNumOfTokens(numOfTokens);
+    setNumOfNfts(numOfNfts);
+  }, [slpBalances]);
 
   useEffect(() => {
     if (!latestSatoshisBalance) return;
@@ -110,13 +107,22 @@ export default function ({ clientPayload }) {
 
       <div>
         {!utxoIsFetching && (
-          <Heading
-            onClick={() => refetchUtxos()}
-            customCss={css(`color: black`)}
-            number={2}
+          <div
+            class={css`
+              display: flex;
+              flex-direction: row;
+            `}
           >
-            {balance} BCH {balanceInUSD && `($${balanceInUSD})`}
-          </Heading>
+            <Heading customCss={css(`color: black`)} number={2}>
+              {balance} BCH {balanceInUSD && `($${balanceInUSD})`}
+            </Heading>
+            <ReloadButton
+              customStyle={css`
+                margin: 22.5px -20px;
+              `}
+              onClick={() => refetchUtxos()}
+            />
+          </div>
         )}
 
         {utxoIsFetching && <Heading number={5}>Fetching Balance...</Heading>}
@@ -152,42 +158,65 @@ export default function ({ clientPayload }) {
             excavate: false,
           }}
         />
-        <Heading size="12px" ariaLabel="Your SLP Address" number={5} highlight>
+        <Heading
+          size="12px"
+          customCss={css`
+            margin-top: -15px;
+          `}
+          ariaLabel="Your SLP Address"
+          number={5}
+          highlight
+        >
           {slpAddr}
         </Heading>
 
-        <p>Your SLP balances are listed here 👾</p>
+        {!utxoIsFetching && (
+          <>
+            <div
+              class={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              `}
+            >
+              <p>Your SLP balances are listed here 👾</p>
+              <ReloadButton onClick={() => refetchUtxos()} />
+            </div>
 
-        <div
-          class={css`
-            display: flex;
-            flex-direction: row;
-            margin-bottom: 10px;
-          `}
-        >
-          <Box title="SLP Tokens">
-            <Heading
-              customCss={css`
-                color: black;
+            <div
+              class={css`
+                display: flex;
+                flex-direction: row;
+                margin-bottom: 10px;
               `}
-              number={2}
-              onClick={() => route("/tokens", true)}
             >
-              {numOfTokens}
-            </Heading>
-          </Box>
-          <Box title="NFTs">
-            <Heading
-              customCss={css`
-                color: black;
-              `}
-              number={2}
-              onClick={() => route("/NFTs", true)}
-            >
-              {numOfNfts}
-            </Heading>
-          </Box>
-        </div>
+              <Box title="SLP Tokens">
+                <Heading
+                  customCss={css`
+                    color: black;
+                  `}
+                  number={2}
+                  onClick={() => route("/tokens", true)}
+                >
+                  {numOfTokens}
+                </Heading>
+              </Box>
+              <Box title="NFTs">
+                <Heading
+                  customCss={css`
+                    color: black;
+                  `}
+                  number={2}
+                  onClick={() => route("/NFTs", true)}
+                >
+                  {numOfNfts}
+                </Heading>
+              </Box>
+            </div>
+          </>
+        )}
+
+        {utxoIsFetching && <p>Loading your SLPs ...</p>}
       </>
     </Article>
   );
@@ -202,7 +231,7 @@ export default function ({ clientPayload }) {
           overflow: hidden;
         `}
       >
-        {walletExist && bchAddr ? (
+        {bchAddr ? (
           <Tabs
             sections={[
               {
