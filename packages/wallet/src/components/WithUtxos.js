@@ -2,10 +2,14 @@ import { h, createContext } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { css } from "emotion";
 import * as slpjs from "slpjs";
-import { getWalletSLPAddr, getWalletAddr } from "../utils/wallet";
+import {
+  getWalletSLPAddr,
+  getWalletAddr,
+  isUserWalletExist,
+} from "../utils/wallet";
 import { workerCourier } from "../signer";
 import { getUtxos } from "../utils/blockchain";
-import { getSlpUtxos, getSlpBalances } from "../utils/slp";
+import { getSlpUtxos, getSlpBalances, getSlpBatonUtxos } from "../utils/slp";
 
 const BITBOX = require("bitbox-sdk").BITBOX;
 
@@ -19,9 +23,10 @@ const WithUtxos = (Component) => {
     const [latestUtxos, setLatestUtxos] = useState([]);
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
     const [slpUtxos, setSlpUtxos] = useState({});
-    const [slpBalances, setSlpBalances] = useState();
+    const [slpBalances, setSlpBalances] = useState([]);
     const [bchAddr, setBchAddr] = useState();
     const [slpAddr, setSlpAddr] = useState();
+    const [walletExist, setWalletExist] = useState();
 
     useEffect(() => {
       refetchUtxos();
@@ -37,11 +42,20 @@ const WithUtxos = (Component) => {
       setUtxoIsFetching(true);
 
       const walletAddr = await getWalletAddr();
+      const walletExist = typeof walletAddr !== "undefined";
+      setWalletExist(walletExist);
+
+      if (!walletExist) {
+        setUtxoIsFetching(false);
+        return;
+      }
+
       const walletSlpAddr = await getWalletSLPAddr();
 
-      let [utxos, slpUtxos, slpBalances] = await Promise.all([
+      let [utxos, slpUtxos, slpBatons, slpBalances] = await Promise.all([
         getUtxos(walletAddr),
         getSlpUtxos(walletSlpAddr),
+        getSlpBatonUtxos(walletSlpAddr),
         getSlpBalances(walletSlpAddr),
       ]).catch((e) => {
         console.log("ERROR with UTXOs", e);
@@ -54,6 +68,11 @@ const WithUtxos = (Component) => {
       // remove SLP Utxos from normal utxos
       utxos = utxos.filter(
         (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
+      );
+
+      // remove SLP Baton Utxos to avoid burning batons
+      utxos = utxos.filter(
+        (u) => !slpBatons.some((su) => su.txid === u.txid && su.vout === u.vout)
       );
 
       // calculate satoshis available
@@ -89,6 +108,7 @@ const WithUtxos = (Component) => {
           refetchUtxos,
           utxoIsFetching,
           slpBalances,
+          walletExist,
           bchAddr,
           slpAddr,
         }}
