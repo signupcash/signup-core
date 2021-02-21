@@ -41,7 +41,13 @@ export async function deleteWallet(mnemonic) {
 }
 
 export async function retrieveWalletCredentials() {
-  const userWallet = atob(await localforage.getItem("SIGNUP_WALLET"));
+  let userWallet;
+
+  const userWalletInBase64 = await localforage.getItem("SIGNUP_WALLET");
+  if (userWalletInBase64) {
+    userWallet = atob(userWalletInBase64);
+  }
+
   const walletStatus = await localforage.getItem("SIGNUP_WALLET_STATUS");
   const isVerified = walletStatus === "VERIFIED";
   return { userWallet, isVerified };
@@ -54,7 +60,9 @@ export async function isUserWalletExist() {
 
 export async function getWalletAddr() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
+
   let bchAddr;
+  if (!userWallet || !isVerified) return;
 
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
   const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
