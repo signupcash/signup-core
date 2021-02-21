@@ -94,18 +94,52 @@ export async function getSlpUtxos(slpAddr) {
       db: ["g"],
       aggregate: [
         {
-          $match: {
-            "graphTxn.outputs.address": slpAddr,
-            "graphTxn.outputs.status": "UNSPENT",
-          },
-        },
-        {
           $unwind: "$graphTxn.outputs",
         },
         {
           $match: {
             "graphTxn.outputs.address": slpAddr,
             "graphTxn.outputs.status": "UNSPENT",
+          },
+        },
+        {
+          $project: {
+            graphTxn: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "tokens",
+            localField: "graphTxn.details.tokenIdHex",
+            foreignField: "tokenDetails.tokenIdHex",
+            as: "token",
+          },
+        },
+      ],
+    },
+    r: {
+      f:
+        "[ .[] | { txid: .graphTxn.txid, vout: .graphTxn.outputs.vout, satoshis: .graphTxn.outputs.bchSatoshis, value: .graphTxn.outputs.slpAmount, decimals: .token[0].tokenDetails.decimals, ticker: .token[0].tokenDetails.symbol, tokenId: .graphTxn.details.tokenIdHex } ]",
+    },
+  };
+
+  const { data } = await executeSlpDbQuery(q);
+  return data.g;
+}
+
+export async function getSlpBatonUtxos(slpAddr) {
+  const q = {
+    v: 3,
+    q: {
+      db: ["g"],
+      aggregate: [
+        {
+          $unwind: "$graphTxn.outputs",
+        },
+        {
+          $match: {
+            "graphTxn.outputs.address": slpAddr,
+            "graphTxn.outputs.status": "BATON_UNSPENT",
           },
         },
         {
