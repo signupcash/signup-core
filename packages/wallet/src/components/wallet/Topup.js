@@ -161,7 +161,7 @@ export default function ({ clientPayload }) {
         <Heading
           size="12px"
           customCss={css`
-            margin-top: -15px;
+            margin-top: 0;
           `}
           ariaLabel="Your SLP Address"
           number={5}
@@ -179,8 +179,8 @@ export default function ({ clientPayload }) {
                 align-items: center;
               `}
             >
-              <p>Your SLP balances are listed here 👾</p>
               <ReloadButton onClick={() => refetchUtxos()} />
+              <p>Your SLP balances are listed here 👾</p>
             </div>
 
             <div

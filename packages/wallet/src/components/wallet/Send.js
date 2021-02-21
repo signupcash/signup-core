@@ -14,6 +14,7 @@ import {
   isCashAddress,
   satsToBch,
   bchToSats,
+  bchToFiat,
 } from "../../utils/unitUtils";
 import { sendBchTx } from "../../utils/transactions";
 import { DUST } from "../../config";
@@ -42,18 +43,33 @@ const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 const hardCodedTxFee = 500;
 
 export default function ({ clientPayload }) {
-  const [balance, setBalance] = useState();
-  const [balanceInUSD, setBalanceInUSD] = useState();
-  const [status, setStatus] = useState();
+  const [status, setStatus] = useState("DEFAULT");
   const [canSendTx, setCanSendTx] = useState(false);
-
+  const [balance, setBalance] = useState(0);
+  const [balanceInUSD, setBalanceInUSD] = useState();
   const [shouldSendAll, setShouldSendAll] = useState(false);
   const [targetAddr, setTargetAddr] = useState("");
   const [amountToSend, setAmountToSend] = useState(0);
 
-  const { latestUtxos, latestSatoshisBalance, refetchUtxos } = useContext(
-    UtxosContext
-  );
+  const {
+    latestUtxos,
+    latestSatoshisBalance,
+    refetchUtxos,
+    utxoIsFetching,
+  } = useContext(UtxosContext);
+
+  useEffect(() => {
+    if (!latestSatoshisBalance) return;
+
+    const balance = satsToBch(latestSatoshisBalance);
+    setBalance(balance);
+
+    (async () => {
+      // getting the fiat value
+      const usdBalance = await bchToFiat(balance, "usd");
+      setBalanceInUSD(usdBalance);
+    })();
+  }, [latestSatoshisBalance]);
 
   const [bchAddr, setBchAddr] = useState();
 
@@ -89,7 +105,6 @@ export default function ({ clientPayload }) {
       // refetch UTXOs for future transactions
       await delay(2500);
       refetchUtxos();
-      readBalance();
     } catch (e) {
       console.log("[SIGNUP][ERROR]", e);
       setStatus("ERROR");
@@ -117,26 +132,8 @@ export default function ({ clientPayload }) {
     }
   }
 
-  async function readBalance() {
-    if (!bchAddr) return;
-    setStatus("FETCHING");
-
-    try {
-      const { balance, balanceInUSD } = await wallet.getBalance(bchAddr);
-
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
-      setStatus("FETCHED");
-    } catch (e) {
-      console.log("[SIGNUP Error]", e);
-      setStatus("BALANCE_ERROR");
-      Sentry.captureException(e);
-    }
-  }
-
   useEffect(() => {
     refetchUtxos();
-    readBalance();
   }, [bchAddr]);
 
   useEffect(() => {
@@ -178,32 +175,23 @@ export default function ({ clientPayload }) {
                 margin-bottom: 16px;
               `}
             >
-              {status === "FETCHED" && (
-                <Heading number={4}>
-                  Balance: {balance} BCH (${balanceInUSD})
-                </Heading>
-              )}
-              {status === "FETCHING" && (
+              {!utxoIsFetching &&
+                (status === "DEFAULT" || status === "TX ACCOMPLISHED") && (
+                  <Heading number={4}>
+                    {balance} BCH (${balanceInUSD})
+                  </Heading>
+                )}
+              {utxoIsFetching && (
                 <Heading number={4}>Fetching Balance...</Heading>
               )}
               {status === "TX PROCESSING" && (
                 <Heading number={4}>Sending... give us a second 🥶</Heading>
               )}
-              {status === "TX ACCOMPLISHED" && (
-                <Heading number={4}>Transaction is Sent! 😼</Heading>
-              )}
+
               {status === "ERROR" && (
                 <Heading number={4}>
                   Something went wrong! Please report this issue to us so we can
                   fix it 😥
-                </Heading>
-              )}
-              {status === "BALANCE_ERROR" && (
-                <Heading number={4}>
-                  There was a problem while fetching your balance.{" "}
-                  <a href="#" onClick={readBalance}>
-                    Retry
-                  </a>
                 </Heading>
               )}
             </div>

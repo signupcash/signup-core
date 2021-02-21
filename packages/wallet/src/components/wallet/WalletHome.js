@@ -26,13 +26,15 @@ const labelStyle = css`
 `;
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 
-export default function ({ clientPayload, bchAddr }) {
+export default function ({ clientPayload }) {
   const { reqType } = clientPayload;
-  const [balance, setBalance] = useState();
-  const [balanceInUSD, setBalanceInUSD] = useState();
+  const [balance, setBalance] = useState(0);
+  const [balanceInUSD, setBalanceInUSD] = useState(0);
   const [status, setStatus] = useState();
 
-  const { latestSatoshisBalance, utxoIsFetching } = useContext(UtxosContext);
+  const { latestSatoshisBalance, utxoIsFetching, bchAddr } = useContext(
+    UtxosContext
+  );
 
   useEffect(() => {
     if (!latestSatoshisBalance) return;
@@ -54,8 +56,6 @@ export default function ({ clientPayload, bchAddr }) {
   return (
     <>
       <Article ariaLabel="Your Wallet">
-        {utxoIsFetching && <Heading number={4}>Fetching Balance...</Heading>}
-
         {reqType === "spend_token" && (
           <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
@@ -72,9 +72,13 @@ export default function ({ clientPayload, bchAddr }) {
           reqType !== "access" &&
           reqType !== "send_slp" && (
             <>
-              <Logo />
+              <Logo slp />
 
-              {!utxoIsFetching && balance && (
+              {utxoIsFetching && (
+                <Heading number={5}>Fetching Balance...</Heading>
+              )}
+
+              {!utxoIsFetching && (
                 <Heading customCss={css(`color: black`)} number={3}>
                   {balance} BCH (${balanceInUSD})
                 </Heading>
@@ -94,15 +98,18 @@ export default function ({ clientPayload, bchAddr }) {
               </Button>
 
               <Heading customCss={css(`margin-top: 32px`)} number={5} highlight>
-                We are in beta! Make sure to follow us in Twitter{" "}
+                Signup is not designed for storing large amount of funds! Use{" "}
                 <a
-                  href="https://twitter.com/signupwallet"
+                  href="https://bch.info/en/wallets"
                   target="_blank"
                   rel="noopener noreferer"
+                  class={css`
+                    color: #815de3;
+                  `}
                 >
-                  @signupwallet
+                  alternative wallets
                 </a>{" "}
-                for more exciting news.
+                for that purpose to ensure your safety.
               </Heading>
             </>
           )}

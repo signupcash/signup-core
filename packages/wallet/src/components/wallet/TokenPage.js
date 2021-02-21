@@ -91,12 +91,6 @@ export default function ({ tokenId }) {
     })();
   }, [refetchCurrentToken, slpBalances]);
 
-  useEffect(() => {
-    if (isSendingSlp) {
-      refetchUtxos();
-    }
-  }, [isSendingSlp]);
-
   // Here we fetch the group after the token is loaded
   useEffect(() => {
     if (!token) return;
@@ -269,7 +263,11 @@ export default function ({ tokenId }) {
 
                     <Button
                       type="submit"
-                      disabled={!amountToSend || !isSLPAddress(targetAddr)}
+                      disabled={
+                        !amountToSend ||
+                        !isSLPAddress(targetAddr) ||
+                        utxoIsFetching
+                      }
                       customStyle={css`
                         margin-top: 32px;
                       `}
