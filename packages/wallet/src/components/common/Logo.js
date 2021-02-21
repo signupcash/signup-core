@@ -2,8 +2,9 @@ import { h } from "preact";
 import { css, cx } from "emotion";
 import logoPurple from "../../assets/signup-logo.png";
 import logoWhite from "../../assets/signup-logo-white-transparent.png";
+import slpLogo from "../../assets/signup-logo-slp.png";
 
-export default function ({ block }) {
+export default function ({ block, slp }) {
   let logoContainer = css`
     margin: 16px 0;
   `;
@@ -11,7 +12,7 @@ export default function ({ block }) {
     color: #7c3aed;
     text-align: center;
     text-decoration: none;
-    width: 100px;
+    width: ${slp ? "250px" : "100px"};
   `;
 
   if (block) {
@@ -23,6 +24,7 @@ export default function ({ block }) {
       justify-content: center;
       user-select: none;
       margin: 32px;
+      padding: 15px;
     `;
     logoStyle = cx(
       logoStyle,
@@ -38,8 +40,11 @@ export default function ({ block }) {
     );
   }
   return (
-    <span class={logoContainer} aria-label="SIGNUP Logo">
-      <img src={block ? logoWhite : logoPurple} class={logoStyle} />
+    <span class={logoContainer} aria-label="Signup Logo">
+      <img
+        src={block ? logoWhite : slp ? slpLogo : logoPurple}
+        class={logoStyle}
+      />
     </span>
   );
 }
