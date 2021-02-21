@@ -49,6 +49,18 @@ export default function () {
         <Article ariaLabel="Your SLP Tokens">
           <Heading number={2}>SLP Tokens</Heading>
           {utxoIsFetching && <Loading text="Loading your tokens..." />}
+
+          {!utxoIsFetching &&
+            slpBalances.filter((x) => x.versionType == "1").length == 0 && (
+              <p
+                class={css`
+                  margin-top: 32px;
+                `}
+              >
+                Your wallet is very empty! 😅
+              </p>
+            )}
+
           {!utxoIsFetching &&
             slpBalances
               .filter((x) => x.versionType == "1")

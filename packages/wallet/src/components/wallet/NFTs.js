@@ -71,11 +71,13 @@ export default function () {
 
   useEffect(() => {
     setIsFetching(true);
+    if (!slpBalances) return;
+
     (async () => {
       await fetchNftGroups(slpBalances);
       setIsFetching(false);
     })();
-  }, []);
+  }, [slpBalances]);
 
   return (
     <>
@@ -88,6 +90,27 @@ export default function () {
 
           {(isFetching || utxoIsFetching) && (
             <Loading text="Loading your NFTs... 🥁" />
+          )}
+
+          {!(isFetching || utxoIsFetching) && nftGroups.length == 0 && (
+            <p
+              class={css`
+                margin-top: 32px;
+              `}
+            >
+              Your wallet is very empty! 😅 Go to{" "}
+              <a
+                href="https://waifufaucet.com/"
+                target="_blank"
+                rel="noreferer noopener"
+                class={css`
+                  color: #815de3;
+                `}
+              >
+                Waifu Faucet
+              </a>{" "}
+              and get some free NFTs!
+            </p>
           )}
 
           {nftGroups.map((group) => (
