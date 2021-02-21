@@ -1,6 +1,7 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { Link, route } from "preact-router";
+import { Mnemonic } from "bitbox-sdk";
 import { css } from "emotion";
 import * as Sentry from "@sentry/browser";
 import { toast } from "react-toastify";
@@ -10,11 +11,13 @@ import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import * as wallet from "../../utils/wallet";
-import { Mnemonic } from "bitbox-sdk";
+import { UtxosContext } from "../WithUtxos";
 
 export default function () {
   const [walletMnemonic, setWalletMnemonic] = useState();
   const [walletExist, setWalletExist] = useState(false);
+
+  const { refetchUtxos } = useContext(UtxosContext);
 
   useEffect(() => {
     (async () => {
@@ -23,7 +26,7 @@ export default function () {
   }, []);
 
   function handleMnemonicInput(e) {
-    setWalletMnemonic(e.target.value);
+    setWalletMnemonic(e.target.value.trim());
   }
 
   function handleImport(e) {
@@ -47,7 +50,11 @@ export default function () {
       try {
         await wallet.storeWallet(walletMnemonic);
         await wallet.storeWalletIsVerified();
-        route("/top-up", true);
+
+        setTimeout(() => {
+          refetchUtxos();
+          route("/", true);
+        }, 500);
       } catch (e) {
         console.log(e);
         toast.error("There is an error while importing your wallet!");
