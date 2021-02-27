@@ -1,4 +1,5 @@
 import { binToHex, cashAddressToLockingBytecode } from "@bitauth/libauth";
+import hash from "hash.js";
 
 // Parts of codes are borrowed from: https://github.com/Bitcoin-com/cashscript/blob/master/packages/cashscript/src/network/ElectrumNetworkProvider.ts
 // these functions are mostly necessary for EC network provider
