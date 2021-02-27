@@ -1,17 +1,51 @@
 import { BITBOX } from "bitbox-sdk";
+import { binToHex, cashAddressToLockingBytecode } from "@bitauth/libauth";
+import hash from "hash.js";
+import {
+  ElectrumCluster,
+  ElectrumTransport,
+  ClusterOrder,
+  RequestResponse,
+} from "electrum-cash";
+import { electrumCashClusters } from "../config";
+import { addressToElectrumScriptHash } from "./crypto";
 
 const bitbox = new BITBOX();
 
+const electrum = new ElectrumCluster(
+  "wallet.signup.cash",
+  "1.4.1",
+  2,
+  3,
+  ClusterOrder.PRIORITY
+);
+
+// Connect to all the clusters defined in config
+electrumCashClusters.forEach((c) => {
+  electrum.addServer(c.host, c.port, ElectrumTransport.WSS.Scheme, true);
+});
+
 export async function getUtxos(bchAddr) {
-  const { utxos } = await bitbox.Address.utxo(bchAddr);
-  if (!utxos) throw new Error("[Signup] No UTXO is found for this address");
+  await electrum.startup();
+  await electrum.ready();
+
+  const scripthash = addressToElectrumScriptHash(bchAddr);
+
+  const result = await electrum.request(
+    "blockchain.scripthash.listunspent",
+    scripthash
+  );
+
+  const utxos = result.map((utxo) => ({
+    txid: utxo.tx_hash,
+    vout: utxo.tx_pos,
+    satoshis: utxo.value,
+    height: utxo.height,
+  }));
 
   return utxos;
 }
 
-export function tiny(value) {
-  if (value.length > 35) {
-    return `${value.slice(0, 20)}...${value.slice(value.length - 10)}`;
-  }
-  return value;
+export async function sendRawTx(txHex) {
+  return electrum.request("blockchain.transaction.broadcast", txHex);
 }

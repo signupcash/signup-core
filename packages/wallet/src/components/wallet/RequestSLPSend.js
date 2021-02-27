@@ -19,7 +19,7 @@ import { sendSlpTx, feesFor } from "../../utils/transactions";
 import slpLogo from "../../assets/slp-logo-2.png";
 import bchLogo from "../../assets/bch-icon-qrcode.png";
 import { getSlpByTokenId } from "../../utils/slp";
-import { tiny } from "../../utils/blockchain";
+import { tiny } from "../../utils/helpers";
 import { SLP_EXPLORER } from "../../config";
 
 const Row = ({ children }) => (

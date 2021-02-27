@@ -2,6 +2,7 @@ import * as slpjs from "slpjs";
 import BigNumber from "bignumber.js";
 import bitbox from "../libs/bitbox";
 const slpMetadata = require("slp-mdm");
+import { sendRawTx } from "./blockchain";
 
 import {
   isUserWalletExist,
@@ -89,7 +90,7 @@ export async function sendBchTx(
   const txHex = builtTx.toHex();
 
   // Broadcast transation to the network
-  const txId = await bitbox.RawTransactions.sendRawTransaction([txHex]);
+  const txId = await sendRawTx(txHex);
 
   return { txId, spent: amountInSatoshis + fees };
 }
@@ -186,7 +187,7 @@ export async function sendSlpTx(
   const txHex = builtTx.toHex();
 
   // Broadcast transation to the network
-  const txId = await bitbox.RawTransactions.sendRawTransaction([txHex]);
+  const txId = await sendRawTx(txHex);
 
   return { txId };
 }

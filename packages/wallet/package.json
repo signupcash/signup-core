@@ -1,6 +1,6 @@
 {
   "name": "signupcash-signer",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "",
   "main": "public/index.html",
   "scripts": {
@@ -14,6 +14,7 @@
   "license": "MPL-2.0",
   "dependencies": {
     "@babel/plugin-transform-react-jsx": "^7.10.4",
+    "@bitauth/libauth": "^1.18.0",
     "@sentry/browser": "^5.27.1",
     "@sentry/tracing": "^5.27.1",
     "axios": "^0.19.2",
@@ -23,7 +24,9 @@
     "bitcore-lib-cash": "^8.24.2",
     "core-js": "^3.6.5",
     "delay": "^4.4.0",
+    "electrum-cash": "^2.0.6",
     "emotion": "^10.0.27",
+    "hash.js": "^1.1.7",
     "jsonwebtoken": "^8.5.1",
     "localforage": "^1.9.0",
     "p-retry": "^4.2.0",
