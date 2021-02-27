@@ -33,8 +33,4 @@ export const electrumCashClusters = [
     host: "bch.loping.net",
     port: 50004,
   },
-  {
-    host: "electrum.imaginary.cash",
-    port: 50004,
-  },
 ];
