@@ -1,3 +1,5 @@
+import { binToHex, cashAddressToLockingBytecode } from "@bitauth/libauth";
+
 // Parts of codes are borrowed from: https://github.com/Bitcoin-com/cashscript/blob/master/packages/cashscript/src/network/ElectrumNetworkProvider.ts
 // these functions are mostly necessary for EC network provider
 
@@ -29,7 +31,7 @@ export function addressToLockScript(address) {
  *
  * @returns The corresponding script hash in an electrum-cash compatible format
  */
-function addressToElectrumScriptHash(address) {
+export function addressToElectrumScriptHash(address) {
   // Retrieve locking script
   const lockScript = addressToLockScript(address);
 

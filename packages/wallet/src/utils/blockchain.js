@@ -1,5 +1,4 @@
 import { BITBOX } from "bitbox-sdk";
-import { binToHex, cashAddressToLockingBytecode } from "@bitauth/libauth";
 import hash from "hash.js";
 import {
   ElectrumCluster,
