@@ -13,12 +13,14 @@ import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
+import Loading from "../common/Loading";
 import Article from "../common/Article";
 import { UtxosContext } from "../WithUtxos";
 import { sendSlpTx, feesFor } from "../../utils/transactions";
 import slpLogo from "../../assets/slp-logo-2.png";
 import bchLogo from "../../assets/bch-icon-qrcode.png";
 import { getSlpByTokenId } from "../../utils/slp";
+import { satsToBch } from "../../utils/unitUtils";
 import { tiny } from "../../utils/helpers";
 import { SLP_EXPLORER } from "../../config";
 
@@ -58,7 +60,7 @@ export default function ({ clientPayload }) {
     if (!requestedToken || requestedToken.value < clientPayload.action.amount) {
       // Not enough slp tokens to send
       setStatus("NOT_ENOUGH_SLP");
-    } else if (latestSatoshisBalance < feesFor(3, 4)) {
+    } else if (latestSatoshisBalance < feesFor(4, 4)) {
       // Not enough BCH to pay for fees
       setStatus("NOT_ENOUGH_BCH");
     } else {
@@ -78,10 +80,20 @@ export default function ({ clientPayload }) {
     setStatus("PENDING");
   }, [clientPayload.nonce]);
 
+  useEffect(() => {
+    if (!utxoIsFetching) return;
+    setStatus("PENDING");
+  }, [utxoIsFetching]);
+
   function handleAllow(e) {
+    setStatus("PROCESSING");
     e.preventDefault();
     (async () => {
-      const { slpAddr: receiverSlpAddr, tokenId, amount } = clientPayload;
+      const {
+        slpAddr: receiverSlpAddr,
+        tokenId,
+        amount,
+      } = clientPayload.action;
 
       // TODO: peform the transaction
 
@@ -111,6 +123,12 @@ export default function ({ clientPayload }) {
 
   return (
     <>
+      {utxoIsFetching && <Loading text="Opening your wallet ... 🔒" />}
+
+      {status === "PROCESSING" && (
+        <Loading text="Processing your transaction ..." />
+      )}
+
       {status === "WAITING" && !utxoIsFetching && (
         <form onSubmit={handleAllow}>
           <Heading number={3}>SLP Transaction Request</Heading>
@@ -202,7 +220,45 @@ export default function ({ clientPayload }) {
         </form>
       )}
 
-      {status === "NOT_ENOUGH_SLP" && (
+      {status === "NOT_ENOUGH_BCH" && !utxoIsFetching && (
+        <>
+          <Heading number={2}>Not Enough BCH</Heading>
+          <Heading number={5}>
+            You need to have at least {satsToBch(feesFor(4, 4))} BCH to pay for
+            the fees on this transaction. If you want to proceed, send enough
+            BCH to this address:
+          </Heading>
+          <QRCode
+            value={bchAddr}
+            renderAs={"png"}
+            size={250}
+            includeMargin
+            imageSettings={{
+              src: bchAddr && bchLogo,
+              x: null,
+              y: null,
+              height: 50,
+              width: 50,
+              excavate: false,
+            }}
+          />
+          <Heading
+            size="12px"
+            ariaLabel="Your BCH Address"
+            number={5}
+            highlight
+          >
+            {bchAddr}
+          </Heading>
+          <p>Click on the button below after you sent the required amount:</p>
+          <Button onClick={() => refetchUtxos()}>Check Again</Button>
+          <Button alert onClick={handleDeny}>
+            Cancel
+          </Button>
+        </>
+      )}
+
+      {status === "NOT_ENOUGH_SLP" && !utxoIsFetching && (
         <>
           <Heading number={2}>Not Enough SLP</Heading>
           <Heading number={5}>

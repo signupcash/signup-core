@@ -1,5 +1,4 @@
 import { BITBOX } from "bitbox-sdk";
-
 import {
   ElectrumCluster,
   ElectrumTransport,
@@ -13,7 +12,7 @@ const bitbox = new BITBOX();
 const electrum = new ElectrumCluster(
   "wallet.signup.cash",
   "1.4.1",
-  2,
+  1,
   3,
   ClusterOrder.PRIORITY
 );

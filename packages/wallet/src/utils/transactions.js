@@ -119,11 +119,10 @@ export async function sendSlpTx(
   const changeReceiverAddress = await getWalletSLPAddr();
   const fees = feesFor(4, 4);
 
-  const balances = await getSlpBalances(changeReceiverAddress);
-  const targetToken = balances.filter((x) => x.tokenId === tokenId).pop();
+  const targetToken = slpBalances.filter((x) => x.tokenId === tokenId).pop();
 
   if (!targetToken) {
-    throw new Error("[Signup] No balance to send the transaction");
+    throw new Error("[Signup] No SLP balance to send the transaction");
   }
 
   let sendAmounts = [
