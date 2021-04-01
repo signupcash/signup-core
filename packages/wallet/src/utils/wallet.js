@@ -65,9 +65,9 @@ export async function getWalletAddr() {
   if (!userWallet || !isVerified) return;
 
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, __SIGNUP_NETWORK__);
 
-  const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const path = bitbox.HDNode.derivePath(hdNode, __SIGNUP_HD_PATH__);
   const legacyAddr = path.keyPair.getAddress();
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
@@ -82,8 +82,8 @@ export async function getWalletSLPAddr() {
 export async function getWalletHdNode() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
-  return bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, __SIGNUP_NETWORK__);
+  return bitbox.HDNode.derivePath(hdNode, __SIGNUP_HD_PATH__);
 }
 
 export async function getWalletEntropy() {

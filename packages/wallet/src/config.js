@@ -20,21 +20,4 @@ export const WAIFU_NFT_IMAGE_SERVER = "https://icons.waifufaucet.com/128/";
 export const WAIFU_GROUP_ID =
   "a2987562a405648a6c5622ed6c205fca6169faa8afeb96a994b48010bd186a66";
 
-export const electrumCashClusters = [
-  {
-    host: "electroncash.de",
-    port: 60002,
-  },
-  {
-    host: "electroncash.dk",
-    port: 50004,
-  },
-  {
-    host: "bch.loping.net",
-    port: 50004,
-  },
-  {
-    host: "electrum.imaginary.cash",
-    port: 50004,
-  },
-];
+export const electrumCashClusters = __ELECTRUM_SERVERS__

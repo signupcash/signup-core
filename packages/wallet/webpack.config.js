@@ -1,3 +1,4 @@
+const webpack = require("webpack")
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 
@@ -5,6 +6,10 @@ module.exports = {
   entry: {
     signer: "./src/index.js",
     worker: "./src/worker/worker.js",
+  },
+  node: {
+    net: 'empty',
+    tls: 'empty'
   },
   resolve: {
     alias: {
@@ -69,4 +74,18 @@ module.exports = {
       },
     ],
   },
+  plugins: [new webpack.DefinePlugin({
+    __SIGNUP_NETWORK__: JSON.stringify(process.env.NODE_ENV === "development" ? "testnet" : "mainnet"),
+    __SIGNUP_HD_PATH__: JSON.stringify(process.env.SIGNUP_HD_PATH || "m/44'/0'/0'/0/0"),
+    __ELECTRUM_SERVERS__: JSON.stringify(process.env.NODE_ENV === "development" ? [
+      { host: "testnet.bitcoincash.network", port: 60004 },
+      { host: "blackie.c3-soft.com", port: 60004 },
+      { host: "electroncash.de", port: 60004 }
+    ] : [
+      { host: "electroncash.de", port: 60002 },
+      { host: "electroncash.dk", port: 50004 },
+      { host: "bch.loping.net", port: 50004 },
+      { host: "electrum.imaginary.cash", port: 50004 }
+    ])
+  })]
 };

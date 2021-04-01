@@ -47,17 +47,17 @@ export default function ({ clientPayload, bchAddr }) {
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [accomplishedTxs, dispatchTx] = useReducer(txReducer, []);
 
-  const { refetchUtxos } = useContext(UtxosContext);
+  const { refetchUtxos, latestSatoshisBalance  } = useContext(UtxosContext);
 
-  useEffect(() => {
-    (async () => {
-      if (!bchAddr) return;
+  useEffect(async () => {
+    if (!latestSatoshisBalance) return;
 
-      const { balance, balanceInUSD } = await getBalance(bchAddr);
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
-    })();
-  }, [bchAddr]);
+    const balance = satsToBch(latestSatoshisBalance);
+    const balanceInUSD = await bchToFiat(balance, "usd");
+    setBalance(balance);
+    setBalanceInUSD(balanceInUSD);
+
+  }, [latestSatoshisBalance]);
 
   useEffect(() => {
     setStatus("WAITING");
