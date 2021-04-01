@@ -16,7 +16,7 @@
     "@babel/plugin-transform-react-jsx": "^7.10.4",
     "@sentry/browser": "^5.27.1",
     "@sentry/tracing": "^5.27.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "base58check": "^2.0.0",
     "bignumber.js": "^9.0.1",
     "bitbox-sdk": "^8.11.2",
