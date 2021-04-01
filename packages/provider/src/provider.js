@@ -43,6 +43,27 @@ function getRequestPayload() {
   return latestPayload;
 }
 
+function showPopup() {
+  // open a new popup window or focus the current one
+  if (popupWindowRef == null || popupWindowRef.closed) {
+
+    const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
+    popupWindowRef = window.open(LOGIN_URL, "Signup Wallet", popupParams);
+
+    listenForMessage(null, function (payloadFromSigner) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+      removeListeningForMessage();
+      if (payloadFromSigner.status === "READY") {
+        requestFromUserWallet({ ...getRequestPayload() });
+      }
+    });
+
+  } else {
+    requestFromUserWallet({ ...getRequestPayload() });
+    popupWindowRef.focus();
+  }
+}
+
 // create the rootDiv and toast and keep it invisible
 function buildDOMObjects() {
   rootDiv = document.createElement("div");
@@ -131,24 +152,7 @@ function buildDOMObjects() {
     }
   `);
 
-  button.addEventListener("click", (e) => {
-    // open a new popup window or focus the current one
-    if (popupWindowRef == null || popupWindowRef.closed) {
-      const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
-      popupWindowRef = window.open(LOGIN_URL, "Signup Wallet", popupParams);
-
-      listenForMessage(null, function (payloadFromSigner) {
-        console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
-        removeListeningForMessage();
-        if (payloadFromSigner.status === "READY") {
-          requestFromUserWallet({ ...getRequestPayload() });
-        }
-      });
-    } else {
-      requestFromUserWallet({ ...getRequestPayload() });
-      popupWindowRef.focus();
-    }
-  });
+  button.addEventListener("click", showPopup);
 
   rootDiv.appendChild(h1);
   rootDiv.appendChild(h4);
@@ -170,10 +174,18 @@ function setRootDivHeight(newHeight) {
   rootDiv.classList.add(newHeight);
 }
 
-function showRootDiv() {
-  setTimeout(function () {
-    rootDiv.style.setProperty("display", "block");
-  }, 0);
+function showRootDiv(skipPopup) {
+
+  if (!skipPopup) {
+    
+    setTimeout(function () {
+      rootDiv.style.setProperty("display", "block");
+    }, 0);
+
+  } else {
+    
+    showPopup()
+  }
 }
 
 function setStateForRootDiv(state, meta = {}) {
@@ -354,6 +366,37 @@ function sign(data) {
     });
 }
 
+function contribute(amount, unit, data, recipients, skipPopup = true) {
+  showRootDiv(skipPopup)
+  const newReqId = uuidv4();
+
+  latestPayload = {
+    reqId: newReqId,
+    reqType: "contribution",
+    recipients,
+    data,
+    amount,
+    unit
+  };
+
+  return new Promise(function (resolve, reject) {
+    // first set a listener to receive the response back from signer
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+      if (payloadFromWallet.status === "CONTRIBUTION_SUCCESS") {
+        // TODO show user is logged in inside rootDiv and disappear
+        setStateForRootDiv("LOGGED-IN");
+        resolve(payloadFromWallet);
+
+      } else {
+        // Signin failed
+        reject("User failed to Signin with a wallet");
+      }
+    });
+  });
+}
+
 function requestAccess(permissions) {
   showRootDiv();
   const newReqId = uuidv4();
@@ -494,6 +537,7 @@ export function cash(params) {
     spendTokenExist,
     pay,
     sign,
+    contribute
   };
 }
 

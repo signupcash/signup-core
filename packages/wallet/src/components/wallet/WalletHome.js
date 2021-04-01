@@ -8,6 +8,7 @@ import { satsToBch, bchToFiat } from "../../utils/unitUtils";
 import RequestSpendToken from "./RequestSpendToken";
 import RequestAccess from "./RequestAccess";
 import RequestSlpSend from "./RequestSLPSend";
+import RequestSendContribution from "./RequestSendContribution";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -32,7 +33,7 @@ export default function ({ clientPayload }) {
   const [balanceInUSD, setBalanceInUSD] = useState(0);
   const [status, setStatus] = useState();
 
-  const { latestSatoshisBalance, utxoIsFetching, bchAddr } = useContext(
+  const { latestSatoshisBalance, utxoIsFetching } = useContext(
     UtxosContext
   );
 
@@ -59,6 +60,10 @@ export default function ({ clientPayload }) {
         {reqType === "spend_token" && (
           <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
+        
+        {reqType === "contribution" && (
+          <RequestSendContribution clientPayload={clientPayload} />
+        )}
 
         {reqType === "access" && (
           <RequestAccess bchAddr={bchAddr} clientPayload={clientPayload} />
@@ -70,7 +75,8 @@ export default function ({ clientPayload }) {
 
         {reqType !== "spend_token" &&
           reqType !== "access" &&
-          reqType !== "send_slp" && (
+          reqType !== "send_slp" &&
+          reqType !== "contribution" && (
             <>
               <Logo slp />
 

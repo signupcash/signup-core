@@ -248,3 +248,11 @@ export async function getWalletSpendingsBySessionId(sessionId) {
     return 0;
   }
 }
+
+export async function freezeCoinsInTx(sessionId, txId) {
+
+}
+
+export async function unfreezeCoinsInTx(sessionId, txId) {
+  
+}

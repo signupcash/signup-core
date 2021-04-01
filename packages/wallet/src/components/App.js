@@ -42,7 +42,7 @@ function App() {
 
   useEffect(() => {
     function receiveMessage(event) {
-      if (!["access", "spend_token", "send_slp"].includes(event.data.reqType)) {
+      if (!["access", "spend_token", "send_slp", "contribution"].includes(event.data.reqType)) {
         return;
       }
 

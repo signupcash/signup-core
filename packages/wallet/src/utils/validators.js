@@ -9,7 +9,7 @@ export function validateConfig(configObject) {
 }
 
 export function validateReqType(reqType) {
-  const acceptedReqTypes = ["access", "spend_token"];
+  const acceptedReqTypes = ["access", "spend_token", "contribution"];
   if (!acceptedReqTypes.includes(reqType)) {
     throw new Error("[SIGNUP ERROR] - reqType is wrong");
   }

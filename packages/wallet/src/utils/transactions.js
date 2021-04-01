@@ -11,6 +11,7 @@ import {
   getWalletHdNode,
   makeUsername,
   getUserAttemptedCashAccount,
+  freezeCoinsInTx
 } from "./wallet";
 
 import { isInSatoshis, sats } from "./unitUtils";
@@ -26,8 +27,7 @@ export function feesFor(inputNum, outputNum) {
   );
 }
 
-// perform the transaction right away
-export async function sendBchTx(
+async function createSendTransaction(
   amount,
   unit,
   receiverAddress,
@@ -45,7 +45,7 @@ export async function sendBchTx(
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
 
-  const tx = new bitbox.TransactionBuilder("mainnet");
+  const tx = new bitbox.TransactionBuilder(__SIGNUP_NETWORK__);
 
   let inputsSats = 0;
   let selectedUtxos = [];
@@ -87,12 +87,24 @@ export async function sendBchTx(
   });
 
   const builtTx = tx.build();
-  const txHex = builtTx.toHex();
+  const spent = amountInSatoshis + fees
 
-  // Broadcast transation to the network
-  const txId = await sendRawTx(txHex);
+  return { tx: builtTx, spent }
+}
 
-  return { txId, spent: amountInSatoshis + fees };
+// perform the transaction right away
+export async function sendBchTx(
+  amount,
+  unit,
+  receiverAddress,
+  latestSatoshisBalance,
+  latestUtxos = []
+) {
+
+  const { tx, spent } = await createSendTransaction(amount, unit, receiverAddress, latestSatoshisBalance, latestUtxos)
+  const txId = sendRawTx(tx.toHex());
+
+  return { txId, spent }
 }
 
 export async function sendSlpTx(
@@ -135,7 +147,8 @@ export async function sendSlpTx(
   // Proceed with the payment
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
-  const tx = new bitbox.TransactionBuilder("mainnet");
+
+  const tx = new bitbox.TransactionBuilder(__SIGNUP_NETWORK__);
 
   // Adding inputs
   inputUtxos.forEach((utxo) => {
@@ -190,4 +203,193 @@ export async function sendSlpTx(
   const txId = await sendRawTx(txHex);
 
   return { txId };
+}
+
+export async function sendCommitmentTx(
+  recipients,
+  data,
+  amount,
+  unit = "SATS",
+  latestSatoshisBalance,
+  latestUtxos = [],
+  //expires,
+  //checkExpired = true
+) {
+  
+  //check donation exists and amount in donation exists
+  if (!amount) {
+    throw "Donation amount is missing"
+  }
+
+  try {
+    amount = parseInt(amount)
+  } catch (err) {
+    throw "Invalid donation amount"
+  }
+  
+  //check donation amount is non negative
+  if (amount <= 0) {
+    throw "Zero or negative donation amount"
+  }
+
+  let amountInSatoshis = await sats(amount, unit);
+
+  //check outputs exist
+  if (!recipients) {
+    throw "Outputs are missing"
+  }
+
+  //check outputs is a list
+  if (!recipients instanceof Array) {
+    throw "Outputs are not a list"
+  }
+  
+  //check there are one or more outputs
+  if (recipients.length <= 0) {
+    throw "Outputs are empty"
+  }
+
+  // //check campaign has expired date 
+  // if (!expires) {
+  //   throw "Expiration is missing"
+  // }
+
+  //check data field exists and is an object/dictionary with comment and alias fields for contributor
+  if (!data) {
+    throw "'data' field is missing"
+  }
+
+  if (typeof(data) !== "object") {
+    throw "'data' field is not a dictionary"
+  }
+
+  if (typeof(data.alias) === 'undefined') {
+    throw "'data' is missing alias"
+  }
+
+  if (typeof(data.comment) === 'undefined') {
+    throw "'data' is missing comment"
+  }
+
+  //check all outputs have a value and address 
+  let sumOutputs = 0
+  
+  for (let i = 0; i < recipients.length; i++) {
+    const output = recipients[i]
+    
+    if (!output.address) {
+      throw "Output is missing address"
+    }
+
+    if (!output.value) {
+      throw "Output is missing value"
+    }
+    
+    // check all output value is an int and positive amount
+    let value
+
+    try {
+      value = parseInt(output.value)
+    } catch (err) {
+      throw "Invalid output value"
+    }
+
+    if (value <= 0) {
+      throw "Zero or negative output value"
+    }
+  
+    // sum all the outputs, God willing
+    sumOutputs += value
+  }
+
+  ////check donationTotal is > sum_outputs 
+  if (amountInSatoshis > sumOutputs) {
+    throw "Donation amount is larger than outputs"
+  }
+
+  //check the campaign hasn't expired
+  // let expires
+
+  // try {
+  //   expires = parseInt(expires)
+  // } catch (err) {
+  //   throw "Invalid expiration"
+  // }
+
+  // if (checkExpired && moment().unix(expires) < moment().unix()) {
+  //   throw "Campaign already expired"
+  // }
+
+  // proceed with the payment
+  const hdNode = await getWalletHdNode();
+  const keyPair = bitbox.HDNode.toKeyPair(hdNode);
+  
+  //Create a tx to ourselves and check we have enough funds, God willing.
+  //Deposit more in order to do this, God willing.
+  let pledgeTx
+
+  try { 
+
+    pledgeTx = (await createSendTransaction(amountInSatoshis, "SATS", bitbox.Address.toCashAddress(keyPair.getAddress()), latestSatoshisBalance, latestUtxos)).tx
+    
+  } catch (err) {
+
+    throw "Failed to create commitment transaction"
+  }
+  
+  //Create and sign a pledge tx moving coins from frozen addr to recipients of campaign, God willing.
+  const tx = new bitbox.TransactionBuilder(__SIGNUP_NETWORK__);
+  
+  tx.addInput(pledgeTx.getId(), 0);
+  
+  recipients.forEach(recipient => {
+    tx.addOutput(recipient.address, parseInt(recipient.value))
+  })
+
+  const vin = 0
+  let redeemScript
+  const hashType = tx.hashTypes.SIGHASH_ALL | tx.hashTypes.SIGHASH_ANYONECANPAY
+  const originalAmount = amountInSatoshis
+  const signatureAlgorithm = tx.signatureAlgorithms.ECDSA
+  
+  tx.sign(
+    vin, 
+    keyPair, 
+    redeemScript, 
+    hashType,
+    originalAmount,
+    signatureAlgorithm
+  )
+
+  const txin = tx.build().ins[0]
+  
+  //Serialize input to send back to UI, God willing.
+  //Ensure ability to cancel pledge and either move coins over so it's revoked in backend UI, God willing.
+  const commitmentObject = btoa(JSON.stringify({
+    inputs: [{
+      previous_output_transaction_hash: txin.hash.reverse().toString('hex'),
+      previous_output_index: txin.index,
+      sequence_number: txin.sequence,
+      unlocking_script: txin.script.toString('hex')
+    }],
+    data: {
+      alias: data.alias,
+      comment: data.comment
+    },
+    data_signature: null
+  }))
+
+  try {
+    await sendRawTx(pledgeTx.toHex())
+  } catch (err) {
+    throw "Failed to broadcast commitment transaction"
+  }
+
+  try {
+    await freezeCoinsInTx(pledgeTx.getId())
+  } catch (err) {
+    console.log("Failed to freeze coins!")
+  }
+
+  return commitmentObject
 }
