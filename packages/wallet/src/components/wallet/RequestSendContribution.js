@@ -216,7 +216,7 @@ export default function ({ clientPayload }) {
         )}
       </div>
 
-      {balanceIsLoaded && accomplishedTxs && accomplishedTxs.length && <Heading number={3}>Existing contributions:</Heading>}
+      {balanceIsLoaded && accomplishedTxs && !!accomplishedTxs.length && <Heading number={3}>Existing contributions:</Heading>}
 
       {accomplishedTxs &&
         accomplishedTxs.map((tx, idx) => (

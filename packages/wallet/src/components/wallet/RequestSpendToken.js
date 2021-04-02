@@ -38,7 +38,7 @@ const txReducer = function (state, action) {
   }
 };
 
-export default function ({ clientPayload, bchAddr }) {
+export default function ({ clientPayload }) {
   // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");
   // using this in state so user can change the parameter before accepting it
