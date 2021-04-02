@@ -429,8 +429,7 @@ function contribute(amount, unit, data, recipients, skipPopup = true) {
       console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
       removeListeningForMessage();
       if (payloadFromWallet.status === "CONTRIBUTION_SUCCESS") {
-        // TODO show user is logged in inside rootDiv and disappear
-        setStateForRootDiv("LOGGED-IN");
+        
         resolve(payloadFromWallet);
 
       } else {
