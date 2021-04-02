@@ -33,7 +33,7 @@ export default function ({ clientPayload }) {
   const [balanceInUSD, setBalanceInUSD] = useState(0);
   const [status, setStatus] = useState();
 
-  const { latestSatoshisBalance, utxoIsFetching } = useContext(
+  const { latestSatoshisBalance, utxoIsFetching, bchAddr } = useContext(
     UtxosContext
   );
 
