@@ -13,6 +13,8 @@ import Button from "../common/Button";
 import Article from "../common/Article";
 import { UtxosContext } from "../WithUtxos";
 
+import moment from 'moment'
+
 const permissionCss = css`
   margin: 16px;
   padding: 12px;
@@ -142,11 +144,32 @@ export default function ({ clientPayload }) {
                 customCss={css`
                     color: black;
                     margin: 8px 0;
+                    text-align: right;
                 `}
                 >
                 {clientPayload.origin}
                 </Heading>
             </div>
+            { clientPayload.data && clientPayload.data.title && <div class={css`
+                  display: flex;
+                  flex-direction: row;
+                  justify-content: space-between;
+              `}>
+              <Heading number={4} inline>
+                To:
+                </Heading>
+                <Heading
+                number={4}
+                inline
+                customCss={css`
+                    color: black;
+                    margin: 8px 0;
+                    text-align: right;
+                `}
+                >
+                {clientPayload.data.title}
+              </Heading>
+            </div> }
             <div
               class={css`
                 display: flex;
@@ -164,16 +187,17 @@ export default function ({ clientPayload }) {
                     margin: 8px 0;
                     height: 27px;
                     font-size: 15px;
+                    text-align: right;
                 `}>{ amountInSatoshis } SATS { balanceInUSD && `($${balanceInUSD})` }</Heading>
             </div>
             
-            <div class={css`
+            { clientPayload.data && clientPayload.data.expires && <div class={css`
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
             `}>
                 <Heading number={4} inline>
-                Expires in:
+                Expires:
                 </Heading>
                 <Heading
                 number={4}
@@ -181,11 +205,12 @@ export default function ({ clientPayload }) {
                 customCss={css`
                     color: black;
                     margin: 8px 0;
+                    text-align: right;
                 `}
                 >
-                1 hour
+                { moment().to(moment.unix(clientPayload.data.expires)) }
                 </Heading>
-            </div>
+            </div> }
 
             <Button type="submit" disabled={!balanceIsEnough} primary>
               {balanceIsEnough ? `Contribute (${amountInSatoshis} SATS)` : `Contribute`}
