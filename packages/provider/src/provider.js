@@ -558,7 +558,7 @@ function removeListeningForMessage() {
   window.removeEventListener("message", handleMessageReceivedFromSigner);
 }
 
-export function cash(params = {}) {
+function cash(params) {
   if (!(this instanceof cash)) {
     return new cash(params);
   }
@@ -586,3 +586,7 @@ export function cash(params = {}) {
 }
 
 export function read(bitdbURL = DEFAULT_BITDB_URL) {}
+
+export default {
+  cash,
+};

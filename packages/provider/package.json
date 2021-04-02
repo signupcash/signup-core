@@ -1,6 +1,6 @@
 {
   "name": "@signupcash/provider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connecting the web apps to Signup DApp wallet",
   "main": "dist/provider.js",
   "browserslist": [
@@ -39,7 +39,7 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "babel-polyfill": "^6.26.0",
     "emotion": "^10.0.27"
   }
