@@ -45,7 +45,7 @@ export default function ({ clientPayload }) {
   
   useEffect(async () => {
     setAmountInSatoshis(await sats(clientPayload.amount, clientPayload.unit))
-  }, [])
+  }, [clientPayload.amount, clientPayload.unit])
 
   useEffect(async () => {
     if (!latestSatoshisBalance) return;
