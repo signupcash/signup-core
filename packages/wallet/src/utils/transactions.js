@@ -290,11 +290,6 @@ export async function sendCommitmentTx(
     sumOutputs += value
   }
 
-  ////check donationTotal is > sum_outputs 
-  if (amountInSatoshis - bitcoinCashUtilities.CONTRIBUTOR_MINER_FEE > sumOutputs) {
-    throw "Donation amount is larger than outputs"
-  }
-
   // proceed with the payment
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
@@ -359,13 +354,4 @@ export async function sendCommitmentTx(
   }
 
   return commitmentObject
-}
-
-  static calculateTotalContributorMinerFees(CONTRIBUTION_COUNT) {
-    const AVERAGE_BYTE_PER_CONTRIBUTION = 296
-    const TARGET_FEE_RATE = 2
-
-    // Calculate the miner fee necessary to cover a fullfillment transaction for each contribution contribution.
-    return (AVERAGE_BYTE_PER_CONTRIBUTION * (CONTRIBUTION_COUNT)) * TARGET_FEE_RATE;
-  };
 }
