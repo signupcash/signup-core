@@ -42,7 +42,6 @@ export default function ({ clientPayload }) {
               class={css`
                 position: absolute;
                 bottom: 40px;
-                right: 10px;
                 text-align: center;
                 font-size: 13px;
               `}

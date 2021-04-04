@@ -26,7 +26,6 @@ export default {
   },
   bmMenu: {
     background: "#7c3aed",
-    padding: "2.5em 1.5em 0",
     fontSize: "1.15em",
   },
   bmMorphShape: {
@@ -34,6 +33,7 @@ export default {
   },
   bmItemList: {
     padding: "0.8em",
+    boxSizing: "border-box"
   },
   bmItem: {
     display: "block",
