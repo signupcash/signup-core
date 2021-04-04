@@ -1,10 +1,7 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
-import {
-  handleMessageBackToClient,
-  onWorkerEvent,
-} from "../../signer";
+import { handleMessageBackToClient } from "../../signer";
 import { satsToBch, bchToFiat, sats } from "../../utils/unitUtils";
 import { sendCommitmentTx } from "../../utils/transactions"
 
@@ -18,68 +15,64 @@ import moment from 'moment'
 const permissionCss = css`
   margin: 16px;
   padding: 12px;
-  min-height: 350px;
 `;
-
-function deepClone(data) {
-  return JSON.parse(JSON.stringify(data));
-}
-
-const txReducer = function (state, action) {
-  switch (action.type) {
-    case "TX_PUSH":
-      return [...state, action.value];
-    default:
-      return state;
-  }
-};
 
 export default function ({ clientPayload }) {
   // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");
   // using this in state so user can change the parameter before accepting it
-  const [balance, setBalance] = useState();
+  const [balanceInBch, setBalanceInBch] = useState();
   const [balanceInUSD, setBalanceInUSD] = useState();
-  const [accomplishedTxs, dispatchTx] = useReducer(txReducer, []);
-  const [amountInSatoshis, setAmountInSatoshis] = useState();
-
-  const { refetchUtxos, latestSatoshisBalance, utxoIsFetching, latestUtxos } = useContext(UtxosContext);
   
+  const [donationAmountInSatoshis, setDonationAmountInSatoshis] = useState();
+  const [donationAmountInBCH, setDonationAmountInBCH] = useState();
+  const [donationAmountInUSD, setDonationAmountInUSD] = useState();
+  
+  const [totalAmountInSatoshis, setTotalAmountInSatoshis] = useState();
+  const [totalAmountInBCH, setTotalAmountInBCH] = useState();
+
+  const { latestSatoshisBalance, utxoIsFetching, latestUtxos, frozenUtxos, freezeUtxo, unfreezeUtxo } = useContext(UtxosContext);
+  const frozenContributions = frozenUtxos.filter(utxo => {
+    return utxo.reqType === "contribution"
+  })
+
   useEffect(async () => {
-    setAmountInSatoshis(await sats(clientPayload.amount, clientPayload.unit))
-  }, [clientPayload.amount, clientPayload.unit])
+
+    const totalAmountInSatoshis = (await sats(clientPayload.amount, clientPayload.unit))
+    
+    const donationAmountInSatoshis = totalAmountInSatoshis - clientPayload.data.includingFee
+    const donationAmountInBCH = satsToBch(donationAmountInSatoshis);
+    const donationAmountInUSD = await bchToFiat(donationAmountInBCH, "usd");
+    
+    const totalAmountInBCH = satsToBch(totalAmountInSatoshis);
+    
+    setDonationAmountInSatoshis(donationAmountInSatoshis)
+    setDonationAmountInBCH(donationAmountInBCH);
+    setDonationAmountInUSD(donationAmountInUSD);
+
+    setTotalAmountInSatoshis(totalAmountInSatoshis)
+    setTotalAmountInBCH(totalAmountInBCH);
+
+  }, [clientPayload.amount, clientPayload.unit, clientPayload.data.includingFee])
 
   useEffect(async () => {
     if (!latestSatoshisBalance) return;
 
-    const balance = satsToBch(latestSatoshisBalance);
-    const balanceInUSD = await bchToFiat(balance, "usd");
-    setBalance(balance);
-    setBalanceInUSD(balanceInUSD);
+    const balanceInBch = satsToBch(latestSatoshisBalance);
+    const balanceInUSD = await bchToFiat(balanceInBch, "usd");
+    setBalanceInBch(balanceInBch || 0);
+    setBalanceInUSD(balanceInUSD || 0);
 
   }, [latestSatoshisBalance]);
-    
+
   useEffect(() => {
     setStatus("WAITING");
   }, [clientPayload.nonce]);
 
-  useEffect(() => {
-    refetchUtxos();
-    onWorkerEvent("tx", (eventData) => {
-      if (eventData.status === "DONE") {
-        const newTx = deepClone(eventData);
-        dispatchTx({
-          type: "TX_PUSH",
-          value: newTx,
-        });
-        refetchUtxos();
-      }
-    });
-  }, []);
-
   function handleAllow(e) {
     e.preventDefault();
     (async () => {
+
       const commitmentObject = await sendCommitmentTx(
         clientPayload.recipients, 
         clientPayload.data, 
@@ -89,7 +82,28 @@ export default function ({ clientPayload }) {
         latestUtxos
       )
 
-      handleMessageBackToClient("CONTRIBUTION_SUCCESS", clientPayload.reqId, { payload: commitmentObject });
+      try {
+
+        //TODO God willing: refetch utxos to get the actual amount/sats (add unit data too, God willing, about our utxos)
+        await freezeUtxo(
+          commitmentObject.inputs[0].previous_output_transaction_hash, 
+          commitmentObject.inputs[0].previous_output_index,
+          "contribution",
+          {
+            title: clientPayload.data.title,
+            expires: clientPayload.data.expires,
+            origin: clientPayload.origin,
+            amount: totalAmountInSatoshis,
+            unit: "SATS"
+          }
+        )
+
+      } catch (err) {
+        console.log("Failed to freeze coins!")
+      }
+
+      const serializedObject = btoa(JSON.stringify(commitmentObject))
+      handleMessageBackToClient("CONTRIBUTION_SUCCESS", clientPayload.reqId, { payload: serializedObject });
       setStatus("APPROVED");
 
     })();
@@ -101,9 +115,28 @@ export default function ({ clientPayload }) {
     self.close();
   }
 
-  const balanceIsLoaded = !utxoIsFetching || !!latestSatoshisBalance;
-  const balanceIsEnough = amountInSatoshis <= latestSatoshisBalance;
+  async function handleContributionRevocation({ txid, vout }) {
+    //TODO God willing: specifically for flipstarters, spend the contribution so it's not used later (not locked)
+    //TODO God willing: in general just remove from frozen coins, God willing, so it shows in balance.
+    await unfreezeUtxo(txid, vout)
+  }
 
+  const balanceIsLoaded = !utxoIsFetching || !!latestSatoshisBalance;
+  const balanceIsEnough = totalAmountInSatoshis <= latestSatoshisBalance;
+
+  const showBalanceInSats = latestSatoshisBalance < 5000000
+  const balanceInUSDStr = !isNaN(balanceInUSD) ? " ($" + balanceInUSD  + ")" : ""
+  const balanceStr = (showBalanceInSats ? `${ latestSatoshisBalance || "0" } SATS` : `${ balanceInBch || "0" } BCH`) + balanceInUSDStr
+
+  const showDonationAmountInSats = donationAmountInSatoshis < 5000000
+  const donationAmountInUSDStr = !isNaN(donationAmountInUSD) ? " ($" + donationAmountInUSD  + ")" : ""
+  const donationAmountStr = (showDonationAmountInSats ? `${ donationAmountInSatoshis || "0" } SATS` : `${ donationAmountInBCH || "0" } BCH`) + donationAmountInUSDStr
+  
+  const showTotalAmountInSats = totalAmountInSatoshis < 5000000
+  const totalAmountStr = showTotalAmountInSats ? 
+    `${ totalAmountInSatoshis || "0" } SATS` : 
+    `${ totalAmountInBCH || "0" } BCH`
+  
   return (
     <>
       <div class={permissionCss}>
@@ -111,14 +144,14 @@ export default function ({ clientPayload }) {
           <form onSubmit={handleAllow}>
             {balanceIsLoaded && !balanceIsEnough && (
               <Heading highlight number={5} alert>
-                Your balance is only ${balanceInUSD}, do you want to{" "}
+                Your balance is only { balanceStr }, do you want to{" "}
                 <a href="/top-up">Top-up</a> your wallet?
               </Heading>
             )}
 
             {balanceIsLoaded && balanceIsEnough && (
               <Heading number={5} highlight>
-                Your balance is ${balanceInUSD}
+                Your balance is { balanceStr }
               </Heading>
             )}
 
@@ -188,9 +221,30 @@ export default function ({ clientPayload }) {
                     height: 27px;
                     font-size: 15px;
                     text-align: right;
-                `}>{ amountInSatoshis } SATS { balanceInUSD && `($${balanceInUSD})` }</Heading>
+                `}>{ donationAmountStr }</Heading>
             </div>
             
+            { clientPayload.data && clientPayload.data.includingFee && <div class={css`
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+            `}>
+                <Heading number={4} inline>
+                Fee:
+                </Heading>
+                <Heading
+                number={4}
+                inline
+                customCss={css`
+                    color: black;
+                    margin: 8px 0;
+                    text-align: right;
+                `}
+                >
+                { clientPayload.data.includingFee } SATS
+                </Heading>
+            </div> }
+
             { clientPayload.data && clientPayload.data.expires && <div class={css`
                 display: flex;
                 flex-direction: row;
@@ -213,7 +267,7 @@ export default function ({ clientPayload }) {
             </div> }
 
             <Button type="submit" disabled={!balanceIsEnough} primary>
-              {balanceIsEnough ? `Contribute (${amountInSatoshis} SATS)` : `Contribute`}
+              {balanceIsEnough ? `Contribute (${ totalAmountStr })` : `Contribute`}
             </Button>
             <Button onClick={handleDeny} type="button" secondary>
               Refuse
@@ -225,60 +279,142 @@ export default function ({ clientPayload }) {
           <>
             <Heading number={4}>Successfully contibuted!</Heading>
             <Heading number={5} highlight>
-              You can now go back to the application. Please keep this window
-              open to allow {clientPayload.origin} to spend from your wallet up
-              to {amountInSatoshis} SATS
+              You can now go back to the application. Thank you for your contribution!
             </Heading>
-            <p
-              class={css`
-                margin: 32px 16px;
-              `}
-            >
-              Or simply revert back your permission by clicking the button below
-            </p>
-            <Button>Revert Back Permission</Button>
           </>
         )}
       </div>
+    
+      {balanceIsLoaded && frozenContributions && !!frozenContributions.length && <Heading number={3}>Existing contributions:</Heading>}
 
-      {balanceIsLoaded && accomplishedTxs && !!accomplishedTxs.length && <Heading number={3}>Existing contributions:</Heading>}
-
-      {accomplishedTxs &&
-        accomplishedTxs.map((tx, idx) => (
+      {frozenContributions &&
+        frozenContributions.map(({ txid, vout, data }) => (
           <Article
-            key={idx}
+            key={txid}
             customCss={css`
-              background: #eee;
               width: 90%;
               margin: 16px;
               border: 1px solid black;
             `}
           >
-            <Heading number={5}>Transaction: Sent</Heading>
-            <p>
-              Spent <b>{tx.action.amount}</b> {tx.action.unit} to{" "}
-              <b>
-                <a
-                  href={`https://blockchair.com/bitcoin-cash/address/${tx.action.bchAddr}`}
-                  target="_blank"
-                  rel="noopener noreferer"
+            <Heading number={5}>Transaction: Contribution</Heading>
+            <p style="width:100%">
+              { data.origin && <div class={css`
+                  display: flex;
+                  flex-direction: row;
+                  justify-content: space-between;
+              `}>
+                  <Heading number={4} inline>
+                  From:
+                  </Heading>
+                  <Heading
+                  number={4}
+                  inline
+                  customCss={css`
+                      color: black;
+                      margin: 8px 0;
+                      text-align: right;
+                  `}
+                  >
+                  {data.origin}
+                  </Heading>
+              </div> }
+              
+              { data.title && <div class={css`
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                `}>
+                <Heading number={4} inline>
+                  To:
+                  </Heading>
+                  <Heading
+                  number={4}
+                  inline
+                  customCss={css`
+                      color: black;
+                      margin: 8px 0;
+                      text-align: right;
+                  `}
+                  >
+                  {data.title}
+                </Heading>
+              </div> }
+
+              { data.amount && <div class={css`
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                  `}
                 >
-                  {tx.action.bchAddr.slice(0, 16)}...
-                </a>
-              </b>
+                <Heading number={4}>Total spent:</Heading>
+                <Heading
+                  number={4}
+                  inline
+                  width="50px"
+                  customCss={css`
+                      color: black;
+                      margin: 8px 0;
+                      height: 27px;
+                      font-size: 15px;
+                      text-align: right;
+                  `}>{ data.amount } { data.unit }</Heading>
+              </div> }
+
+              { data.expires && <div class={css`
+                  display: flex;
+                  flex-direction: row;
+                  justify-content: space-between;
+              `}>
+                  <Heading number={4} inline>
+                  Expires:
+                  </Heading>
+                  <Heading
+                  number={4}
+                  inline
+                  customCss={css`
+                      color: black;
+                      margin: 8px 0;
+                      text-align: right;
+                  `}
+                  >
+                  { moment().to(moment.unix(data.expires)) }
+                  </Heading>
+              </div> }
+              <div class={css`
+                  display: flex;
+                  flex-direction: row;
+                  justify-content: space-between;
+              `}>
+                  <Heading number={4} inline>
+                  Tx Id:
+                  </Heading>
+                  <Heading
+                  number={4}
+                  inline
+                  customCss={css`
+                      color: black;
+                      margin: 8px 0;
+                      text-align: right;
+                  `}
+                  >
+                    <a
+                      href={__SIGNUP_BLOCKEXPLORER_TX__ + `${txid}`}
+                      target="_blank"
+                      rel="noopener noreferer"
+                    >
+                      {txid.slice(0, 15)}...
+                    </a>
+                  </Heading>
+              </div>
             </p>
-            <p>
-              Tx Id:{" "}
-              <a
-                href={`https://blockchair.com/bitcoin-cash/transaction/${tx.txResult.txId}`}
-                target="_blank"
-                rel="noopener noreferer"
-              >
-                {tx.txResult.txId.slice(0, 15)}...
-              </a>
-            </p>
+            <Button onClick={() => handleContributionRevocation({ txid, vout })} type="button" secondary customStyle={css`
+              background: none;
+              border: none;
+            `}>Revoke</Button>
           </Article>
         ))}
+
     </>
   );
 }

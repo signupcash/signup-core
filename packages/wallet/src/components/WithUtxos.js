@@ -6,6 +6,10 @@ import {
   getWalletSLPAddr,
   getWalletAddr,
   isUserWalletExist,
+  getFrozenUtxos,
+  freezeUtxo,
+  unfreezeUtxo,
+  unfreezeUtxos
 } from "../utils/wallet";
 import { workerCourier } from "../signer";
 import { getUtxos } from "../utils/blockchain";
@@ -27,7 +31,8 @@ const WithUtxos = (Component) => {
     const [bchAddr, setBchAddr] = useState();
     const [slpAddr, setSlpAddr] = useState();
     const [walletExist, setWalletExist] = useState();
-
+    const [frozenUtxos, setFrozenUtxos] = useState([]);
+    
     useEffect(() => {
       refetchUtxos();
     }, []);
@@ -52,28 +57,51 @@ const WithUtxos = (Component) => {
 
       const walletSlpAddr = await getWalletSLPAddr();
 
-      let [utxos, slpUtxos, slpBatons, slpBalances] = await Promise.all([
+      let [rawUtxos, slpUtxos, slpBatons, slpBalances, frozenUtxos] = await Promise.all([
         getUtxos(walletAddr),
         getSlpUtxos(walletSlpAddr),
         getSlpBatonUtxos(walletSlpAddr),
         getSlpBalances(walletSlpAddr),
+        getFrozenUtxos()
       ]).catch((e) => {
         console.log("ERROR with UTXOs", e);
       });
 
       console.log("Utxos =>", utxos);
       console.log("SLP Utxos => ", slpUtxos);
+      console.log("Frozen Utxos => ", frozenUtxos);
       console.log("SLP Balances =>", slpBalances);
 
-      // remove SLP Utxos from normal utxos
-      utxos = utxos.filter(
-        (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
-      );
+      // track which frozen coins are not found in the utxo set by removing from this copy
+      const frozenCoinsNotFound = JSON.parse(JSON.stringify(frozenUtxos))
+      
+      // track which frozen coins are found
+      const currentFrozenUtxos = []
 
-      // remove SLP Baton Utxos to avoid burning batons
-      utxos = utxos.filter(
-        (u) => !slpBatons.some((su) => su.txid === u.txid && su.vout === u.vout)
-      );
+      const utxos = rawUtxos.filter(({ txid, vout }) => {
+        const frozenCoin = frozenUtxos[txid] && frozenUtxos[txid].find(fu => fu.vout === vout)
+
+        // remove SLP Utxos from normal utxos
+        const isSlp = slpUtxos.some((su) => su.txid === txid && su.vout === vout)
+
+        // remove SLP Baton Utxos to avoid burning batons
+        const isSlpBaton = slpBatons.some((su) => su.txid === txid && su.vout === vout)
+
+        if (frozenCoin) {
+          frozenCoinsNotFound[txid] = frozenCoinsNotFound[txid].filter(fu => fu.vout !== vout)
+          currentFrozenUtxos.push(frozenCoin)
+        }
+
+        return !frozenCoin && !isSlp && !isSlpBaton
+      })
+
+      //unfreeze unfound frozen tokens
+      const frozenCoinsWithoutUtxos = [].concat(...Object.values(frozenCoinsNotFound))
+
+      // TODO God willing: don't unfreeze but actually mark as spent, God willing.
+      if (frozenCoinsWithoutUtxos.length) {
+        await unfreezeUtxos(frozenCoinsWithoutUtxos)
+      }
 
       // calculate satoshis available
       const latestSatoshisBalance = utxos.reduce(
@@ -84,11 +112,12 @@ const WithUtxos = (Component) => {
       if (utxos) {
         setLatestSatoshisBalance(latestSatoshisBalance);
         setLatestUtxos(utxos);
+        setFrozenUtxos(currentFrozenUtxos);
         setSlpUtxos(slpUtxos);
         setSlpBalances(slpBalances);
         setBchAddr(walletAddr);
         setSlpAddr(walletSlpAddr);
-
+        
         setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
@@ -111,6 +140,17 @@ const WithUtxos = (Component) => {
           walletExist,
           bchAddr,
           slpAddr,
+          frozenUtxos,
+          freezeUtxo: async (txid, vout, reqType, data) => {
+            //TODO God willing: refetch utxos to be sure they exist, God willing.
+              // implications may be that can't freeze coins for unbroadcasted tx's
+            const frozenUtxos = await freezeUtxo(txid, vout, reqType, data)
+            setFrozenUtxos([].concat(...Object.values(frozenUtxos)))
+          },
+          unfreezeUtxo: async (txid, vout) => {
+            await unfreezeUtxo(txid, vout)
+            await refetchUtxos()
+          }
         }}
       >
         {<Component {...props} />}

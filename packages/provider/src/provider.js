@@ -418,7 +418,10 @@ function contribute(amount, unit, data, recipients, skipPopup = true) {
     reqId: newReqId,
     reqType: "contribution",
     recipients,
-    data,
+    data: {
+      ...data,
+      includingFee: data.includingFee || 0
+    },
     amount,
     unit
   };

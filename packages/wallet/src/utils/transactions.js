@@ -5,13 +5,9 @@ const slpMetadata = require("slp-mdm");
 import { sendRawTx } from "./blockchain";
 
 import {
-  isUserWalletExist,
   getWalletAddr,
   getWalletSLPAddr,
   getWalletHdNode,
-  makeUsername,
-  getUserAttemptedCashAccount,
-  freezeCoinsInTx
 } from "./wallet";
 
 import { isInSatoshis, sats } from "./unitUtils";
@@ -210,9 +206,7 @@ export async function sendCommitmentTx(
   amount,
   unit = "SATS",
   latestSatoshisBalance,
-  latestUtxos = [],
-  //expires,
-  //checkExpired = true
+  latestUtxos = []
 ) {
   
   //check donation exists and amount in donation exists
@@ -247,11 +241,6 @@ export async function sendCommitmentTx(
   if (recipients.length <= 0) {
     throw "Outputs are empty"
   }
-
-  // //check campaign has expired date 
-  // if (!expires) {
-  //   throw "Expiration is missing"
-  // }
 
   //check data field exists and is an object/dictionary with comment and alias fields for contributor
   if (!data) {
@@ -302,22 +291,9 @@ export async function sendCommitmentTx(
   }
 
   ////check donationTotal is > sum_outputs 
-  if (amountInSatoshis > sumOutputs) {
+  if (amountInSatoshis - bitcoinCashUtilities.CONTRIBUTOR_MINER_FEE > sumOutputs) {
     throw "Donation amount is larger than outputs"
   }
-
-  //check the campaign hasn't expired
-  // let expires
-
-  // try {
-  //   expires = parseInt(expires)
-  // } catch (err) {
-  //   throw "Invalid expiration"
-  // }
-
-  // if (checkExpired && moment().unix(expires) < moment().unix()) {
-  //   throw "Campaign already expired"
-  // }
 
   // proceed with the payment
   const hdNode = await getWalletHdNode();
@@ -362,9 +338,7 @@ export async function sendCommitmentTx(
 
   const txin = tx.build().ins[0]
   
-  //Serialize input to send back to UI, God willing.
-  //Ensure ability to cancel pledge and either move coins over so it's revoked in backend UI, God willing.
-  const commitmentObject = btoa(JSON.stringify({
+  const commitmentObject = {
     inputs: [{
       previous_output_transaction_hash: txin.hash.reverse().toString('hex'),
       previous_output_index: txin.index,
@@ -376,7 +350,7 @@ export async function sendCommitmentTx(
       comment: data.comment
     },
     data_signature: null
-  }))
+  }
 
   try {
     await sendRawTx(pledgeTx.toHex())
@@ -384,11 +358,14 @@ export async function sendCommitmentTx(
     throw "Failed to broadcast commitment transaction"
   }
 
-  try {
-    await freezeCoinsInTx(pledgeTx.getId())
-  } catch (err) {
-    console.log("Failed to freeze coins!")
-  }
-
   return commitmentObject
+}
+
+  static calculateTotalContributorMinerFees(CONTRIBUTION_COUNT) {
+    const AVERAGE_BYTE_PER_CONTRIBUTION = 296
+    const TARGET_FEE_RATE = 2
+
+    // Calculate the miner fee necessary to cover a fullfillment transaction for each contribution contribution.
+    return (AVERAGE_BYTE_PER_CONTRIBUTION * (CONTRIBUTION_COUNT)) * TARGET_FEE_RATE;
+  };
 }

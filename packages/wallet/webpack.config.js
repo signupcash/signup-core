@@ -86,6 +86,10 @@ module.exports = {
       { host: "electroncash.dk", port: 50004 },
       { host: "bch.loping.net", port: 50004 },
       { host: "electrum.imaginary.cash", port: 50004 }
-    ])
+    ]),
+    __SIGNUP_BLOCKEXPLORER_TX__: JSON.stringify(
+      process.env.NODE_ENV === "development" ?
+        "https://www.blockchain.com/bch-testnet/tx/" :
+        "https://blockchair.com/bitcoin-cash/transaction/")
   })]
 };
