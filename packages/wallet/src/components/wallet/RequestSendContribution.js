@@ -3,7 +3,7 @@ import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
 import { handleMessageBackToClient } from "../../signer";
 import { satsToBch, bchToFiat, sats } from "../../utils/unitUtils";
-import { sendCommitmentTx } from "../../utils/transactions"
+import { sendCommitmentTx, sendBchTx } from "../../utils/transactions"
 
 import Heading from "../common/Heading";
 import Button from "../common/Button";
@@ -31,7 +31,7 @@ export default function ({ clientPayload }) {
   const [totalAmountInSatoshis, setTotalAmountInSatoshis] = useState();
   const [totalAmountInBCH, setTotalAmountInBCH] = useState();
 
-  const { latestSatoshisBalance, utxoIsFetching, latestUtxos, frozenUtxos, freezeUtxo, unfreezeUtxo } = useContext(UtxosContext);
+  const { bchAddr, latestSatoshisBalance, utxoIsFetching, refetchUtxos, latestUtxos, frozenUtxos, freezeUtxo } = useContext(UtxosContext);
   const frozenContributions = frozenUtxos.filter(utxo => {
     return utxo.reqType === "contribution"
   })
@@ -115,13 +115,21 @@ export default function ({ clientPayload }) {
     self.close();
   }
 
-  async function handleContributionRevocation({ txid, vout }) {
-    //TODO God willing: specifically for flipstarters, spend the contribution so it's not used later (not locked)
-    //TODO God willing: in general just remove from frozen coins, God willing, so it shows in balance.
-    await unfreezeUtxo(txid, vout)
+  async function handleContributionRevocation({ txid, vout, data }) {
+    //Invalidate the utxo
+    await sendBchTx(
+      data.amount, 
+      "SATS", 
+      bchAddr, 
+      latestSatoshisBalance, 
+      //Assuming utxo selection always adds utxos in order. Flag for future-proofing.
+      [{ txid, vout, satoshis: data.amount, flag: "require" }, ...latestUtxos]
+    )
+
+    await refetchUtxos()
   }
 
-  const balanceIsLoaded = !utxoIsFetching || !!latestSatoshisBalance;
+  const balanceIsLoaded = !utxoIsFetching;
   const balanceIsEnough = totalAmountInSatoshis <= latestSatoshisBalance;
 
   const showBalanceInSats = latestSatoshisBalance < 5000000
@@ -286,11 +294,12 @@ export default function ({ clientPayload }) {
       </div>
     
       {balanceIsLoaded && frozenContributions && !!frozenContributions.length && <Heading number={3}>Existing contributions:</Heading>}
+      {!balanceIsLoaded && <Heading number={3}>Fetching existing contributions...</Heading>}
 
-      {frozenContributions &&
-        frozenContributions.map(({ txid, vout, data }) => (
+      {balanceIsLoaded && frozenContributions &&
+        frozenContributions.map((utxo) => (
           <Article
-            key={txid}
+            key={utxo.txid}
             customCss={css`
               width: 90%;
               margin: 16px;
@@ -299,7 +308,7 @@ export default function ({ clientPayload }) {
           >
             <Heading number={5}>Transaction: Contribution</Heading>
             <p style="width:100%">
-              { data.origin && <div class={css`
+              { utxo.data.origin && <div class={css`
                   display: flex;
                   flex-direction: row;
                   justify-content: space-between;
@@ -316,11 +325,11 @@ export default function ({ clientPayload }) {
                       text-align: right;
                   `}
                   >
-                  {data.origin}
+                  {utxo.data.origin}
                   </Heading>
               </div> }
               
-              { data.title && <div class={css`
+              { utxo.data.title && <div class={css`
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
@@ -337,11 +346,11 @@ export default function ({ clientPayload }) {
                       text-align: right;
                   `}
                   >
-                  {data.title}
+                  {utxo.data.title}
                 </Heading>
               </div> }
 
-              { data.amount && <div class={css`
+              { utxo.data.amount && <div class={css`
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
@@ -358,10 +367,10 @@ export default function ({ clientPayload }) {
                       height: 27px;
                       font-size: 15px;
                       text-align: right;
-                  `}>{ data.amount } { data.unit }</Heading>
+                  `}>{ utxo.data.amount } { utxo.data.unit }</Heading>
               </div> }
 
-              { data.expires && <div class={css`
+              { utxo.data.expires && <div class={css`
                   display: flex;
                   flex-direction: row;
                   justify-content: space-between;
@@ -378,9 +387,10 @@ export default function ({ clientPayload }) {
                       text-align: right;
                   `}
                   >
-                  { moment().to(moment.unix(data.expires)) }
+                  { moment().to(moment.unix(utxo.data.expires)) }
                   </Heading>
               </div> }
+              
               <div class={css`
                   display: flex;
                   flex-direction: row;
@@ -399,16 +409,16 @@ export default function ({ clientPayload }) {
                   `}
                   >
                     <a
-                      href={__SIGNUP_BLOCKEXPLORER_TX__ + `${txid}`}
+                      href={__SIGNUP_BLOCKEXPLORER_TX__ + `${utxo.txid}`}
                       target="_blank"
                       rel="noopener noreferer"
                     >
-                      {txid.slice(0, 15)}...
+                      {utxo.txid.slice(0, 15)}...
                     </a>
                   </Heading>
               </div>
             </p>
-            <Button onClick={() => handleContributionRevocation({ txid, vout })} type="button" secondary customStyle={css`
+            <Button onClick={() => handleContributionRevocation(utxo)} type="button" secondary customStyle={css`
               background: none;
               border: none;
             `}>Revoke</Button>

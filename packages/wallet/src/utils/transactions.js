@@ -98,7 +98,7 @@ export async function sendBchTx(
 ) {
 
   const { tx, spent } = await createSendTransaction(amount, unit, receiverAddress, latestSatoshisBalance, latestUtxos)
-  const txId = sendRawTx(tx.toHex());
+  const txId = await sendRawTx(tx.toHex());
 
   return { txId, spent }
 }
