@@ -15,7 +15,6 @@ import {
   convertAmountToBCHUnit,
   convertAmountToSatoshiUnits,
 } from "./utils/unitUtils";
-import { notionLinkToBrowserCompatibility } from "./config";
 
 const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
