@@ -190,3 +190,101 @@ export async function sendSlpTx(
 
   return { txId };
 }
+
+// Can be used for genesis token type 1 and NFT group
+export async function genesisSlp(
+  name,
+  ticker,
+  documentUri,
+  documentHash,
+  quantity,
+  decimals,
+  keepBaton,
+  latestSatoshisBalance,
+  latestUtxos,
+  type
+) {
+  const changeReceiverAddress = await getWalletAddr();
+  const receiverAddress = await getWalletSLPAddr();
+  let satsNeeded = feesFor(3, 4) + DUST;
+  if (keepBaton) {
+    satsNeeded += DUST;
+  }
+
+  // Adding UTXOs for fees
+  const inputUtxo = latestUtxos.filter((x) => x.satoshis >= satsNeeded)[0];
+
+  if (!inputUtxo) {
+    throw new Error("No BCH found to pay for the fees");
+  }
+
+  // Proceed with the payment
+  const hdNode = await getWalletHdNode();
+  const keyPair = bitbox.HDNode.toKeyPair(hdNode);
+  const tx = new bitbox.TransactionBuilder("mainnet");
+
+  // Adding inputs
+  tx.addInput(inputUtxo.txid, inputUtxo.vout);
+
+  // OP_RETURN output to create the token based on SLP spec
+  let opReturnData;
+
+  if (type === "GENESIS_NFT_GROUP") {
+    opReturnData = slpMetadata.NFT1.Group.genesis(
+      ticker,
+      name,
+      documentUri,
+      documentHash,
+      decimals,
+      // mintBatonVout will always be 2 according to SLP spec
+      keepBaton ? 2 : null,
+      new BigNumber(quantity)
+    );
+  } else if (type === "GENESIS_TYPE1") {
+    opReturnData = slpMetadata.TokenType1.genesis(
+      ticker,
+      name,
+      documentUri,
+      documentHash,
+      decimals,
+      // mintBatonVout will always be 2 according to SLP spec
+      keepBaton ? 2 : null,
+      new BigNumber(quantity)
+    );
+  }
+
+  tx.addOutput(opReturnData, 0);
+
+  // The UTXO which is carrying SLP tokens always has a dust value (546)
+  tx.addOutput(receiverAddress, DUST);
+
+  if (keepBaton) {
+    // this utxo will be reserved for baton
+    tx.addOutput(receiverAddress, DUST);
+  }
+
+  const changeAmount = inputUtxo.satoshis - satsNeeded;
+
+  if (changeAmount > DUST) {
+    tx.addOutput(changeReceiverAddress, changeAmount);
+  }
+
+  tx.setLockTime(0);
+
+  tx.sign(
+    0,
+    keyPair,
+    undefined,
+    tx.hashTypes.SIGHASH_ALL,
+    inputUtxo.satoshis,
+    tx.signatureAlgorithms.SCHNORR
+  );
+
+  const builtTx = tx.build();
+  const txHex = builtTx.toHex();
+
+  // Broadcast transation to the network
+  const txId = await sendRawTx(txHex);
+
+  return { txId };
+}
