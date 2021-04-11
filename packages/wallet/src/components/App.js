@@ -42,7 +42,11 @@ function App() {
 
   useEffect(() => {
     function receiveMessage(event) {
-      if (!["access", "spend_token", "send_slp"].includes(event.data.reqType)) {
+      if (
+        !["access", "spend_token", "send_slp", "genesis_slp"].includes(
+          event.data.reqType
+        )
+      ) {
         return;
       }
 
@@ -52,7 +56,6 @@ function App() {
       const { reqType, reqId, config, budget, deadline } = event.data;
 
       validateConfig(config);
-      validateReqType(reqType);
       setClientPayload({ ...event.data, origin: requestOrigin, nonce });
     }
 

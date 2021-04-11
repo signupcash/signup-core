@@ -359,6 +359,76 @@ function sendSlp(tokenId, amount, slpAddr = config.slpAddr) {
   });
 }
 
+function genesisNFTGroup(
+  name,
+  ticker,
+  documentUri,
+  documentHash,
+  quantity,
+  keepBaton = true
+) {
+  const newReqId = uuidv4();
+  setRequestPayload(newReqId, "genesis_slp", [], {
+    type: "GENESIS_NFT_GROUP",
+    name,
+    ticker,
+    documentUri,
+    documentHash,
+    quantity,
+    keepBaton,
+    decimals: 0,
+  });
+
+  openPopup();
+
+  return new Promise(function (resolve, reject) {
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+
+      if (payloadFromWallet.status === "GRANTED") {
+        resolve(payloadFromWallet);
+      } else {
+        // Signin failed
+        reject({
+          status: "ERROR",
+          message: "User failed to Signin with a wallet",
+        });
+      }
+    });
+  });
+}
+
+function genesisNftChild(groupdId, ticker, name, imageUri, amountToMint = 1) {
+  const newReqId = uuidv4();
+  setRequestPayload(newReqId, "genesis_nft_child", [], {
+    type: "G_NFT_CHILD",
+    name,
+    ticker,
+    imageUri,
+    maxQuantity,
+  });
+
+  openPopup();
+
+  return new Promise(function (resolve, reject) {
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+
+      if (payloadFromWallet.status === "GRANTED") {
+        resolve(payloadFromWallet);
+      } else {
+        // Signin failed
+        reject({
+          status: "ERROR",
+          message: "User failed to Signin with a wallet",
+        });
+      }
+    });
+  });
+}
+
 function sign(data) {
   if (!data || typeof data !== "object") {
     throw new Error(
@@ -533,14 +603,13 @@ export function cash(params = {}) {
     config.slpAddr = params.slpAddr;
   }
 
-  return {
+  return Object.freeze({
     requestAccess,
     requestSpendToken,
     spendTokenExist,
     pay,
     sign,
     sendSlp,
-  };
+    genesisNFTGroup,
+  });
 }
-
-export function read(bitdbURL = DEFAULT_BITDB_URL) {}
