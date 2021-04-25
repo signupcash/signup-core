@@ -1,8 +1,15 @@
-import * as slpjs from "slpjs";
-import BigNumber from "bignumber.js";
-import bitbox from "../libs/bitbox";
 const slpMetadata = require("slp-mdm");
+import BigNumber from "bignumber.js";
+import delay from "delay";
+import bitbox from "../libs/bitbox";
 import { sendRawTx } from "./blockchain";
+import { getAllUtxosWithSlpBalances } from "./blockchain";
+import {
+  getSlpUtxos,
+  getSlpBalances,
+  getSlpBatonUtxos,
+  getSlpByTokenId,
+} from "./slp";
 
 import {
   isUserWalletExist,
@@ -15,9 +22,6 @@ import {
 
 import { isInSatoshis, sats } from "./unitUtils";
 import { DUST } from "../config";
-import { getSlpByTokenId, getSlpBalances } from "./slp";
-
-const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
 export function feesFor(inputNum, outputNum) {
   return bitbox.BitcoinCash.getByteCount(
@@ -110,7 +114,7 @@ export async function sendSlpTx(
   const targetToken = slpBalances.filter((x) => x.tokenId === tokenId).pop();
 
   if (!targetToken) {
-    throw new Error("[Signup] No SLP balance to send the transaction");
+    throw new Error("No SLP balance to send the transaction");
   }
 
   let sendAmounts = [
@@ -262,6 +266,153 @@ export async function genesisSlp(
     // this utxo will be reserved for baton
     tx.addOutput(receiverAddress, DUST);
   }
+
+  const changeAmount = inputUtxo.satoshis - satsNeeded;
+
+  if (changeAmount > DUST) {
+    tx.addOutput(changeReceiverAddress, changeAmount);
+  }
+
+  tx.setLockTime(0);
+
+  tx.sign(
+    0,
+    keyPair,
+    undefined,
+    tx.hashTypes.SIGHASH_ALL,
+    inputUtxo.satoshis,
+    tx.signatureAlgorithms.SCHNORR
+  );
+
+  const builtTx = tx.build();
+  const txHex = builtTx.toHex();
+
+  // Broadcast transation to the network
+  const txId = await sendRawTx(txHex);
+
+  return { txId };
+}
+
+async function fanOutSendSlp(
+  tokenId,
+  receiverAddress,
+  latestSatoshisBalance,
+  latestUtxos,
+  slpUtxos,
+  slpBalances
+) {
+  // TODO: fanout send
+  const { txId } = await sendSlpTx(
+    1,
+    tokenId,
+    receiverAddress,
+    latestSatoshisBalance,
+    latestUtxos,
+    slpUtxos,
+    slpBalances
+  );
+
+  console.log("fan out =>", txId);
+
+  return {
+    txid: txId,
+    vout: 0,
+  };
+}
+
+export async function genesisNftChild(
+  name,
+  ticker,
+  documentUri,
+  documentHash,
+  groupId,
+  walletAddr,
+  receiverSlpAddr,
+  latestSatoshisBalance,
+  latestUtxos,
+  slpBalances,
+  slpUtxos
+) {
+  let receiverAddress;
+
+  const changeReceiverAddress = walletAddr;
+
+  if (receiverSlpAddr === "owner") {
+    receiverAddress = await getWalletSLPAddr();
+  } else {
+    receiverAddress = receiverSlpAddr;
+  }
+
+  // check if Group baton exist in this wallet and the amount is > 0
+  const groupToken = slpBalances.filter((x) => x.tokenId === groupId).pop();
+
+  if (!groupToken || groupToken.value < 1) {
+    throw new Error("[Signup] The group token does not exist in this wallet");
+  }
+
+  let groupUtxo = slpUtxos.filter((x) => x.tokenId === groupId);
+
+  try {
+    if (groupToken.value > 1) {
+      // This function should get group UTXO and create another UTXO for one single token of group
+      // So we don't burn the whole group for one Child :(
+
+      groupUtxo = await fanOutSendSlp(
+        groupId,
+        receiverAddress,
+        latestSatoshisBalance,
+        latestUtxos,
+        slpUtxos,
+        slpBalances
+      );
+
+      // wait for one seconds and refetch utxos
+      await delay(1000);
+      const newUtxos = await getAllUtxosWithSlpBalances(walletAddr);
+      // reassign the new utxos after fanout transaction
+      latestSatoshisBalance = newUtxos.latestSatoshisBalance;
+      latestUtxos = newUtxos.utxos;
+      slpBalances = newUtxos.slpBalances;
+      slpUtxos = newUtxos.slpUtxos;
+    }
+  } catch (e) {
+    throw new Error(
+      "[Signup Error] fanout SLP transaction failed. This is a transaction made to separate the Group NFT UTXO in order to be burned for NFT Child genesis. This transaction is probably failed because something is wrong with the group baton you have in your wallet.",
+      e
+    );
+  }
+
+  let satsNeeded = feesFor(3, 4) + DUST;
+
+  // Adding UTXOs for fees
+  const inputUtxo = latestUtxos.filter((x) => x.satoshis >= satsNeeded)[0];
+
+  if (!inputUtxo) {
+    throw new Error("No BCH found to pay for the fees");
+  }
+
+  // Proceed with the payment
+  const hdNode = await getWalletHdNode();
+  const keyPair = bitbox.HDNode.toKeyPair(hdNode);
+  const tx = new bitbox.TransactionBuilder("mainnet");
+
+  // Adding inputs
+  tx.addInput(inputUtxo.txid, inputUtxo.vout);
+  tx.addInput(groupUtxo.txid, groupUtxo.vout);
+
+  // OP_RETURN output to create the token based on SLP spec
+  let opReturnData;
+  opReturnData = slpMetadata.NFT1.Child.genesis(
+    ticker,
+    name,
+    documentUri,
+    documentHash
+  );
+
+  tx.addOutput(opReturnData, 0);
+
+  // The UTXO which is carrying SLP tokens always has a dust value (546)
+  tx.addOutput(receiverAddress, DUST);
 
   const changeAmount = inputUtxo.satoshis - satsNeeded;
 
