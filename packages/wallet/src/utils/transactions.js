@@ -147,7 +147,12 @@ export async function sendSlpTx(
 
   // OP_RETURN output to flag the tx as a valid SLP
   let opReturnData;
-  if (targetToken.versionType === 65) {
+  if (targetToken.versionType === 129) {
+    // NFT Group tx
+    opReturnData = slpMetadata.NFT1.Group.send(tokenId, [
+      new BigNumber(1).times(10 ** targetToken.decimals),
+    ]);
+  } else if (targetToken.versionType === 65) {
     // NFT child tx
     opReturnData = slpMetadata.NFT1.Child.send(tokenId, [
       new BigNumber(1).times(10 ** targetToken.decimals),
