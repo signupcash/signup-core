@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>Signup.cash Client Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Signup.cash SLP Mint NFT Demo</h1>
+
+      <p id="msg">Click on the button below to Create a NFT</p>
+      <p style="color: darkslategrey" id="secondaryMsg"></p>
+      <button type="button" class="btn btn-primary" id="group_button">
+        Genesis Group
+      </button>
+
+      <button
+        type="button"
+        style="display: none"
+        class="btn btn-primary"
+        id="child_button"
+      >
+        Genesis Child
+      </button>
+    </div>
+
+    <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
+    <script type="text/javascript" src="../../dist/provider.js"></script>
+
+    <script>
+      const signup = new Signup.cash();
+
+      const groupButton = document.querySelector("#group_button");
+      const childButton = document.querySelector("#child_button");
+      const msgText = document.querySelector("#msg");
+
+      groupButton.addEventListener("click", genesisGroup);
+      childButton.addEventListener("click", genesisChild);
+
+      // This will be filled up after genesisGroup function is executed (and approved)
+      let groupId;
+
+      function genesisChild(e) {
+        e.preventDefault();
+
+        const name = "POPO Item 1";
+        const ticker = "POP-1";
+        const documentHash = "";
+        // This is the NFT we are minting uploaded as an IPFS image
+        const imageUri =
+          "https://gateway.pinata.cloud/ipfs/QmSnTJrXzq9M7FB44wkCMM7pUQY4p4gYJ7uKh5typYwJ24";
+
+        signup
+          .genesisNFTChild(groupId, ticker, name, imageUri)
+          .then(({ txResult }) => {
+            // update the UI
+            msgText.innerHTML = `Your SLP NFT child is created! <a href='https://explorer.bitcoin.com/bch/tx/${txResult.txId}'>View</a>`;
+            console.log("TX for NFT Child: ", txResult);
+          })
+          .catch(({ status, message }) => {
+            // error handling
+            if (status === "ERROR") {
+              msgText.innerHTML = "Oops, " + message + " 😱";
+            }
+          })
+          .finally(() => {
+            childButton.setAttribute("style", "display: none");
+          });
+      }
+
+      function genesisGroup(e) {
+        e.preventDefault();
+
+        // change the state of button
+        groupButton.setAttribute("disabled", true);
+
+        const name = "POPO Collection";
+        const ticker = "POPO";
+        const documentHash = "";
+        const documentUri = "http://signup.cash";
+        const quantity = 10;
+
+        signup
+          .genesisNFTGroup(name, ticker, quantity, documentUri, documentHash)
+          .then(({ txResult }) => {
+            console.log("TX for NFT Group =>", txResult);
+
+            // This is the group ID for your NFT collection
+            groupId = `${txResult.txId}`;
+
+            // update the UI
+            msgText.innerHTML = `Your SLP NFT group is created! <a href='https://explorer.bitcoin.com/bch/tx/${txResult.txId}'>View</a>`;
+            secondaryMsg.innerHTML =
+              "Now click on the button below to create a NFT Child from an IPFS image:";
+            groupButton.setAttribute("style", "display: none");
+            childButton.setAttribute("style", "display: block");
+          })
+          .catch(({ status, message }) => {
+            // error handling
+            if (status === "ERROR") {
+              msgText.innerHTML = "Oops, " + message + " 😱";
+            }
+          })
+          .finally(() => {
+            groupButton.removeAttribute("disabled");
+          });
+      }
+    </script>
+  </body>
+</html>
