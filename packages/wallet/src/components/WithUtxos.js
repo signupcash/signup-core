@@ -8,7 +8,7 @@ import {
   isUserWalletExist,
 } from "../utils/wallet";
 import { workerCourier } from "../signer";
-import { getUtxos } from "../utils/blockchain";
+import { getAllUtxosWithSlpBalances } from "../utils/blockchain";
 import { getSlpUtxos, getSlpBalances, getSlpBatonUtxos } from "../utils/slp";
 
 const BITBOX = require("bitbox-sdk").BITBOX;
@@ -42,6 +42,7 @@ const WithUtxos = (Component) => {
       setUtxoIsFetching(true);
 
       const walletAddr = await getWalletAddr();
+      const walletSlpAddr = slpjs.Utils.toSlpAddress(walletAddr);
       const walletExist = typeof walletAddr !== "undefined";
       setWalletExist(walletExist);
 
@@ -50,36 +51,13 @@ const WithUtxos = (Component) => {
         return;
       }
 
-      const walletSlpAddr = await getWalletSLPAddr();
-
-      let [utxos, slpUtxos, slpBatons, slpBalances] = await Promise.all([
-        getUtxos(walletAddr),
-        getSlpUtxos(walletSlpAddr),
-        getSlpBatonUtxos(walletSlpAddr),
-        getSlpBalances(walletSlpAddr),
-      ]).catch((e) => {
-        console.log("ERROR with UTXOs", e);
-      });
-
-      console.log("Utxos =>", utxos);
-      console.log("SLP Utxos => ", slpUtxos);
-      console.log("SLP Balances =>", slpBalances);
-
-      // remove SLP Utxos from normal utxos
-      utxos = utxos.filter(
-        (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
-      );
-
-      // remove SLP Baton Utxos to avoid burning batons
-      utxos = utxos.filter(
-        (u) => !slpBatons.some((su) => su.txid === u.txid && su.vout === u.vout)
-      );
-
-      // calculate satoshis available
-      const latestSatoshisBalance = utxos.reduce(
-        (acc, c) => acc + c.satoshis,
-        0
-      );
+      const {
+        utxos,
+        slpUtxos,
+        slpBalances,
+        slpBatons,
+        latestSatoshisBalance,
+      } = await getAllUtxosWithSlpBalances(walletAddr);
 
       if (utxos) {
         setLatestSatoshisBalance(latestSatoshisBalance);
