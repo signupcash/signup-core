@@ -16,13 +16,17 @@ const electrum = new ElectrumCluster(
   "wallet.signup.cash",
   "1.4.1",
   1,
-  3,
-  ClusterOrder.PRIORITY
+  1,
+  ClusterOrder.RANDOM
 );
 
 // Connect to all the clusters defined in config
 electrumCashClusters.forEach((c) => {
-  electrum.addServer(c.host, c.port, ElectrumTransport.WSS.Scheme, true);
+  try {
+    electrum.addServer(c.host, c.port, ElectrumTransport.WSS.Scheme, true);
+  } catch (e) {
+    console.log("Error connecting Electrum server ", e);
+  }
 });
 
 export async function getUtxos(bchAddr) {
@@ -47,7 +51,15 @@ export async function getUtxos(bchAddr) {
 }
 
 export async function sendRawTx(txHex) {
-  return electrum.request("blockchain.transaction.broadcast", txHex);
+  const result = await electrum.request(
+    "blockchain.transaction.broadcast",
+    txHex
+  );
+  if (result instanceof Error) {
+    throw new Error(result);
+  }
+
+  return result;
 }
 
 export async function getAllUtxosWithSlpBalances(bchAddr) {
