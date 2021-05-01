@@ -349,10 +349,10 @@ function sendSlp(tokenId, amount, slpAddr = config.slpAddr) {
       if (payloadFromWallet.status === "GRANTED") {
         resolve(payloadFromWallet);
       } else {
-        // Signin failed
+        // Operation failed
         reject({
           status: "ERROR",
-          message: "User failed to Signin with a wallet",
+          message: payloadFromWallet.message,
         });
       }
     });
@@ -362,9 +362,9 @@ function sendSlp(tokenId, amount, slpAddr = config.slpAddr) {
 function genesisNFTGroup(
   name,
   ticker,
-  documentUri,
-  documentHash,
   quantity,
+  documentUri,
+  documentHash = "",
   keepBaton = true
 ) {
   const newReqId = uuidv4();
@@ -399,14 +399,23 @@ function genesisNFTGroup(
   });
 }
 
-function genesisNftChild(groupdId, ticker, name, imageUri, amountToMint = 1) {
+function genesisNFTChild(
+  groupdId,
+  ticker,
+  name,
+  imageUri,
+  imageHash = "",
+  receiverSlpAddr = "owner"
+) {
   const newReqId = uuidv4();
   setRequestPayload(newReqId, "genesis_nft_child", [], {
     type: "G_NFT_CHILD",
-    name,
+    groupId,
     ticker,
+    name,
     imageUri,
-    maxQuantity,
+    imageHash,
+    receiverSlpAddr,
   });
 
   openPopup();
@@ -611,5 +620,6 @@ export function cash(params = {}) {
     sign,
     sendSlp,
     genesisNFTGroup,
+    genesisNFTChild,
   });
 }
