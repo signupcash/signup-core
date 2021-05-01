@@ -37,7 +37,7 @@ import { getSlpByTokenId, getSlpBalances } from "../../utils/slp";
 import Loading from "../common/Loading";
 import NFTImage from "./NFTImage";
 import { sendSlpTx } from "../../utils/transactions";
-import { countDecimals } from "../../utils/helpers";
+import { countDecimals, formatDocumentUri } from "../../utils/helpers";
 import placeholderImg from "../../assets/placeholder.jpg";
 
 const headerStyle = css``;
@@ -143,24 +143,6 @@ export default function ({ tokenId }) {
         setRefetchCurrentToken(refetchCurrentToken + 1);
       }, 1000);
     })();
-  }
-
-  function formatDocumentUri(uri) {
-    if (!uri) return <p>Empty!</p>;
-    if (uri.length > 30) {
-      return (
-        <a href={uri} target="_blank" rel="noopener noreferrer">
-          {uri.slice(0, 12)}
-          {"..."}
-          {uri.slice(uri.length - 5)}
-        </a>
-      );
-    }
-    return (
-      <a href={uri} target="_blank" rel="noopener noreferrer">
-        {uri}
-      </a>
-    );
   }
 
   const isNft = token && token.versionType === 65;

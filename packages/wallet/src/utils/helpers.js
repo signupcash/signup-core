@@ -1,3 +1,4 @@
+import { h } from "preact";
 // Debounce function for performance improvement
 // credit to https://davidwalsh.name/javascript-debounce-function
 export function debounce(func, wait, immediate) {
@@ -40,4 +41,22 @@ export function tiny(value) {
     return `${value.slice(0, 20)}...${value.slice(value.length - 10)}`;
   }
   return value;
+}
+
+export function formatDocumentUri(uri) {
+  if (!uri) return <p>Empty!</p>;
+  if (uri.length > 30) {
+    return (
+      <a href={uri} target="_blank" rel="noopener noreferrer">
+        {uri.slice(0, 12)}
+        {"..."}
+        {uri.slice(uri.length - 5)}
+      </a>
+    );
+  }
+  return (
+    <a href={uri} target="_blank" rel="noopener noreferrer">
+      {uri}
+    </a>
+  );
 }
