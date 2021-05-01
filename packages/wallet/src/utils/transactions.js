@@ -149,14 +149,10 @@ export async function sendSlpTx(
   let opReturnData;
   if (targetToken.versionType === 129) {
     // NFT Group tx
-    opReturnData = slpMetadata.NFT1.Group.send(tokenId, [
-      new BigNumber(1).times(10 ** targetToken.decimals),
-    ]);
+    opReturnData = slpMetadata.NFT1.Group.send(tokenId, sendAmounts);
   } else if (targetToken.versionType === 65) {
     // NFT child tx
-    opReturnData = slpMetadata.NFT1.Child.send(tokenId, [
-      new BigNumber(1).times(10 ** targetToken.decimals),
-    ]);
+    opReturnData = slpMetadata.NFT1.Child.send(tokenId, sendAmounts);
   } else if (targetToken.versionType === 1) {
     // SLP type 1 tx
     opReturnData = slpMetadata.TokenType1.send(tokenId, sendAmounts);
@@ -321,7 +317,8 @@ async function fanOutSendSlp(
 
   return {
     txid: txId,
-    vout: 0,
+    vout: 1,
+    satoshis: DUST,
   };
 }
 
@@ -355,7 +352,7 @@ export async function genesisNftChild(
     throw new Error("[Signup] The group token does not exist in this wallet");
   }
 
-  let groupUtxo = slpUtxos.filter((x) => x.tokenId === groupId);
+  let groupUtxo = slpUtxos.filter((x) => x.tokenId === groupId)[0];
 
   try {
     if (groupToken.value > 1) {
@@ -372,7 +369,7 @@ export async function genesisNftChild(
       );
 
       // wait for one seconds and refetch utxos
-      await delay(1000);
+      await delay(3000);
       const newUtxos = await getAllUtxosWithSlpBalances(walletAddr);
       // reassign the new utxos after fanout transaction
       latestSatoshisBalance = newUtxos.latestSatoshisBalance;
@@ -386,7 +383,6 @@ export async function genesisNftChild(
       e
     );
   }
-
   let satsNeeded = feesFor(3, 4) + DUST;
 
   // Adding UTXOs for fees
@@ -402,8 +398,8 @@ export async function genesisNftChild(
   const tx = new bitbox.TransactionBuilder("mainnet");
 
   // Adding inputs
-  tx.addInput(inputUtxo.txid, inputUtxo.vout);
   tx.addInput(groupUtxo.txid, groupUtxo.vout);
+  tx.addInput(inputUtxo.txid, inputUtxo.vout);
 
   // OP_RETURN output to create the token based on SLP spec
   let opReturnData;
@@ -429,6 +425,15 @@ export async function genesisNftChild(
 
   tx.sign(
     0,
+    keyPair,
+    undefined,
+    tx.hashTypes.SIGHASH_ALL,
+    groupUtxo.satoshis,
+    tx.signatureAlgorithms.SCHNORR
+  );
+
+  tx.sign(
+    1,
     keyPair,
     undefined,
     tx.hashTypes.SIGHASH_ALL,

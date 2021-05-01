@@ -43,9 +43,13 @@ function App() {
   useEffect(() => {
     function receiveMessage(event) {
       if (
-        !["access", "spend_token", "send_slp", "genesis_slp"].includes(
-          event.data.reqType
-        )
+        ![
+          "access",
+          "spend_token",
+          "send_slp",
+          "genesis_slp",
+          "genesis_nft_child",
+        ].includes(event.data.reqType)
       ) {
         return;
       }
@@ -55,7 +59,6 @@ function App() {
       const requestOrigin = event.origin.replace(/https?:\/\//, "");
       const { reqType, reqId, config, budget, deadline } = event.data;
 
-      validateConfig(config);
       setClientPayload({ ...event.data, origin: requestOrigin, nonce });
     }
 
