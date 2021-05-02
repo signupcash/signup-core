@@ -2,6 +2,8 @@ import { h, Fragment } from "preact";
 import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
 import QRCode from "qrcode.react";
+import { toast } from "react-toastify";
+import * as Sentry from "@sentry/browser";
 import {
   handleMessageBackToClient,
   workerCourier,
@@ -117,8 +119,10 @@ export default function ({ clientPayload }) {
         });
         self.close();
       } catch (e) {
-        console.log("[Signup][Error]", e.message);
-        // TODO: show the error to user
+        console.log(e);
+        Sentry.captureException(e);
+
+        toast.error(e.message);
       }
     })();
   }

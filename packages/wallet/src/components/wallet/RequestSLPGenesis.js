@@ -1,6 +1,8 @@
 import { h, Fragment } from "preact";
 import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
+import { toast } from "react-toastify";
+import * as Sentry from "@sentry/browser";
 import QRCode from "qrcode.react";
 import {
   handleMessageBackToClient,
@@ -107,26 +109,33 @@ export default function ({ clientPayload }) {
         type,
       } = clientPayload.action;
 
-      // peform the transaction
-      const { txId } = await genesisSlp(
-        name,
-        ticker,
-        documentUri,
-        documentHash,
-        quantity,
-        decimals,
-        keepBaton,
-        latestSatoshisBalance,
-        latestUtxos,
-        type
-      );
+      try {
+        // peform the transaction
+        const { txId } = await genesisSlp(
+          name,
+          ticker,
+          documentUri,
+          documentHash,
+          quantity,
+          decimals,
+          keepBaton,
+          latestSatoshisBalance,
+          latestUtxos,
+          type
+        );
 
-      handleMessageBackToClient("GRANTED", clientPayload.reqId, {
-        txResult: { txId },
-        action: clientPayload.action,
-      });
+        handleMessageBackToClient("GRANTED", clientPayload.reqId, {
+          txResult: { txId },
+          action: clientPayload.action,
+        });
 
-      self.close();
+        self.close();
+      } catch (e) {
+        console.log(e);
+        Sentry.captureException(e);
+
+        toast.error(e);
+      }
     })();
   }
 

@@ -2,6 +2,8 @@ import { h, Fragment } from "preact";
 import { useState, useEffect, useContext, useReducer } from "preact/hooks";
 import { css } from "emotion";
 import QRCode from "qrcode.react";
+import { toast } from "react-toastify";
+import * as Sentry from "@sentry/browser";
 import {
   handleMessageBackToClient,
   workerCourier,
@@ -76,13 +78,12 @@ export default function ({ clientPayload }) {
   }, [slpBalances]);
 
   useEffect(() => {
-    refetchUtxos();
     setStatus("PENDING");
   }, [clientPayload.nonce]);
 
   useEffect(() => {
-    if (!utxoIsFetching) return;
-    setStatus("PENDING");
+    if (utxoIsFetching) return;
+    setStatus("WAITING");
   }, [utxoIsFetching]);
 
   function handleAllow(e) {
@@ -95,24 +96,28 @@ export default function ({ clientPayload }) {
         amount,
       } = clientPayload.action;
 
-      // TODO: peform the transaction
+      try {
+        const { txId } = await sendSlpTx(
+          amount,
+          tokenId,
+          receiverSlpAddr,
+          latestSatoshisBalance,
+          latestUtxos,
+          slpUtxos,
+          slpBalances
+        );
 
-      const { txId } = await sendSlpTx(
-        amount,
-        tokenId,
-        receiverSlpAddr,
-        latestSatoshisBalance,
-        latestUtxos,
-        slpUtxos,
-        slpBalances
-      );
+        handleMessageBackToClient("GRANTED", clientPayload.reqId, {
+          txResult: { txId },
+          action: clientPayload.action,
+        });
 
-      handleMessageBackToClient("GRANTED", clientPayload.reqId, {
-        txResult: { txId },
-        action: clientPayload.action,
-      });
-
-      self.close();
+        self.close();
+      } catch (e) {
+        console.log(e);
+        Sentry.captureException(e);
+        toast.error(e.message);
+      }
     })();
   }
 
