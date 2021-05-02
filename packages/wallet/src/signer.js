@@ -9,7 +9,6 @@ import {
   makeUsername,
   getUserAttemptedCashAccount,
 } from "./utils/wallet";
-import { validateConfig, validateReqType } from "./utils/validators";
 import {
   isInSatoshis,
   convertAmountToBCHUnit,

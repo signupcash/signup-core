@@ -5,7 +5,6 @@ import { ToastContainer } from "react-toastify";
 import { css } from "emotion";
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
-import { validateConfig, validateReqType } from "../utils/validators";
 import {
   handleMessageBackToClient,
   initWorker,
