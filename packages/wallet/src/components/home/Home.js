@@ -20,6 +20,8 @@ export default function ({ clientPayload }) {
     UtxosContext
   );
 
+  console.log("[Provider Payload] ", clientPayload);
+
   return (
     <>
       <header class={headerStyle}>
@@ -52,21 +54,32 @@ export default function ({ clientPayload }) {
         )}
       </header>
       <main>
-        {typeof walletExist === "undefined" && (
-          <div
-            class={css`
-              text-align: center;
-              color: #7c3aed;
-            `}
-          >
-            Opening your wallet ... 🔒
-          </div>
-        )}
+        {typeof walletExist === "undefined" ||
+          (utxoIsFetching && (
+            <div
+              class={css`
+                text-align: center;
+                color: #7c3aed;
+              `}
+            >
+              Opening your wallet ... 🔒
+              <p
+                class={css`
+                  font-size: 12px;
+                  margin: 20px;
+                  font-weight: 300;
+                  color: black;
+                `}
+              >
+                This might take a few seconds...
+              </p>
+            </div>
+          ))}
         {walletExist === false && (
           <Authenticate clientPayload={clientPayload} />
         )}
 
-        {walletExist === true && (
+        {walletExist === true && !utxoIsFetching && (
           <WalletHome bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
       </main>
