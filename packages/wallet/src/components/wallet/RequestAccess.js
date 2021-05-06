@@ -7,7 +7,12 @@ import {
   onWorkerEvent,
 } from "../../signer";
 import { makeAccessToken, makeSessionId } from "../../utils/permission";
-import { getWalletAddr, getWalletCashAccount } from "../../utils/wallet";
+import { getSlpBalances } from "../../utils/slp";
+import {
+  getWalletAddr,
+  getWalletCashAccount,
+  getWalletSLPAddr,
+} from "../../utils/wallet";
 import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
@@ -38,14 +43,22 @@ export default function ({ clientPayload, bchAddr }) {
     (async () => {
       const { permissions } = clientPayload;
       let bchAddr;
-      let cashAccount;
+      let slpAddr;
+      let slpBalances;
 
       if (permissions.includes("bch_address")) {
         bchAddr = await getWalletAddr();
       }
 
-      if (permissions.includes("cash_account")) {
-        cashAccount = await getWalletCashAccount();
+      if (permissions.includes("slp_address")) {
+        slpAddr = await getWalletSLPAddr();
+      }
+
+      if (permissions.includes("slp_balances")) {
+        // Get all spl balances
+        slpBalances = await getSlpBalances(
+          slpAddr || (await getWalletSLPAddr())
+        );
       }
 
       const accessToken = await makeAccessToken(permissions);
@@ -55,7 +68,8 @@ export default function ({ clientPayload, bchAddr }) {
         accessToken,
         sessionId,
         bchAddr,
-        ...cashAccount,
+        slpAddr,
+        slpBalances,
       });
 
       connectWalletToTxBridge(sessionId);
