@@ -16,8 +16,6 @@ import {
   getWalletAddr,
   getWalletSLPAddr,
   getWalletHdNode,
-  makeUsername,
-  getUserAttemptedCashAccount,
 } from "./wallet";
 
 import { isInSatoshis, sats } from "./unitUtils";
