@@ -14,13 +14,12 @@ const SIGNUP_TX_BRIDGE =
 
 const isPhone = window.innerWidth < 625;
 const LOGIN_URL = SIGNUP_ORIGIN + "/";
-const DEFAULT_BITDB_URL = "https://bitdb.bch.sx";
 
 const config = {};
-let identity = {};
 
 let popupWindowRef = null;
 let rootDiv;
+let state;
 let latestPayload = {};
 
 const height150 = css`
@@ -192,7 +191,8 @@ function showRootDiv() {
   }, 0);
 }
 
-function setStateForRootDiv(state, meta = {}) {
+function setStateForRootDiv(_state, meta = {}) {
+  state = _state;
   showRootDiv();
   const p = document.querySelector("#_SIGNUP__rootDiv_p");
   const h4 = document.querySelector("#_SIGNUP__rootDiv_h4");
@@ -204,6 +204,16 @@ function setStateForRootDiv(state, meta = {}) {
     setTimeout(() => {
       hideRootDiv();
     }, miliSeconds);
+  }
+
+  if (state === "INIT") {
+    setRootDivHeight(height220);
+    p.innerText =
+      "Your wallet is not connected. Connect to interact with this app:";
+    h4.innerText = "";
+    btn.setAttribute("style", "display: block");
+    btn.innerText = "Connect with Signup";
+    disappear(10000);
   }
 
   if (state === "LOGGED-IN") {
@@ -488,6 +498,11 @@ function requestAccess(permissions) {
     reqType: "access",
     permissions,
   };
+
+  if (state) {
+    setStateForRootDiv("INIT");
+  }
+
   return new Promise(function (resolve, reject) {
     // first set a listener to receive the response back from signer
     listenForMessage(newReqId, function (payloadFromWallet) {
@@ -591,6 +606,14 @@ function listenForMessage(targetReqId, cb) {
   });
 }
 
+const utility = {
+  onlyTokens: (slpBalances) => slpBalances.filter((x) => x.versionType === 1),
+  onlyChildNFTs: (slpBalances) =>
+    slpBalances.filter((x) => x.versionType === 65),
+  onlyGroupNFTs: (slpBalances) =>
+    slpBalances.filter((x) => x.versionType === 129),
+};
+
 function removeListeningForMessage() {
   if (!window) return null;
   window.removeEventListener("message", handleMessageReceivedFromSigner);
@@ -621,5 +644,6 @@ export function cash(params = {}) {
     sendSlp,
     genesisNFTGroup,
     genesisNFTChild,
+    utility,
   });
 }
