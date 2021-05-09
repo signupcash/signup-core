@@ -59,11 +59,11 @@ const containerStyle = css`
   }
 `;
 
-export default function ({ onClick, checked, children }) {
+export default function ({ onClick, checked, disabled, children }) {
   return (
     <label class={containerStyle} onClick={onClick}>
       {children}
-      <input type="checkbox" checked={checked} />
+      <input type="checkbox" disabled={disabled} checked={checked} />
       <span class={checkmarkStyle} id="checkbox"></span>
     </label>
   );
