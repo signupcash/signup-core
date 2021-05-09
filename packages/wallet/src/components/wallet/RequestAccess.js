@@ -105,12 +105,26 @@ export default function ({ clientPayload, bchAddr }) {
                 font-size: 15px;
               `}
             >
-              {permissions.includes("bch_address") && <li>Your BCH address</li>}
-              {permissions.includes("cash_account") && (
-                <li>Your Cash Account</li>
+              {permissions.includes("bch_address") && (
+                <Checkbox checked disabled>
+                  Your BCH address
+                </Checkbox>
               )}
+              {permissions.includes("slp_address") && (
+                <Checkbox checked disabled>
+                  Your SLP address
+                </Checkbox>
+              )}
+              {permissions.includes("slp_balances") && (
+                <Checkbox checked disabled>
+                  Your SLP Balances
+                </Checkbox>
+              )}
+
               {permissions.includes("signature") && (
-                <li>To sign with your wallet</li>
+                <Checkbox checked disabled>
+                  To sign with your wallet
+                </Checkbox>
               )}
             </ul>
 
