@@ -16,7 +16,7 @@ import {
   bchToSats,
   bchToFiat,
 } from "../../utils/unitUtils";
-import { sendBchTx } from "../../utils/transactions";
+import { sendBchTx, feesFor } from "../../utils/transactions";
 import { DUST } from "../../config";
 import slpLogo from "../../assets/slp-logo-2.png";
 import bchLogo from "../../assets/bch-icon-qrcode.png";
@@ -38,9 +38,6 @@ const labelStyle = css`
   margin-left: 8px;
 `;
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
-
-// TODO: calculate it later
-const hardCodedTxFee = 500;
 
 export default function ({ clientPayload }) {
   const [status, setStatus] = useState("DEFAULT");
@@ -72,6 +69,25 @@ export default function ({ clientPayload }) {
   }, [latestSatoshisBalance]);
 
   const [bchAddr, setBchAddr] = useState();
+
+  function calculateFeesForAmount(amount) {
+    let inputsSats = 0;
+    let selectedUtxos = 0;
+    let fees;
+
+    latestUtxos.forEach((utxo) => {
+      if (selectedUtxos > 0 && inputsSats >= amount) {
+        return;
+      }
+
+      selectedUtxos++;
+      // keeping track of inputs
+      inputsSats += utxo.satoshis;
+      fees = feesFor(selectedUtxos, 2);
+    });
+
+    return fees;
+  }
 
   async function handleSend(e) {
     e.preventDefault();
@@ -121,8 +137,9 @@ export default function ({ clientPayload }) {
       setAmountToSend("0");
     } else {
       setShouldSendAll(true);
-      // deduct 500 sats for tx fee
-      const satsToSend = bchToSats(balance) - hardCodedTxFee;
+      // deduct tx fee
+      const satsToSend =
+        bchToSats(balance) - calculateFeesForAmount(bchToSats(balance));
       if (satsToSend <= DUST) {
         toast.info("Your balance is too little to be sent! Maybe Top-up more?");
         setAmountToSend("0");
@@ -144,9 +161,13 @@ export default function ({ clientPayload }) {
       toast.error("Target address is not a valid BCH address");
     }
 
+    if (!latestUtxos.length) return;
+
     // check if the amount + fee is lesser or equal to the balance
     const amountIsCorrect =
-      parseFloat(amountToSend) + satsToBch(hardCodedTxFee - 1) <= balance;
+      parseFloat(amountToSend) +
+        satsToBch(calculateFeesForAmount(amountToSend)) <=
+      balance;
 
     setCanSendTx(
       addrIsCorrect && amountIsCorrect && bchToSats(amountToSend) > DUST
