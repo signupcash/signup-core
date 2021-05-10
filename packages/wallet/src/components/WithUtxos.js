@@ -42,7 +42,6 @@ const WithUtxos = (Component) => {
       setUtxoIsFetching(true);
 
       const walletAddr = await getWalletAddr();
-      const walletSlpAddr = slpjs.Utils.toSlpAddress(walletAddr);
       const walletExist = typeof walletAddr !== "undefined";
       setWalletExist(walletExist);
 
@@ -50,6 +49,8 @@ const WithUtxos = (Component) => {
         setUtxoIsFetching(false);
         return;
       }
+
+      const walletSlpAddr = slpjs.Utils.toSlpAddress(walletAddr);
 
       const {
         utxos,
