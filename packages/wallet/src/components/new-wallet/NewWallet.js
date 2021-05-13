@@ -72,7 +72,7 @@ export default function ({ clientPayload }) {
               {isAnonymous && (
                 <>
                   <Heading number={5}>
-                    Anonymous wallets are made fully on your browser and SIGNUP
+                    Anonymous wallets are made fully on your browser and Signup
                     servers will be uninformed about the registration of this
                     account.
                   </Heading>
@@ -95,11 +95,7 @@ export default function ({ clientPayload }) {
                 </Checkbox>
               )}
 
-              <Button
-                type="submit"
-                disabled={!email && !isAnonymous}
-                primary
-              >
+              <Button type="submit" disabled={!email && !isAnonymous} primary>
                 Create Wallet 🤖
               </Button>
             </Article>

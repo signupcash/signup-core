@@ -42,7 +42,7 @@ const WithUtxos = (Component) => {
       setUtxoIsFetching(true);
 
       const walletAddr = await getWalletAddr();
-      const walletExist = typeof walletAddr !== "undefined";
+      const walletExist = !!walletAddr;
       setWalletExist(walletExist);
 
       if (!walletExist) {

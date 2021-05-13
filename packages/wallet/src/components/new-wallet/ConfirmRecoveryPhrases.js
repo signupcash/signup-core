@@ -25,10 +25,10 @@ export default function ({ email, optinForEmails, isAnonymous }) {
   async function handleStoreWallet(e) {
     e.preventDefault();
     await wallet.storeWalletIsVerified();
+    refetchUtxos();
     setTimeout(() => {
-      refetchUtxos();
       route("/", true);
-    }, 500);
+    }, 1000);
   }
 
   const [recoveryPhrases, setRecoveryPhrases] = useState([]);

@@ -51,10 +51,11 @@ export default function () {
         await wallet.storeWallet(walletMnemonic);
         await wallet.storeWalletIsVerified();
 
+        refetchUtxos();
+
         setTimeout(() => {
-          refetchUtxos();
           route("/", true);
-        }, 500);
+        }, 1000);
       } catch (e) {
         console.log(e);
         toast.error("There is an error while importing your wallet!");
