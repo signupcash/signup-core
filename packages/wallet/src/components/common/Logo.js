@@ -2,7 +2,7 @@ import { h } from "preact";
 import { css, cx } from "emotion";
 import logoPurple from "../../assets/signup-logo.png";
 import logoWhite from "../../assets/signup-logo-white-transparent.png";
-import slpLogo from "../../assets/signup-logo-slp.png";
+import homepageLogo from "../../assets/signup-logo-home.png";
 
 export default function ({ block, slp }) {
   let logoContainer = css`
@@ -42,7 +42,7 @@ export default function ({ block, slp }) {
   return (
     <span class={logoContainer} aria-label="Signup Logo">
       <img
-        src={block ? logoWhite : slp ? slpLogo : logoPurple}
+        src={block ? logoWhite : slp ? homepageLogo : logoPurple}
         class={logoStyle}
       />
     </span>
