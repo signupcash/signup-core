@@ -12,7 +12,7 @@ export default function ({ block, slp }) {
     color: #7c3aed;
     text-align: center;
     text-decoration: none;
-    width: ${slp ? "250px" : "100px"};
+    width: ${slp ? "280px" : "100px"};
   `;
 
   if (block) {
