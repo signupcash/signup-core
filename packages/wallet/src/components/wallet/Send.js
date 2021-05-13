@@ -139,7 +139,7 @@ export default function ({ clientPayload }) {
       setShouldSendAll(true);
       // deduct tx fee
       const satsToSend =
-        bchToSats(balance) - calculateFeesForAmount(bchToSats(balance));
+        bchToSats(balance) - calculateFeesForAmount(bchToSats(balance)) - 1;
       if (satsToSend <= DUST) {
         toast.info("Your balance is too little to be sent! Maybe Top-up more?");
         setAmountToSend("0");
@@ -152,6 +152,10 @@ export default function ({ clientPayload }) {
   useEffect(() => {
     refetchUtxos();
   }, [bchAddr]);
+
+  useEffect(() => {
+    setShouldSendAll(false);
+  }, [amountToSend]);
 
   useEffect(() => {
     // validate input values before activating the send button
