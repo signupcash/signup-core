@@ -16,7 +16,7 @@ import {
   satsToBch,
   bchToSats,
 } from "../../utils/unitUtils";
-import { sendBchTx } from "../../utils/transactions";
+import { feesFor, sendBchTx } from "../../utils/transactions";
 import {
   DUST,
   SLP_ICONS_URL,
@@ -48,8 +48,6 @@ const labelStyle = css`
   margin-left: 8px;
 `;
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
-
-const hardCodedTxFee = 500;
 
 export default function ({ tokenId }) {
   const [status, setStatus] = useState("INITIAL");
@@ -105,6 +103,14 @@ export default function ({ tokenId }) {
 
   function handleSend(e) {
     e.preventDefault();
+
+    // check for fees
+    if (latestSatoshisBalance < feesFor(3, 4)) {
+      toast.error(
+        `You need to have some BCH in your wallet to send transactions`
+      );
+      return;
+    }
 
     // Check if user is sending correct amount
     if (amountToSend > token.value) {
