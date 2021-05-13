@@ -22,7 +22,6 @@ const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 export default function ({ clientPayload }) {
   const [optinForEmails, setOptinForEmails] = useState(false);
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [step, setStep] = useState(1);
   const [isAnonymous, setIsAonymous] = useState(false);
 
@@ -73,7 +72,7 @@ export default function ({ clientPayload }) {
               {isAnonymous && (
                 <>
                   <Heading number={5}>
-                    Anonymous wallets are made fully on your browser and SIGNUP
+                    Anonymous wallets are made fully on your browser and Signup
                     servers will be uninformed about the registration of this
                     account.
                   </Heading>
@@ -83,15 +82,6 @@ export default function ({ clientPayload }) {
                   </Heading>
                 </>
               )}
-
-              <Label>Username</Label>
-              <Input
-                type="text"
-                onInput={(e) => {
-                  setUsername(e.target.value);
-                }}
-                placeholder="Cash Account Username"
-              />
 
               {!isAnonymous && (
                 <Checkbox
@@ -105,11 +95,7 @@ export default function ({ clientPayload }) {
                 </Checkbox>
               )}
 
-              <Button
-                type="submit"
-                disabled={(!email && !isAnonymous) || !username}
-                primary
-              >
+              <Button type="submit" disabled={!email && !isAnonymous} primary>
                 Create Wallet 🤖
               </Button>
             </Article>
@@ -118,7 +104,6 @@ export default function ({ clientPayload }) {
         {step === 2 && (
           <ConfirmRecoveryPhrases
             email={email}
-            username={username}
             optinForEmails={optinForEmails}
             isAnonymous={isAnonymous}
           />

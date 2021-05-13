@@ -10,6 +10,7 @@ import localforage from "localforage";
 import VanillaQR from "./vanillaQR";
 import { heightModifier, isDevEnv } from "../config";
 import { getBCHPrice } from "./price";
+import { memoize } from "./helpers";
 
 function q(selector, el) {
   if (!el) {
@@ -39,31 +40,14 @@ export async function deleteWallet(mnemonic) {
   await localforage.removeItem("SIGNUP_PREDICTED_CASH_ACCOUNT");
 }
 
-export async function getBalance(bchAddr) {
-  const balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-    bchAddr
-  );
-
-  let balance = 0;
-  let balanceInUSD = 0;
-
-  if (!balancesAndUtxos.satoshis_available_bch) {
-    return { balance, balanceInUSD };
-  }
-
-  balance = balancesAndUtxos.satoshis_available_bch;
-
-  if (balance > 0) {
-    const bchPriceInUSD = await getBCHPrice();
-    balance = bitbox.BitcoinCash.toBitcoinCash(balance);
-    balanceInUSD = (bchPriceInUSD * balance).toFixed(2);
-  }
-
-  return { balance, balanceInUSD };
-}
-
 export async function retrieveWalletCredentials() {
-  const userWallet = atob(await localforage.getItem("SIGNUP_WALLET"));
+  let userWallet;
+
+  const userWalletInBase64 = await localforage.getItem("SIGNUP_WALLET");
+  if (userWalletInBase64) {
+    userWallet = atob(userWalletInBase64);
+  }
+
   const walletStatus = await localforage.getItem("SIGNUP_WALLET_STATUS");
   const isVerified = walletStatus === "VERIFIED";
   return { userWallet, isVerified };
@@ -76,7 +60,9 @@ export async function isUserWalletExist() {
 
 export async function getWalletAddr() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
+
   let bchAddr;
+  if (!userWallet || !isVerified) return;
 
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
   const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
@@ -86,6 +72,11 @@ export async function getWalletAddr() {
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
   return bchAddr;
+}
+
+export async function getWalletSLPAddr() {
+  const bchAddr = await getWalletAddr();
+  return slpjs.Utils.toSlpAddress(bchAddr);
 }
 
 export async function getWalletHdNode() {
@@ -104,85 +95,6 @@ export function createRecoveryPhrase() {
   const mnemonic = bitbox.Mnemonic.generate(128);
   storeWallet(mnemonic);
   return { mnemonic };
-}
-
-export function makeUsername(cashAccountPayload) {
-  return `${cashAccountPayload.nameText}#${cashAccountPayload.accountNumber}`;
-}
-
-export async function getUserAttemptedCashAccount() {
-  let username;
-  try {
-    const predictedUsername = await localforage.getItem(
-      "SIGNUP_PREDICTED_CASH_ACCOUNT"
-    );
-    if (predictedUsername) {
-      username = predictedUsername;
-    }
-  } catch (e) {
-    Sentry.captureMessage("Localforage not supported in the browser");
-    Sentry.captureException(e);
-  }
-  return username;
-}
-
-export async function getWalletCashAccount(bchAddress) {
-  let cashAccount;
-  let accountEmoji;
-
-  // get cash account details
-  try {
-    let reverseLookup = await bitbox.CashAccounts.reverseLookup(bchAddress);
-    if (reverseLookup && reverseLookup.results) {
-      cashAccount = makeUsername(reverseLookup.results[0]);
-      accountEmoji = reverseLookup.results[0].accountEmoji;
-    }
-  } catch (e) {
-    Sentry.captureException(e);
-    // in case user just registered for cash account it might be not found yet
-    // in that scenario we use the predicted username
-    const userAttemptedCashAccount = await getUserAttemptedCashAccount();
-    if (userAttemptedCashAccount) {
-      cashAccount = userAttemptedCashAccount;
-      // assign default emoji until cash account is created
-      accountEmoji = "🏅";
-    }
-  }
-  return { cashAccount, accountEmoji };
-}
-
-export async function createCashAccount(chosenUsername) {
-  if (!chosenUsername) return Promise.reject("No username is chosen by user");
-
-  // remove spaces
-  chosenUsername = chosenUsername.replace(/\s/g, "");
-  const blockHeight = await bitbox.Blockchain.getBlockCount();
-  const predictedAccountNumber = blockHeight - heightModifier + 1;
-
-  const walletAddress = await getWalletAddr();
-  const bchAddress = walletAddress.replace("bitcoincash:", "");
-
-  // store
-  try {
-    await localforage.setItem(
-      "SIGNUP_PREDICTED_CASH_ACCOUNT",
-      `${chosenUsername}#${predictedAccountNumber}`
-    );
-  } catch (e) {
-    console.log("[Error] Storing in indexDB", e);
-    Sentry.captureException(e);
-  }
-
-  return fetch("https://api.cashaccount.info/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: chosenUsername,
-      payments: [bchAddress],
-    }),
-  }).then((res) => res.json());
 }
 
 // Get an object and sign a standard Signup Signature Payload

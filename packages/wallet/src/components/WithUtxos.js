@@ -1,20 +1,32 @@
 import { h, createContext } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { css } from "emotion";
 import * as slpjs from "slpjs";
-import { getWalletAddr } from "../utils/wallet";
+import {
+  getWalletSLPAddr,
+  getWalletAddr,
+  isUserWalletExist,
+} from "../utils/wallet";
 import { workerCourier } from "../signer";
+import { getAllUtxosWithSlpBalances } from "../utils/blockchain";
+import { getSlpUtxos, getSlpBalances, getSlpBatonUtxos } from "../utils/slp";
 
 const BITBOX = require("bitbox-sdk").BITBOX;
 
 const bitbox = new BITBOX();
-const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
 export const UtxosContext = createContext({});
 
 const WithUtxos = (Component) => {
   function WithUtxosComp(props) {
+    const [utxoIsFetching, setUtxoIsFetching] = useState(true);
     const [latestUtxos, setLatestUtxos] = useState([]);
     const [latestSatoshisBalance, setLatestSatoshisBalance] = useState();
+    const [slpUtxos, setSlpUtxos] = useState({});
+    const [slpBalances, setSlpBalances] = useState([]);
+    const [bchAddr, setBchAddr] = useState();
+    const [slpAddr, setSlpAddr] = useState();
+    const [walletExist, setWalletExist] = useState();
 
     useEffect(() => {
       refetchUtxos();
@@ -27,28 +39,58 @@ const WithUtxos = (Component) => {
 
     async function refetchUtxos() {
       cleanseCurrentUtxos();
+      setUtxoIsFetching(true);
+
       const walletAddr = await getWalletAddr();
-      let balancesAndUtxos;
-      // Re-fetch All SLP judged UTXOs
+      const walletExist = !!walletAddr;
+      setWalletExist(walletExist);
 
-      balancesAndUtxos = await bitboxWithSLP.getAllSlpBalancesAndUtxos(
-        walletAddr
-      );
+      if (!walletExist) {
+        setUtxoIsFetching(false);
+        return;
+      }
 
-      if (balancesAndUtxos) {
-        setLatestSatoshisBalance(balancesAndUtxos.satoshis_available_bch);
-        setLatestUtxos(balancesAndUtxos.nonSlpUtxos);
+      const walletSlpAddr = slpjs.Utils.toSlpAddress(walletAddr);
+
+      const {
+        utxos,
+        slpUtxos,
+        slpBalances,
+        slpBatons,
+        latestSatoshisBalance,
+      } = await getAllUtxosWithSlpBalances(walletAddr);
+
+      if (utxos) {
+        setLatestSatoshisBalance(latestSatoshisBalance);
+        setLatestUtxos(utxos);
+        setSlpUtxos(slpUtxos);
+        setSlpBalances(slpBalances);
+        setBchAddr(walletAddr);
+        setSlpAddr(walletSlpAddr);
+
+        setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
-          latestSatoshisBalance: balancesAndUtxos.satoshis_available_bch,
-          latestUtxos: balancesAndUtxos.nonSlpUtxos,
+          latestSatoshisBalance: latestSatoshisBalance,
+          latestUtxos: utxos,
+          slpUtxos: slpUtxos,
         });
       }
     }
 
     return (
       <UtxosContext.Provider
-        value={{ latestUtxos, latestSatoshisBalance, refetchUtxos }}
+        value={{
+          latestUtxos,
+          slpUtxos,
+          latestSatoshisBalance,
+          refetchUtxos,
+          utxoIsFetching,
+          slpBalances,
+          walletExist,
+          bchAddr,
+          slpAddr,
+        }}
       >
         {<Component {...props} />}
       </UtxosContext.Provider>

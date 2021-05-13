@@ -14,13 +14,12 @@ const SIGNUP_TX_BRIDGE =
 
 const isPhone = window.innerWidth < 625;
 const LOGIN_URL = SIGNUP_ORIGIN + "/";
-const DEFAULT_BITDB_URL = "https://bitdb.bch.sx";
 
 const config = {};
-let identity = {};
 
 let popupWindowRef = null;
 let rootDiv;
+let state;
 let latestPayload = {};
 
 const height150 = css`
@@ -43,15 +42,44 @@ function getRequestPayload() {
   return latestPayload;
 }
 
+function setRequestPayload(reqId, reqType, permissions, action) {
+  latestPayload = {
+    reqId,
+    reqType,
+    permissions,
+    action,
+  };
+}
+
+function openPopup() {
+  // open a new popup window or focus the current one
+  if (popupWindowRef == null || popupWindowRef.closed) {
+    const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=800px`;
+    popupWindowRef = window.open(LOGIN_URL, "Signup Wallet", popupParams);
+
+    listenForMessage(null, function (payloadFromSigner) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
+      removeListeningForMessage();
+      if (payloadFromSigner.status === "READY") {
+        requestFromUserWallet({ ...getRequestPayload() });
+      }
+    });
+  } else {
+    requestFromUserWallet({ ...getRequestPayload() });
+    popupWindowRef.focus();
+  }
+}
+
 // create the rootDiv and toast and keep it invisible
 function buildDOMObjects() {
   rootDiv = document.createElement("div");
   rootDiv.setAttribute("id", "_SIGNUP__CONTAINER");
   let rootDivClassName = css`
     position: fixed;
-    background: #3a3d99;
-    transition: height 0.5s ease-out;
-    width: 330px;
+    background: #7c3aed;
+    transition: all 0.5s ease-out;
+    width: 335px;
+    box-sizing: border-box;
     right: ${isPhone ? "5%" : "5%"};
     bottom: ${isPhone ? "5%" : "5%"};
     padding: 20px;
@@ -75,7 +103,7 @@ function buildDOMObjects() {
   }
 
   const h1 = document.createElement("h1");
-  h1.innerText = "SIGNup";
+  h1.innerText = "signup";
   h1.classList.add(css`
     font-size: 1.15rem;
     font-family: "Poppins", sans-serif;
@@ -87,11 +115,11 @@ function buildDOMObjects() {
 
   const h4 = document.createElement("h4");
   h4.setAttribute("id", "_SIGNUP__rootDiv_h4");
-  h4.innerText = "Your gateway into the rabbit hole of blockchain";
+  h4.innerText = "Connect to the blockchain now!";
   h4.classList.add(css`
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-family: "Poppins", sans-serif;
-    margin: 20px 0;
+    margin: 10px 0;
     font-weight: 400;
     text-align: center;
     color: #fff;
@@ -100,28 +128,30 @@ function buildDOMObjects() {
   const p = document.createElement("p");
   p.setAttribute("id", "_SIGNUP__rootDiv_p");
   p.innerText =
-    "Signup is a universal login for blockchain. Create or import a wallet with a few clicks!";
+    "We help you interact with decentralized apps in a secure manner. Create or import a BCH wallet with a few clicks!";
   p.classList.add(css`
     font-size: 0.8rem;
     font-weight: 300;
     font-family: "Poppins", sans-serif;
-    margin: 12px 0;
+    margin: 16px 0;
     color: #fff;
   `);
 
   const button = document.createElement("button");
   button.setAttribute("id", "_SIGNUP__rootDiv_button");
-  button.innerText = "Login with SIGNUP";
+  button.innerText = "Connect with signup";
   button.classList.add(css`
     background: white;
     font-family: "Poppins", sans-serif;
-    color: #3a3d99;
+    color: #7c3aed;
     user-select: none;
+    font-size: 1rem;
     padding: 0.375rem 0.75rem;
     line-height: 1.5;
-    margin: 35px auto 10px;
+    margin: 25px auto 15px;
     display: block;
     border: 0;
+    cursor: pointer;
     border-radius: 0.25rem;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
       border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
@@ -132,22 +162,7 @@ function buildDOMObjects() {
   `);
 
   button.addEventListener("click", (e) => {
-    // open a new popup window or focus the current one
-    if (popupWindowRef == null || popupWindowRef.closed) {
-      const popupParams = `scrollbars=yes,resizable=yes,status=no,location=yes,toolbar=yes,menubar=no,width=430px,height=700px`;
-      popupWindowRef = window.open(LOGIN_URL, "Signup Wallet", popupParams);
-
-      listenForMessage(null, function (payloadFromSigner) {
-        console.log("[SIGNUP][FROM WALLET]", payloadFromSigner);
-        removeListeningForMessage();
-        if (payloadFromSigner.status === "READY") {
-          requestFromUserWallet({ ...getRequestPayload() });
-        }
-      });
-    } else {
-      requestFromUserWallet({ ...getRequestPayload() });
-      popupWindowRef.focus();
-    }
+    openPopup();
   });
 
   rootDiv.appendChild(h1);
@@ -176,7 +191,8 @@ function showRootDiv() {
   }, 0);
 }
 
-function setStateForRootDiv(state, meta = {}) {
+function setStateForRootDiv(_state, meta = {}) {
+  state = _state;
   showRootDiv();
   const p = document.querySelector("#_SIGNUP__rootDiv_p");
   const h4 = document.querySelector("#_SIGNUP__rootDiv_h4");
@@ -188,6 +204,16 @@ function setStateForRootDiv(state, meta = {}) {
     setTimeout(() => {
       hideRootDiv();
     }, miliSeconds);
+  }
+
+  if (state === "INIT") {
+    setRootDivHeight(height220);
+    p.innerText =
+      "Your wallet is not connected. Connect to interact with this app:";
+    h4.innerText = "";
+    btn.setAttribute("style", "display: block");
+    btn.innerText = "Connect with Signup";
+    disappear(10000);
   }
 
   if (state === "LOGGED-IN") {
@@ -225,7 +251,7 @@ function setStateForRootDiv(state, meta = {}) {
       h4.innerText = "";
       p.innerText = "You wallet is disconnected! Login first";
       btn.setAttribute("style", "display: block");
-      btn.innerText = "Login with SIGNUP";
+      btn.innerText = "Connect with Signup";
       disappear(3000);
       return;
     }
@@ -313,6 +339,115 @@ function pay(amount, unit, bchAddr = config.addr) {
     });
 }
 
+function sendSlp(tokenId, amount, slpAddr = config.slpAddr) {
+  const newReqId = uuidv4();
+  setRequestPayload(newReqId, "send_slp", [], {
+    type: "P2SLP",
+    tokenId,
+    amount,
+    slpAddr,
+  });
+
+  openPopup();
+
+  // TODO: send a message to wallet to indicate it's a SLP tx
+  return new Promise(function (resolve, reject) {
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+
+      if (payloadFromWallet.status === "GRANTED") {
+        resolve(payloadFromWallet);
+      } else {
+        // Operation failed
+        reject({
+          status: "ERROR",
+          message: payloadFromWallet.message,
+        });
+      }
+    });
+  });
+}
+
+function genesisNFTGroup(
+  name,
+  ticker,
+  quantity,
+  documentUri,
+  documentHash = "",
+  keepBaton = true
+) {
+  const newReqId = uuidv4();
+  setRequestPayload(newReqId, "genesis_slp", [], {
+    type: "GENESIS_NFT_GROUP",
+    name,
+    ticker,
+    documentUri,
+    documentHash,
+    quantity,
+    keepBaton,
+    decimals: 0,
+  });
+
+  openPopup();
+
+  return new Promise(function (resolve, reject) {
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+
+      if (payloadFromWallet.status === "GRANTED") {
+        resolve(payloadFromWallet);
+      } else {
+        // Signin failed
+        reject({
+          status: "ERROR",
+          message: "User failed to Signin with a wallet",
+        });
+      }
+    });
+  });
+}
+
+function genesisNFTChild(
+  groupdId,
+  ticker,
+  name,
+  imageUri,
+  imageHash = "",
+  receiverSlpAddr = "owner"
+) {
+  const newReqId = uuidv4();
+  setRequestPayload(newReqId, "genesis_nft_child", [], {
+    type: "G_NFT_CHILD",
+    groupId,
+    ticker,
+    name,
+    imageUri,
+    imageHash,
+    receiverSlpAddr,
+  });
+
+  openPopup();
+
+  return new Promise(function (resolve, reject) {
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+
+      if (payloadFromWallet.status === "GRANTED") {
+        resolve(payloadFromWallet);
+      } else {
+        // Signin failed
+        reject({
+          status: "ERROR",
+          message: "User failed to Signin with a wallet",
+        });
+      }
+    });
+  });
+}
+
 function sign(data) {
   if (!data || typeof data !== "object") {
     throw new Error(
@@ -363,6 +498,11 @@ function requestAccess(permissions) {
     reqType: "access",
     permissions,
   };
+
+  if (state) {
+    setStateForRootDiv("INIT");
+  }
+
   return new Promise(function (resolve, reject) {
     // first set a listener to receive the response back from signer
     listenForMessage(newReqId, function (payloadFromWallet) {
@@ -466,12 +606,20 @@ function listenForMessage(targetReqId, cb) {
   });
 }
 
+const utility = {
+  onlyTokens: (slpBalances) => slpBalances.filter((x) => x.versionType === 1),
+  onlyChildNFTs: (slpBalances) =>
+    slpBalances.filter((x) => x.versionType === 65),
+  onlyGroupNFTs: (slpBalances) =>
+    slpBalances.filter((x) => x.versionType === 129),
+};
+
 function removeListeningForMessage() {
   if (!window) return null;
   window.removeEventListener("message", handleMessageReceivedFromSigner);
 }
 
-function cash(params) {
+export function cash(params = {}) {
   if (!(this instanceof cash)) {
     return new cash(params);
   }
@@ -483,17 +631,19 @@ function cash(params) {
     config.addr = params.addr;
   }
 
-  return {
+  if (params.slpAddr) {
+    config.slpAddr = params.slpAddr;
+  }
+
+  return Object.freeze({
     requestAccess,
     requestSpendToken,
     spendTokenExist,
     pay,
     sign,
-  };
+    sendSlp,
+    genesisNFTGroup,
+    genesisNFTChild,
+    utility,
+  });
 }
-
-export function read(bitdbURL = DEFAULT_BITDB_URL) {}
-
-export default {
-  cash,
-};

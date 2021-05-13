@@ -9,11 +9,12 @@ export default function ({
   inline,
   size,
   ariaLabel,
+  onClick,
   children,
 }) {
   const headerStyle = cx(
     css`
-      color: ${highlight ? "black" : "#3a3d99"};
+      color: ${highlight ? "black" : "#7c3aed"};
       margin: ${number > 3 ? "8px" : "16px"};
       padding: 6px 12px;
       background: ${highlight
@@ -22,6 +23,7 @@ export default function ({
           : "#f7e9ff"
         : "transparent"};
       font-weight: ${number > 4 ? 400 : 500};
+      cursor: ${typeof onClick === "function" ? "pointer" : "auto"};
       transition: color 0.15s ease-in-out;
       ${inline && "display: inline-block;"}
       ${size && `font-size: ${size};`}
@@ -32,27 +34,27 @@ export default function ({
   return (
     <>
       {number == 1 && (
-        <h1 aria-label={ariaLabel} class={headerStyle}>
+        <h1 onClick={onClick} aria-label={ariaLabel} class={headerStyle}>
           {children}
         </h1>
       )}
       {number == 2 && (
-        <h2 aria-label={ariaLabel} class={headerStyle}>
+        <h2 onClick={onClick} aria-label={ariaLabel} class={headerStyle}>
           {children}
         </h2>
       )}
       {number == 3 && (
-        <h3 aria-label={ariaLabel} class={headerStyle}>
+        <h3 onClick={onClick} aria-label={ariaLabel} class={headerStyle}>
           {children}
         </h3>
       )}
       {number == 4 && (
-        <h4 aria-label={ariaLabel} class={headerStyle}>
+        <h4 onClick={onClick} aria-label={ariaLabel} class={headerStyle}>
           {children}
         </h4>
       )}
       {number == 5 && (
-        <h5 aria-label={ariaLabel} class={headerStyle}>
+        <h5 onClick={onClick} aria-label={ariaLabel} class={headerStyle}>
           {children}
         </h5>
       )}

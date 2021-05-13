@@ -1,6 +1,6 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
-import { Link } from "preact-router";
+import { useState, useEffect, useContext } from "preact/hooks";
+import { Link, route } from "preact-router";
 import * as Sentry from "@sentry/browser";
 import axios from "axios";
 import QRCode from "qrcode.react";
@@ -10,11 +10,17 @@ import { css } from "emotion";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
+import Box from "../common/Box";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
 import * as wallet from "../../utils/wallet";
 import useWallet from "../../hooks/useWallet";
+import Tabs from "../common/Tabs";
+import { UtxosContext } from "../WithUtxos";
+import { satsToBch, bchToFiat } from "../../utils/unitUtils";
+import { getSlpBalances } from "../../utils/slp";
+import ReloadButton from "../common/ReloadButton";
 
 const headerStyle = css``;
 
@@ -30,111 +36,225 @@ export default function ({ clientPayload }) {
     e.preventDefault();
   }
 
-  const [balance, setBalance] = useState();
+  const {
+    latestUtxos,
+    latestSatoshisBalance,
+    refetchUtxos,
+    utxoIsFetching,
+    slpBalances,
+    bchAddr,
+    slpAddr,
+  } = useContext(UtxosContext);
+
+  const [balance, setBalance] = useState(0);
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [status, setStatus] = useState("LOADING");
   const [reload, setReload] = useState(0);
-  const { bchAddr, cashAccount, walletExist } = useWallet();
+  const [numOfTokens, setNumOfTokens] = useState();
+  const [numOfNfts, setNumOfNfts] = useState();
 
-  async function readBalance() {
-    if (!bchAddr) return;
-    setStatus("FETCHING");
+  // Fetching the number of SLP tokens and NFTs
+  useEffect(() => {
+    if (!slpBalances) return;
 
-    try {
-      const { balance, balanceInUSD } = await wallet.getBalance(bchAddr);
+    const numOfTokens = slpBalances.filter((token) => token.versionType == "1")
+      .length;
+    const numOfNfts = slpBalances.filter((token) => token.versionType == "65")
+      .length;
 
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
-      setStatus("FETCHED");
-    } catch (e) {
-      console.log("[SIGNUP Error]", e);
-      setStatus("ERROR");
-      Sentry.captureException(e);
-    }
-  }
+    setNumOfTokens(numOfTokens);
+    setNumOfNfts(numOfNfts);
+  }, [slpBalances]);
 
   useEffect(() => {
-    if (status === "FETCHED" || status == "ERROR") return;
-    readBalance();
-  }, [bchAddr]);
+    if (!latestSatoshisBalance) return;
 
-  useEffect(() => {
-    readBalance();
-  }, [reload]);
+    const balance = satsToBch(latestSatoshisBalance);
+    setBalance(balance);
+
+    (async () => {
+      // getting the fiat value
+      const usdBalance = await bchToFiat(balance, "usd");
+      setBalanceInUSD(usdBalance);
+    })();
+  }, [latestSatoshisBalance]);
+
+  const BCHView = (
+    <Article ariaLabel="Top up Your Wallet">
+      <Heading number={2}>Top up with BCH</Heading>
+      <QRCode
+        value={bchAddr}
+        renderAs={"png"}
+        size={250}
+        includeMargin
+        imageSettings={{
+          src: bchAddr && bchAddr.includes("bitcoin") ? bchLogo : slpLogo,
+          x: null,
+          y: null,
+          height: 50,
+          width: 50,
+          excavate: false,
+        }}
+      />
+      <Heading
+        size="12px"
+        ariaLabel="Your Bitcoin Cash Address"
+        number={5}
+        highlight
+      >
+        {bchAddr}
+      </Heading>
+
+      <div>
+        {!utxoIsFetching && (
+          <div
+            class={css`
+              display: flex;
+              flex-direction: row;
+            `}
+          >
+            <Heading customCss={css(`color: black`)} number={2}>
+              {balance} BCH {balanceInUSD && `($${balanceInUSD})`}
+            </Heading>
+            <ReloadButton
+              customStyle={css`
+                margin: 22.5px -20px;
+              `}
+              onClick={() => refetchUtxos()}
+            />
+          </div>
+        )}
+
+        {utxoIsFetching && <Heading number={5}>Fetching Balance...</Heading>}
+      </div>
+
+      <p
+        class={css`
+          font-size: 0.8em;
+        `}
+      >
+        Signup is a new wallet, make sure to not store large amount of funds
+        here just to be safe 🔒
+      </p>
+    </Article>
+  );
+
+  const SLPView = (
+    <Article ariaLabel="Your SLP Address">
+      <>
+        <Heading number={2}>Top up with SLP</Heading>
+
+        <QRCode
+          value={slpAddr}
+          renderAs={"png"}
+          size={250}
+          includeMargin
+          imageSettings={{
+            src: slpAddr && slpLogo,
+            x: null,
+            y: null,
+            height: 50,
+            width: 50,
+            excavate: false,
+          }}
+        />
+        <Heading
+          size="12px"
+          customCss={css`
+            margin-top: 0;
+          `}
+          ariaLabel="Your SLP Address"
+          number={5}
+          highlight
+        >
+          {slpAddr}
+        </Heading>
+
+        {!utxoIsFetching && (
+          <>
+            <div
+              class={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              `}
+            >
+              <ReloadButton onClick={() => refetchUtxos()} />
+              <p>Your SLP balances are listed here 👾</p>
+            </div>
+
+            <div
+              class={css`
+                display: flex;
+                flex-direction: row;
+                margin-bottom: 10px;
+              `}
+            >
+              <Box title="SLP Tokens">
+                <Heading
+                  customCss={css`
+                    color: black;
+                  `}
+                  number={2}
+                  onClick={() => route("/tokens", true)}
+                >
+                  {numOfTokens}
+                </Heading>
+              </Box>
+              <Box title="NFTs">
+                <Heading
+                  customCss={css`
+                    color: black;
+                  `}
+                  number={2}
+                  onClick={() => route("/NFTs", true)}
+                >
+                  {numOfNfts}
+                </Heading>
+              </Box>
+            </div>
+          </>
+        )}
+
+        {utxoIsFetching && <p>Loading your SLPs ...</p>}
+      </>
+    </Article>
+  );
 
   return (
     <>
       <header class={headerStyle}>
         <Link href="/">{`< Back to Wallet`}</Link>
       </header>
-      <main>
-        <form onSubmit={handleReload}>
-          <Article ariaLabel="Top up Your Wallet">
-            <Heading number={2}>Top up with BCH</Heading>
-            {status === "LOADING" && <p>Loading ...</p>}
-            {walletExist && bchAddr && (
-              <>
-                <QRCode
-                  value={bchAddr}
-                  renderAs={"png"}
-                  size={260}
-                  includeMargin
-                  imageSettings={{
-                    src:
-                      bchAddr && bchAddr.includes("bitcoin")
-                        ? bchLogo
-                        : slpLogo,
-                    x: null,
-                    y: null,
-                    height: 60,
-                    width: 60,
-                    excavate: false,
-                  }}
-                />
-                <Heading
-                  size="12px"
-                  ariaLabel="Your Bitcoin Cash Address"
-                  number={5}
-                  highlight
-                >
-                  {bchAddr}
-                </Heading>
-              </>
-            )}
-            <div
-              class={css`
-                margin-bottom: 16px;
-              `}
-            >
-              {status === "FETCHED" && (
-                <Label>
-                  Balance: {balance} BCH (${balanceInUSD})
-                </Label>
-              )}
-              {status === "FETCHING" && (
-                <Heading number={5}>Fetching Balance...</Heading>
-              )}
-            </div>
-
-            {status === "FETCHED" && (
-              <Button
-                type="submit"
-                primary
-                onClick={() => setReload(reload + 1)}
-              >
-                Reload Balance
-              </Button>
-            )}
-            <p
-              class={css`
-                font-size: 0.9em;
-              `}
-            >
-              Signup is a new wallet, make sure to not store large amount of
-              funds here just to be safe 🔒
-            </p>
-          </Article>
-        </form>
+      <main
+        class={css`
+          overflow: hidden;
+        `}
+      >
+        {bchAddr ? (
+          <Tabs
+            sections={[
+              {
+                title: "BCH",
+                Component: BCHView,
+              },
+              {
+                title: "SLP",
+                Component: SLPView,
+              },
+            ]}
+          />
+        ) : (
+          <div
+            class={css`
+              text-align: center;
+              color: #7c3aed;
+              margin-top: 32px;
+            `}
+          >
+            Opening your wallet ... 🔒
+          </div>
+        )}
       </main>
     </>
   );

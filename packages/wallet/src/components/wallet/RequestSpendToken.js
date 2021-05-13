@@ -7,7 +7,7 @@ import {
   onWorkerEvent,
 } from "../../signer";
 import { makeSpendToken, makeSessionId } from "../../utils/permission";
-import { getBalance } from "../../utils/wallet";
+import { satsToBch, bchToFiat } from "../../utils/unitUtils";
 import Heading from "../common/Heading";
 import Input from "../common/Input";
 import Button from "../common/Button";
@@ -47,17 +47,20 @@ export default function ({ clientPayload, bchAddr }) {
   const [balanceInUSD, setBalanceInUSD] = useState();
   const [accomplishedTxs, dispatchTx] = useReducer(txReducer, []);
 
-  const { refetchUtxos } = useContext(UtxosContext);
+  const { refetchUtxos, latestSatoshisBalance } = useContext(UtxosContext);
 
   useEffect(() => {
-    (async () => {
-      if (!bchAddr) return;
+    if (!latestSatoshisBalance) return;
 
-      const { balance, balanceInUSD } = await getBalance(bchAddr);
-      setBalance(balance);
-      setBalanceInUSD(balanceInUSD);
+    const balance = satsToBch(latestSatoshisBalance);
+    setBalance(balance);
+
+    (async () => {
+      // getting the fiat value
+      const usdBalance = await bchToFiat(balance, "usd");
+      setBalanceInUSD(usdBalance);
     })();
-  }, [bchAddr]);
+  }, [latestSatoshisBalance]);
 
   useEffect(() => {
     setStatus("WAITING");
@@ -65,7 +68,6 @@ export default function ({ clientPayload, bchAddr }) {
 
   useEffect(() => {
     setBudget(parseFloat(clientPayload.budget).toFixed(2));
-    refetchUtxos();
     onWorkerEvent("tx", (eventData) => {
       if (eventData.status === "DONE") {
         const newTx = deepClone(eventData);

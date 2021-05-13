@@ -14,11 +14,11 @@ const buttonGroups = css`
 export default function () {
   return (
     <Article ariaLabel="Register New Wallet">
-      <Heading number={3}>Login once, use everywhere!</Heading>
-      <Logo block />
+      <Logo slp />
       <p>
-        Signup is a universal non-custodial <b>Bitcoin Cash</b> authorization
-        platform. In order to use Signup, you need to create or import a wallet.
+        Signup is a non-custodial <b>Bitcoin Cash</b> wallet. With Signup you
+        can interact with different web apps, own SLP tokens and NFTs or just
+        send and recieve BCH in web.
       </p>
 
       <Button linkTo={"/new-wallet"} primary>
@@ -28,7 +28,7 @@ export default function () {
         Import an existing wallet
       </Button>
 
-      <Heading number={4}>Free the market, free the world.</Heading>
+      <Heading number={4}>No account registration is required!</Heading>
     </Article>
   );
 }

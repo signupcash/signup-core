@@ -5,7 +5,6 @@ import { ToastContainer } from "react-toastify";
 import { css } from "emotion";
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
-import { validateConfig, validateReqType } from "../utils/validators";
 import {
   handleMessageBackToClient,
   initWorker,
@@ -17,6 +16,9 @@ import Send from "./wallet/Send";
 import Backup from "./wallet/Backup";
 import Logout from "./wallet/Logout";
 import ImportWallet from "./wallet/ImportWallet";
+import SLPTokens from "./wallet/SLPTokens";
+import NFTs from "./wallet/NFTs";
+import TokenPage from "./wallet/TokenPage";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -39,13 +41,23 @@ function App() {
 
   useEffect(() => {
     function receiveMessage(event) {
+      if (
+        ![
+          "access",
+          "spend_token",
+          "send_slp",
+          "genesis_slp",
+          "genesis_nft_child",
+        ].includes(event.data.reqType)
+      ) {
+        return;
+      }
+
       console.log("[SIGNUP] event received", event.data);
       nonce++;
       const requestOrigin = event.origin.replace(/https?:\/\//, "");
       const { reqType, reqId, config, budget, deadline } = event.data;
 
-      validateConfig(config);
-      validateReqType(reqType);
       setClientPayload({ ...event.data, origin: requestOrigin, nonce });
     }
 
@@ -76,6 +88,9 @@ function App() {
         <Backup path="/backup" />
         <Logout path="/logout" />
         <ImportWallet path="/import" />
+        <SLPTokens path="/tokens" />
+        <NFTs path="/NFTs" />
+        <TokenPage path="/token" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />

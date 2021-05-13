@@ -1,4 +1,3 @@
-import * as slpjs from "slpjs";
 import BigNumber from "bignumber.js";
 
 import bitbox from "./libs/bitbox";
@@ -6,18 +5,12 @@ import {
   isUserWalletExist,
   getWalletAddr,
   getWalletHdNode,
-  makeUsername,
-  getUserAttemptedCashAccount,
 } from "./utils/wallet";
-import { validateConfig, validateReqType } from "./utils/validators";
 import {
   isInSatoshis,
   convertAmountToBCHUnit,
   convertAmountToSatoshiUnits,
 } from "./utils/unitUtils";
-import { notionLinkToBrowserCompatibility } from "./config";
-
-const bitboxWithSLP = new slpjs.BitboxNetwork(bitbox);
 
 let myWorker;
 let workerEventListeners = [];

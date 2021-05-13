@@ -36,6 +36,10 @@ module.exports = {
       }),
     ],
   },
+  node: {
+    tls: "mock",
+    net: "mock",
+  },
   stats: {
     warnings: process.env.NODE_ENV === "development",
   },

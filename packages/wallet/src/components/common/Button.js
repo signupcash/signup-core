@@ -1,14 +1,17 @@
 import { h, Fragment } from "preact";
+import { Link } from "preact-router";
 import { css, cx } from "emotion";
 
 export default function ({
   type,
   primary,
   secondary,
+  green,
   alert,
   linkTo,
   onClick,
   disabled,
+  inline,
   customStyle,
   children,
 }) {
@@ -22,9 +25,13 @@ export default function ({
     if (alert) {
       return "#f74476";
     }
-    if (isPrimary) {
-      return "#3a3d99";
+    if (green) {
+      return "#28d9a7";
     }
+    if (isPrimary) {
+      return "#7c3aed";
+    }
+
     return "lightgray";
   }
 
@@ -34,6 +41,9 @@ export default function ({
     }
     if (alert) {
       return "#c41a4a";
+    }
+    if (green) {
+      return "#28d9a7";
     }
     if (isPrimary) {
       return "#815de3";
@@ -53,11 +63,10 @@ export default function ({
     text-decoration: none;
     box-sizing: border-box;
     text-align: center;
-    display: block;
-    border: 0;
+    display: ${inline ? "inline-block" : "block"};
+    border: 0.1rem solid;
     font-size: 16px;
     font-weight: 400;
-    border-radius: 0.12rem;
     cursor: ${disabled ? "default" : "pointer"};
     transition: color 0.1s ease-in-out, background-color 0.1s ease-in-out,
       border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
@@ -68,11 +77,24 @@ export default function ({
 
   return (
     <>
-      {linkTo ? (
-        <a href={linkTo} class={cx(buttonStyle, customStyle)}>
+      {linkTo && linkTo.includes("https") && (
+        <a
+          href={linkTo}
+          target="_blank"
+          rel="noopener noreferrer"
+          class={cx(buttonStyle, customStyle)}
+        >
           {children}
         </a>
-      ) : (
+      )}
+
+      {linkTo && !linkTo.includes("https") && (
+        <Link href={linkTo} class={cx(buttonStyle, customStyle)}>
+          {children}
+        </Link>
+      )}
+
+      {!linkTo && (
         <button
           disabled={disabled}
           type={type || "button"}

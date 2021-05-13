@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <style>
+      p {
+        font-size: 1.4em;
+      }
+      h1 {
+        text-align: center;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 100px;
+      }
+    </style>
+    <title>Signup.cash Client Example</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Signup.cash Simple SLP Send Demo</h1>
+
+      <p id="msg">Click on the button below to tip me</p>
+      <button type="button" class="btn btn-primary" id="signupcash_button">
+        Tip 10 SPICE
+      </button>
+    </div>
+
+    <!-- Change the value in src to https://cdn.signup.cash/provider.js -->
+    <script type="text/javascript" src="../../dist/provider.js"></script>
+
+    <script>
+      const signup = new Signup.cash();
+
+      const payButton = document.querySelector("#signupcash_button");
+      const msgText = document.querySelector("#msg");
+
+      payButton.addEventListener("click", tipMe);
+
+      function tipMe(e) {
+        e.preventDefault();
+
+        // change the state of button
+        payButton.setAttribute("disabled", true);
+
+        // token ID for Spice
+        const tokenId =
+          "4de69e374a8ed21cbddd47f2338cc0f479dc58daa2bbe11cd604ca488eca0ddf";
+        const amount = 10;
+        const slpAddr =
+          "simpleledger:qqfnul5ttmqsr32kwv3memcfhfuzmws44qaxk6rsyq";
+
+        signup
+          .sendSlp(tokenId, amount, slpAddr)
+          .then(({ txResult }) => {
+            console.log("PAY RESP =>", txResult);
+            // update the UI
+            msgText.innerHTML = `Thank you! Your tip is received! <a href='https://blockchair.com/bitcoin-cash/transaction/${txResult.txId}'>TX ID</a>`;
+          })
+          .catch(({ status, message }) => {
+            // error handling
+            if (status === "ERROR") {
+              msgText.innerHTML = "Oops, " + message + " 😱";
+            }
+          })
+          .finally(() => {
+            payButton.removeAttribute("disabled");
+          });
+      }
+    </script>
+  </body>
+</html>

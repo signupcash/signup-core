@@ -1,22 +1,26 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { css } from "emotion";
 import { slide as Menu } from "react-burger-menu";
 import menuStyles from "../wallet/menuStyles";
-import Logo from "../common/Logo";
 import Heading from "../common/Heading";
 import Authenticate from "./Authenticate";
 import * as wallet from "../../utils/wallet";
 import WalletHome from "../wallet/WalletHome";
 import useWallet from "../../hooks/useWallet";
 import defaultProfilePicture from "../../assets/profile.png";
+import { UtxosContext } from "../WithUtxos";
 
 const headerStyle = css`
   min-height: 40px;
 `;
 
 export default function ({ clientPayload }) {
-  const { bchAddr, cashAccount, walletExist } = useWallet();
+  const { refetchUtxos, utxoIsFetching, walletExist, bchAddr } = useContext(
+    UtxosContext
+  );
+
+  console.log("[Provider Payload] ", clientPayload);
 
   return (
     <>
@@ -28,21 +32,11 @@ export default function ({ clientPayload }) {
             right
             pageWrapId="body-wrap"
           >
-            {cashAccount && (
-              <Heading
-                highlight
-                customCss={css`
-                  font-size: 12px;
-                  margin: 0;
-                `}
-                number={5}
-              >
-                {cashAccount}
-              </Heading>
-            )}
             <a href="/">Home</a>
             <a href="/top-up">Topup</a>
             <a href="/send">Send</a>
+            <a href="/tokens">Tokens</a>
+            <a href="/NFTs">NFTs</a>
             <a href="/backup">Backup</a>
             <a href="/logout">Logout</a>
             <span
@@ -60,12 +54,32 @@ export default function ({ clientPayload }) {
         )}
       </header>
       <main>
-        {typeof walletExist === "undefined" && <div>Loading</div>}
+        {typeof walletExist === "undefined" ||
+          (utxoIsFetching && (
+            <div
+              class={css`
+                text-align: center;
+                color: #7c3aed;
+              `}
+            >
+              Opening your wallet ... 🔒
+              <p
+                class={css`
+                  font-size: 12px;
+                  margin: 20px;
+                  font-weight: 300;
+                  color: black;
+                `}
+              >
+                This might take a few seconds...
+              </p>
+            </div>
+          ))}
         {walletExist === false && (
           <Authenticate clientPayload={clientPayload} />
         )}
 
-        {walletExist === true && (
+        {walletExist === true && !utxoIsFetching && (
           <WalletHome bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
       </main>

@@ -1,5 +1,5 @@
 import { h, Fragment } from "preact";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useContext } from "preact/hooks";
 import { route } from "preact-router";
 import { css } from "emotion";
 import Logo from "../common/Logo";
@@ -10,6 +10,7 @@ import Button from "../common/Button";
 import Checkbox from "../common/Checkbox";
 import RecoveryPhrases from "./RecoveryPhrases";
 import * as wallet from "../../utils/wallet";
+import { UtxosContext } from "../WithUtxos";
 
 const labelStyle = css`
   align-self: start;
@@ -18,19 +19,19 @@ const labelStyle = css`
 `;
 const Label = ({ children }) => <label class={labelStyle}>{children}</label>;
 
-export default function ({ email, optinForEmails, username, isAnonymous }) {
+export default function ({ email, optinForEmails, isAnonymous }) {
+  const { refetchUtxos } = useContext(UtxosContext);
+
   async function handleStoreWallet(e) {
     e.preventDefault();
-    setMakingCashAcc(true);
     await wallet.storeWalletIsVerified();
-    const res = await wallet.createCashAccount(username);
-    console.log("Cash Account Create]", res);
-    setMakingCashAcc(false);
-    route("/", true);
+    refetchUtxos();
+    setTimeout(() => {
+      route("/", true);
+    }, 1000);
   }
 
   const [recoveryPhrases, setRecoveryPhrases] = useState([]);
-  const [makingCashAcc, setMakingCashAcc] = useState(false);
 
   useEffect(() => {
     // generate the wallet here
@@ -43,7 +44,7 @@ export default function ({ email, optinForEmails, username, isAnonymous }) {
   return (
     <form onSubmit={handleStoreWallet}>
       <Article ariaLabel="Confirm Recovery Key">
-        <Heading number={3}>Backup Recovery Phrases</Heading>
+        <Heading number={3}>Backup Recovery Phrases 🔒</Heading>
         <p
           class={css`
             font-size: 14px;
@@ -58,8 +59,8 @@ export default function ({ email, optinForEmails, username, isAnonymous }) {
         <Heading number="4">Write these on a paper</Heading>
 
         <RecoveryPhrases words={recoveryPhrases} />
-        <Button type="submit" primary disabled={makingCashAcc}>
-          {makingCashAcc ? "Making Cash Account..." : "I wrote it down"}
+        <Button type="submit" primary>
+          I wrote it down
         </Button>
       </Article>
     </form>

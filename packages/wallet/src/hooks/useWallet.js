@@ -4,29 +4,26 @@ import * as wallet from "../utils/wallet";
 export default function useWallet() {
   const [walletExist, setUserWalletExist] = useState();
   const [bchAddr, setBchAddr] = useState();
-  const [cashAccount, setCashAccount] = useState();
+  const [slpAddr, setSlpAddr] = useState();
 
   useEffect(() => {
     (async () => {
       const doesWalletExist = await wallet.isUserWalletExist();
       const myBchAddr = await wallet.getWalletAddr();
-
-      if (walletExist && !cashAccount) {
-        const { cashAccount } = await wallet.getWalletCashAccount(myBchAddr);
-        setCashAccount(cashAccount);
-      }
+      const mySlpAddr = await wallet.getWalletSLPAddr();
 
       if (typeof walletExist === "undefined") {
         setUserWalletExist(doesWalletExist);
       }
       if (walletExist && !bchAddr) {
-        // fetch the address & cash accounts
+        // fetch the address
         setBchAddr(myBchAddr);
+        setSlpAddr(mySlpAddr);
       }
     })();
   });
 
-  console.log("[Signup][Wallet Hook]", bchAddr, cashAccount);
+  console.log("[Signup][Wallet Hook]", bchAddr);
 
-  return { walletExist, bchAddr, cashAccount };
+  return { walletExist, bchAddr, slpAddr };
 }

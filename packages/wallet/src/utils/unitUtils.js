@@ -1,6 +1,9 @@
-import bitbox from "../libs/bitbox";
+import { BITBOX } from "bitbox-sdk";
+import * as slpjs from "slpjs";
 import * as Sentry from "@sentry/browser";
 import { getBCHPrice } from "./price";
+
+const bitbox = new BITBOX();
 
 export function convertAmountToBCHUnit(amount, unit) {
   if (isInSatoshis(unit)) {
@@ -42,6 +45,10 @@ export function isCashAddress(bchAddr) {
   }
 }
 
+export function isSLPAddress(slpAddr) {
+  return slpjs.Utils.isSlpAddress(slpAddr);
+}
+
 export function isInSatoshis(unit) {
   return (
     unit.toUpperCase() === "SAT" ||
@@ -56,6 +63,11 @@ export function isInFiat(unit) {
 
 export async function fiatToBCH(amount, unit) {
   return amount / (await getBCHPrice(unit));
+}
+
+export async function bchToFiat(amount, unit) {
+  const resultInFiat = amount * (await getBCHPrice(unit));
+  return resultInFiat.toFixed(2);
 }
 
 export async function fiatToSats(amount, unit) {

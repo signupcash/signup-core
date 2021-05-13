@@ -52,18 +52,18 @@ const containerStyle = css`
     height: 10px;
     border: solid white;
     border-width: 0 4px 4px 0;
-    border-color: #3a3d99;
+    border-color: #7c3aed;
     -webkit-transform: rotate(45deg);
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
   }
 `;
 
-export default function ({ onClick, checked, children }) {
+export default function ({ onClick, checked, disabled, children }) {
   return (
     <label class={containerStyle} onClick={onClick}>
       {children}
-      <input type="checkbox" checked={checked} />
+      <input type="checkbox" disabled={disabled} checked={checked} />
       <span class={checkmarkStyle} id="checkbox"></span>
     </label>
   );
