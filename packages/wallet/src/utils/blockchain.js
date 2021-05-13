@@ -6,6 +6,7 @@ import {
   ClusterOrder,
   RequestResponse,
 } from "electrum-cash";
+import { toast } from "react-toastify";
 import { electrumCashClusters } from "../config";
 import { addressToElectrumScriptHash } from "./crypto";
 import { getSlpUtxos, getSlpBalances, getSlpBatonUtxos } from "./slp";
@@ -21,17 +22,28 @@ const electrum = new ElectrumCluster(
 );
 
 // Connect to all the clusters defined in config
-electrumCashClusters.forEach((c) => {
+electrumCashClusters.forEach(async (c) => {
   try {
-    electrum.addServer(c.host, c.port, ElectrumTransport.WSS.Scheme, true);
+    await electrum.addServer(
+      c.host,
+      c.port,
+      ElectrumTransport.WSS.Scheme,
+      true
+    );
   } catch (e) {
     console.log("Error connecting Electrum server ", e);
   }
 });
 
 export async function getUtxos(bchAddr) {
-  await electrum.startup();
   await electrum.ready();
+  const connectedServer = Object.keys(electrum.clients).filter(
+    (c) => electrum.clients[c].state == 1
+  )[0];
+
+  toast.success(`Connected to Electrum Server ${connectedServer} 🔒`, {
+    hideProgressBar: true,
+  });
 
   const scripthash = addressToElectrumScriptHash(bchAddr);
 
