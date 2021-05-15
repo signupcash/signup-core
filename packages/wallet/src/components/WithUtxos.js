@@ -6,6 +6,8 @@ import {
   getWalletSLPAddr,
   getWalletAddr,
   isUserWalletExist,
+  freezeUtxo,
+  unfreezeUtxo,
 } from "../utils/wallet";
 import { workerCourier } from "../signer";
 import { getAllUtxosWithSlpBalances } from "../utils/blockchain";
@@ -27,7 +29,8 @@ const WithUtxos = (Component) => {
     const [bchAddr, setBchAddr] = useState();
     const [slpAddr, setSlpAddr] = useState();
     const [walletExist, setWalletExist] = useState();
-
+    const [frozenUtxos, setFrozenUtxos] = useState([]);
+    
     useEffect(() => {
       refetchUtxos();
     }, []);
@@ -57,17 +60,19 @@ const WithUtxos = (Component) => {
         slpUtxos,
         slpBalances,
         slpBatons,
+        currentFrozenUtxos,
         latestSatoshisBalance,
       } = await getAllUtxosWithSlpBalances(walletAddr);
 
       if (utxos) {
         setLatestSatoshisBalance(latestSatoshisBalance);
         setLatestUtxos(utxos);
+        setFrozenUtxos(currentFrozenUtxos);
         setSlpUtxos(slpUtxos);
         setSlpBalances(slpBalances);
         setBchAddr(walletAddr);
         setSlpAddr(walletSlpAddr);
-
+        
         setUtxoIsFetching(false);
         // update data in the web worker
         workerCourier("update", {
@@ -90,6 +95,17 @@ const WithUtxos = (Component) => {
           walletExist,
           bchAddr,
           slpAddr,
+          frozenUtxos,
+          freezeUtxo: async (txid, vout, reqType, data) => {
+            //TODO God willing: refetch utxos to be sure they exist, God willing.
+              // implications may be that can't freeze coins for unbroadcasted tx's
+            const frozenUtxos = await freezeUtxo(txid, vout, reqType, data)
+            setFrozenUtxos([].concat(...Object.values(frozenUtxos)))
+          },
+          unfreezeUtxo: async (txid, vout) => {
+            await unfreezeUtxo(txid, vout)
+            await refetchUtxos()
+          }
         }}
       >
         {<Component {...props} />}

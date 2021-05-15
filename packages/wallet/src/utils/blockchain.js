@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { electrumCashClusters } from "../config";
 import { addressToElectrumScriptHash } from "./crypto";
 import { getSlpUtxos, getSlpBalances, getSlpBatonUtxos } from "./slp";
+import { getFrozenUtxos, unfreezeUtxos  } from "../utils/wallet";
 
 const bitbox = new BITBOX();
 
@@ -77,29 +78,62 @@ export async function sendRawTx(txHex) {
 export async function getAllUtxosWithSlpBalances(bchAddr) {
   const slpAddr = slpjs.Utils.toSlpAddress(bchAddr);
 
-  let [utxos, slpUtxos, slpBatons, slpBalances] = await Promise.all([
+  let [rawUtxos, slpUtxos, slpBatons, slpBalances, frozenUtxos] = await Promise.all([
     getUtxos(bchAddr),
     getSlpUtxos(slpAddr),
     getSlpBatonUtxos(slpAddr),
     getSlpBalances(slpAddr),
+    getFrozenUtxos()
   ]).catch((e) => {
     console.log("ERROR with UTXOs", e);
     throw new Error("Error while fetching UTXOs");
   });
 
-  console.log("Utxos =>", utxos);
+  console.log("Utxos =>", rawUtxos);
   console.log("SLP Utxos => ", slpUtxos);
+  console.log("Frozen Utxos => ", frozenUtxos);
   console.log("SLP Balances =>", slpBalances);
 
-  // remove SLP Utxos from normal utxos
-  utxos = utxos.filter(
-    (u) => !slpUtxos.some((su) => su.txid === u.txid && su.vout === u.vout)
-  );
+  // track which frozen coins are not found in the utxo set by removing from this copy
+  const frozenCoinsNotFound = JSON.parse(JSON.stringify(frozenUtxos))
+  
+  // track which frozen coins are found
+  const currentFrozenUtxos = []
 
-  // remove SLP Baton Utxos to avoid burning batons
-  utxos = utxos.filter(
-    (u) => !slpBatons.some((su) => su.txid === u.txid && su.vout === u.vout)
-  );
+  const utxos = rawUtxos.filter(({ txid, vout }) => {
+    const frozenCoin = frozenUtxos[txid] && frozenUtxos[txid].find(fu => fu.vout === vout)
+
+    // remove SLP Utxos from normal utxos
+    const isSlp = slpUtxos.some((su) => su.txid === txid && su.vout === vout)
+
+    // remove SLP Baton Utxos to avoid burning batons
+    const isSlpBaton = slpBatons.some((su) => su.txid === txid && su.vout === vout)
+
+    if (frozenCoin) {
+      frozenCoinsNotFound[txid] = frozenCoinsNotFound[txid].filter(fu => fu.vout !== vout)
+      currentFrozenUtxos.push(frozenCoin)
+    }
+
+    return !frozenCoin && !isSlp && !isSlpBaton
+  }).sort((a, b) => {
+    if (a.height === 0) {
+      return 1
+    }
+
+    if (b.height === 0) {
+      return -1
+    }
+
+    return a.satoshis - b.satoshis
+  })
+
+  //unfreeze unfound frozen tokens
+  const frozenCoinsWithoutUtxos = [].concat(...Object.values(frozenCoinsNotFound))
+
+  // TODO God willing: don't unfreeze but actually mark as spent, God willing.
+  if (frozenCoinsWithoutUtxos.length) {
+    await unfreezeUtxos(frozenCoinsWithoutUtxos)
+  }
 
   // calculate satoshis available
   const latestSatoshisBalance = utxos.reduce((acc, c) => acc + c.satoshis, 0);
@@ -110,5 +144,6 @@ export async function getAllUtxosWithSlpBalances(bchAddr) {
     slpUtxos,
     slpBalances,
     slpBatons,
+    currentFrozenUtxos
   };
 }

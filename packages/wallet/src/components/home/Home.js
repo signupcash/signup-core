@@ -37,13 +37,13 @@ export default function ({ clientPayload }) {
             <a href="/send">Send</a>
             <a href="/tokens">Tokens</a>
             <a href="/NFTs">NFTs</a>
+            <a href="/contributions">Contributions</a>
             <a href="/backup">Backup</a>
             <a href="/logout">Logout</a>
             <span
               class={css`
                 position: absolute;
                 bottom: 40px;
-                right: 10px;
                 text-align: center;
                 font-size: 13px;
               `}

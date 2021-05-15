@@ -20,14 +20,22 @@ export default function ({
 
   function getBgColor() {
     if (disabled) {
+
+      if (isSecondary) {
+        return "#b6b6b6"
+      }
+
       return "#aa91ee";
     }
+
     if (alert) {
       return "#f74476";
     }
+
     if (green) {
       return "#28d9a7";
     }
+
     if (isPrimary) {
       return "#7c3aed";
     }
@@ -37,23 +45,32 @@ export default function ({
 
   function getHoverBgColor() {
     if (disabled) {
+
+      if (isSecondary) {
+        return "#b6b6b6"
+      }
+      
       return "#aa91ee";
     }
+    
     if (alert) {
       return "#c41a4a";
     }
+    
     if (green) {
       return "#28d9a7";
     }
+    
     if (isPrimary) {
       return "#815de3";
     }
+
     return "gray";
   }
 
   const buttonStyle = css`
     background: ${getBgColor()};
-    color: ${isPrimary ? "white" : "black"};
+    color: ${isPrimary ? "white" : disabled ? "white" : "black"};
     user-select: none;
     width: 100%;
     font-family: Poppins, sans-serif;

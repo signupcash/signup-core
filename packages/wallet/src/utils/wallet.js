@@ -169,3 +169,104 @@ export async function getWalletSpendingsBySessionId(sessionId) {
     return 0;
   }
 }
+
+export async function getFrozenUtxos() {
+  
+  try {
+
+    const frozenUtxos = await localforage.getItem("SIGNUP_LOCKED_UTXOS")
+    return frozenUtxos ? JSON.parse(frozenUtxos) : {};
+    
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    return {};
+  }
+}
+
+export async function freezeUtxo(txid, vout, reqType, data) {
+  
+  try {
+    
+    return await freezeUtxos([{ txid, vout }], reqType, data)
+
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    
+    return {};
+  }
+}
+
+export async function freezeUtxos(utxos, reqType, data) {
+  
+  let lockedUtxos = {}
+
+  try {
+    
+    lockedUtxos = await getFrozenUtxos();
+
+    utxos.forEach(({ txid, vout }) => {
+      //Remove any duplicates before adding again
+      const lockedUtxosForTx = (lockedUtxos[txid] || []).filter(outpoint => outpoint.vout !== vout)
+      lockedUtxos[txid] = [...lockedUtxosForTx, { txid, vout, reqType, data }]
+    })
+
+    await localforage.setItem("SIGNUP_LOCKED_UTXOS", JSON.stringify(lockedUtxos));
+
+    return lockedUtxos
+
+  } catch (e) {
+
+    console.log(e);
+    Sentry.captureException(e);
+
+    return lockedUtxos;
+  }
+}
+
+export async function unfreezeUtxo(txid, vout) {
+  
+  try {
+    
+    return await unfreezeUtxos([{ txid, vout }])
+
+  } catch (e) {
+
+    console.log(e);
+    Sentry.captureException(e);
+
+    return {};
+  }
+}
+
+export async function unfreezeUtxos(utxos) {
+  
+  let lockedUtxos = {}
+
+  try {
+    
+    lockedUtxos = await getFrozenUtxos();
+
+    utxos.forEach(({ txid, vout }) => {
+      //Remove from txid
+      const lockedUtxosForTx = (lockedUtxos[txid] || []).filter(outpoint => outpoint.vout !== vout)
+
+      if (!lockedUtxosForTx.length) {
+        delete lockedUtxos[txid]
+      } else {
+        lockedUtxos[txid] = lockedUtxosForTx
+      }
+    })
+
+    await localforage.setItem("SIGNUP_LOCKED_UTXOS", JSON.stringify(lockedUtxos));
+
+    return lockedUtxos
+
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    
+    return lockedUtxos;
+  }
+}

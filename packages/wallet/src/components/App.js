@@ -19,6 +19,7 @@ import ImportWallet from "./wallet/ImportWallet";
 import SLPTokens from "./wallet/SLPTokens";
 import NFTs from "./wallet/NFTs";
 import TokenPage from "./wallet/TokenPage";
+import Contributions from "./wallet/Contributions";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -47,7 +48,8 @@ function App() {
           "spend_token",
           "send_slp",
           "genesis_slp",
-          "genesis_nft_child",
+          "genesis_nft_child", 
+          "contribution"
         ].includes(event.data.reqType)
       ) {
         return;
@@ -91,6 +93,7 @@ function App() {
         <SLPTokens path="/tokens" />
         <NFTs path="/NFTs" />
         <TokenPage path="/token" />
+        <Contributions path="/contributions" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />

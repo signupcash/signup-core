@@ -185,10 +185,15 @@ function setRootDivHeight(newHeight) {
   rootDiv.classList.add(newHeight);
 }
 
-function showRootDiv() {
-  setTimeout(function () {
-    rootDiv.style.setProperty("display", "block");
-  }, 0);
+function showRootDiv(skipPopup) {
+  if (!skipPopup) {
+    setTimeout(function () {
+      rootDiv.style.setProperty("display", "block");
+    }, 0);
+
+  } else {
+    openPopup()
+  }
 }
 
 function setStateForRootDiv(_state, meta = {}) {
@@ -489,6 +494,39 @@ function sign(data) {
     });
 }
 
+function contribute(amount, unit, data, recipients, skipPopup = true) {
+  showRootDiv(skipPopup)
+  const newReqId = uuidv4();
+
+  latestPayload = {
+    reqId: newReqId,
+    reqType: "contribution",
+    recipients,
+    data: {
+      ...data,
+      includingFee: data.includingFee || 0
+    },
+    amount,
+    unit
+  };
+
+  return new Promise(function (resolve, reject) {
+    // first set a listener to receive the response back from signer
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+      if (payloadFromWallet.status === "CONTRIBUTION_SUCCESS") {
+        
+        resolve(payloadFromWallet);
+
+      } else {
+        // Signin failed
+        reject("User failed to Signin with a wallet");
+      }
+    });
+  });
+}
+
 function requestAccess(permissions) {
   showRootDiv();
   const newReqId = uuidv4();
@@ -644,6 +682,7 @@ export function cash(params = {}) {
     sendSlp,
     genesisNFTGroup,
     genesisNFTChild,
-    utility,
+    contribute,
+    utility
   });
 }
