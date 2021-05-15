@@ -12,14 +12,13 @@ import {
 } from "./slp";
 
 import {
-  isUserWalletExist,
   getWalletAddr,
   getWalletSLPAddr,
   getWalletHdNode,
 } from "./wallet";
 
 import { isInSatoshis, sats } from "./unitUtils";
-import { DUST } from "../config";
+import { DUST, BITCOIN_NETWORK } from "../config";
 
 export function feesFor(inputNum, outputNum) {
   return bitbox.BitcoinCash.getByteCount(
@@ -28,8 +27,7 @@ export function feesFor(inputNum, outputNum) {
   );
 }
 
-// perform the transaction right away
-export async function sendBchTx(
+async function createSendTransaction(
   amount,
   unit,
   receiverAddress,
@@ -47,13 +45,14 @@ export async function sendBchTx(
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
 
-  const tx = new bitbox.TransactionBuilder("mainnet");
+  const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
 
   let inputsSats = 0;
   let selectedUtxos = [];
   let fees;
 
   latestUtxos.forEach((utxo) => {
+    //break if no more utxos are needed
     if (selectedUtxos.length > 0 && inputsSats >= amountInSatoshis + fees) {
       return;
     }
@@ -62,10 +61,16 @@ export async function sendBchTx(
 
     // only need the satoshis here to sign in the end
     selectedUtxos.push(utxo.satoshis);
+
     // keeping track of inputs
     inputsSats += utxo.satoshis;
     fees = feesFor(selectedUtxos.length, 2);
   });
+
+  //Last check if inputs don't make up for amount + fees
+  if (inputsSats < amountInSatoshis + fees) {
+    return
+  }
 
   const changeAmount = inputsSats - amountInSatoshis - fees;
 
@@ -89,12 +94,24 @@ export async function sendBchTx(
   });
 
   const builtTx = tx.build();
-  const txHex = builtTx.toHex();
+  const spent = amountInSatoshis + fees
 
-  // Broadcast transation to the network
-  const txId = await sendRawTx(txHex);
+  return { tx: builtTx, spent }
+}
 
-  return { txId, spent: amountInSatoshis + fees };
+// perform the transaction right away
+export async function sendBchTx(
+  amount,
+  unit,
+  receiverAddress,
+  latestSatoshisBalance,
+  latestUtxos = []
+) {
+
+  const { tx, spent } = await createSendTransaction(amount, unit, receiverAddress, latestSatoshisBalance, latestUtxos)
+  const txId = await sendRawTx(tx.toHex());
+
+  return { txId, spent }
 }
 
 export async function sendSlpTx(
@@ -136,7 +153,8 @@ export async function sendSlpTx(
   // Proceed with the payment
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
-  const tx = new bitbox.TransactionBuilder("mainnet");
+
+  const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
 
   // Adding inputs
   inputUtxos.forEach((utxo) => {

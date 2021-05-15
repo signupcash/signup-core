@@ -1,10 +1,20 @@
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
+const { WebpackPluginServe } = require('webpack-plugin-serve')
+
+const isDevEnv = process.env.NODE_ENV === "development"
+const serveEntry = isDevEnv ? { serve: "webpack-plugin-serve/client" } : {}
+const servePlugins = isDevEnv ? [new WebpackPluginServe({ port: 5050, static: "./public" })] : []
 
 module.exports = {
   entry: {
     signer: "./src/index.js",
     worker: "./src/worker/worker.js",
+    ...serveEntry
+  },
+  node: {
+    net: 'empty',
+    tls: 'empty'
   },
   resolve: {
     alias: {
@@ -17,7 +27,7 @@ module.exports = {
     },
   },
   mode: process.env.NODE_ENV,
-  watch: process.env.NODE_ENV === "development",
+  watch: isDevEnv,
   output: {
     path: path.resolve(__dirname, "public/js"),
     filename: "[name].lib.js",
@@ -41,7 +51,7 @@ module.exports = {
     net: "mock",
   },
   stats: {
-    warnings: process.env.NODE_ENV === "development",
+    warnings: isDevEnv,
   },
   module: {
     rules: [
@@ -73,4 +83,7 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    ...servePlugins
+  ]
 };

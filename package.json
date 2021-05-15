@@ -23,8 +23,6 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "concurrently": "^5.3.0",
-    "lerna": "^3.22.1",
-    "serve": "^11.3.2"
-  },
-  "dependencies": {}
+    "lerna": "^3.22.1"
+  }
 }

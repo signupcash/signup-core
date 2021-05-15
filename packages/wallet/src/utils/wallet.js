@@ -11,7 +11,7 @@ import VanillaQR from "./vanillaQR";
 import { heightModifier, isDevEnv } from "../config";
 import { getBCHPrice } from "./price";
 import { memoize } from "./helpers";
-
+import { BITCOIN_NETWORK, WALLET_HD_PATH } from '../config'
 function q(selector, el) {
   if (!el) {
     el = document;
@@ -65,9 +65,9 @@ export async function getWalletAddr() {
   if (!userWallet || !isVerified) return;
 
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, BITCOIN_NETWORK);
 
-  const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const path = bitbox.HDNode.derivePath(hdNode, WALLET_HD_PATH);
   const legacyAddr = path.keyPair.getAddress();
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
@@ -82,8 +82,8 @@ export async function getWalletSLPAddr() {
 export async function getWalletHdNode() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
-  return bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, BITCOIN_NETWORK);
+  return bitbox.HDNode.derivePath(hdNode, WALLET_HD_PATH);
 }
 
 export async function getWalletEntropy() {

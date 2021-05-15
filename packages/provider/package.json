@@ -3,14 +3,15 @@
   "version": "1.2.0",
   "description": "Connecting the web apps to Signup DApp wallet",
   "main": "dist/provider.js",
+  "module": "src/provider.js",
   "browserslist": [
     "last 2 version",
     "> 1%"
   ],
   "scripts": {
     "start": "serve ./ -l 5000",
-    "build:dev": "NODE_ENV=development webpack",
-    "build": "NODE_ENV=production webpack",
+    "build:dev": "npx cross-env NODE_ENV=development webpack",
+    "build": "npx cross-env NODE_ENV=production webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "npm run build"
   },
@@ -35,8 +36,9 @@
     "@babel/preset-env": "^7.11.5",
     "babel-loader": "^8.1.0",
     "babel-plugin-transform-inline-environment-variables": "^0.4.3",
+    "cross-env": "^7.0.3",
     "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12"
+    "webpack-plugin-serve": "^1.4.1"
   },
   "dependencies": {
     "axios": "^0.21.1",
