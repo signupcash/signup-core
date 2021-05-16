@@ -508,23 +508,6 @@ export async function sendCommitmentTx(
     throw "Outputs are empty"
   }
 
-  //check data field exists and is an object/dictionary with comment and alias fields for contributor
-  if (!data) {
-    throw "'data' field is missing"
-  }
-
-  if (typeof(data) !== "object") {
-    throw "'data' field is not a dictionary"
-  }
-
-  if (typeof(data.alias) === 'undefined') {
-    throw "'data' is missing alias"
-  }
-
-  if (typeof(data.comment) === 'undefined') {
-    throw "'data' is missing comment"
-  }
-
   //check all outputs have a value and address 
   let sumOutputs = 0
   
@@ -598,7 +581,8 @@ export async function sendCommitmentTx(
   )
 
   const txin = tx.build().ins[0]
-  
+  const wif = bitbox.HDNode.toWIF(hdNode);
+
   const commitmentObject = {
     inputs: [{
       previous_output_transaction_hash: txin.hash.reverse().toString('hex'),
@@ -606,18 +590,12 @@ export async function sendCommitmentTx(
       sequence_number: txin.sequence,
       unlocking_script: txin.script.toString('hex')
     }],
-    data: {
-      alias: data.alias,
-      comment: data.comment
-    },
-    data_signature: null
+    data
   }
 
-  try {
-    await sendRawTx(pledgeTx.toHex())
-  } catch (err) {
-    throw "Failed to broadcast commitment transaction"
-  }
+  commitmentObject.data_signature  = bitbox.BitcoinCash.signMessageWithPrivKey(wif, JSON.stringify(commitmentObject));
+
+  await sendRawTx(pledgeTx.toHex())
 
   return commitmentObject
 }

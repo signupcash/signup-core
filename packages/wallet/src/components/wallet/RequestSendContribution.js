@@ -17,7 +17,7 @@ const permissionCss = css`
   padding: 12px;
 `;
 
-export default function ({ clientPayload = {} }) {
+export default function ({ clientPayload }) {
   // TODO move it to higher level using context
   const [status, setStatus] = useState("WAITING");
   // using this in state so user can change the parameter before accepting it
