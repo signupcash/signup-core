@@ -3,8 +3,10 @@ const TerserPlugin = require("terser-webpack-plugin");
 const { WebpackPluginServe } = require('webpack-plugin-serve')
 
 const isDevEnv = process.env.NODE_ENV === "development"
-const serveEntry = isDevEnv ? { serve: "webpack-plugin-serve/client" } : {}
-const servePlugins = isDevEnv ? [new WebpackPluginServe({ port: 5050, static: "./public" })] : []
+const serveApp = isDevEnv && process.env.FORCE_SERVE_APP === "true" && process.env.FORCE_SERVE_APP !== "false"
+
+const serveEntry = serveApp ? { serve: "webpack-plugin-serve/client" } : {}
+const servePlugins = isDevEnv ? [new WebpackPluginServe({ port: 5050, static: "./public", historyFallback: true })] : []
 
 module.exports = {
   entry: {

@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "start": "serve ./ -l 5000",
-    "build:dev": "npx cross-env NODE_ENV=development webpack",
+    "build:dev": "npx cross-env NODE_ENV=development FORCE_SERVE_APP=false webpack",
+    "dev": "npx cross-env NODE_ENV=development webpack",
     "build": "npx cross-env NODE_ENV=production webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "npm run build"

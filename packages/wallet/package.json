@@ -4,10 +4,9 @@
   "description": "",
   "main": "public/index.html",
   "scripts": {
-    "start": "serve -l 5050 -s ./public",
     "build": "npx cross-env NODE_ENV=production webpack",
-    "build:dev": "npx cross-env NODE_ENV=development webpack",
-    "dev": "echo \"Signup\"",
+    "build:dev": "npx cross-env NODE_ENV=development FORCE_SERVE_APP=false webpack",
+    "dev": "npx cross-env NODE_ENV=development webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "p0o",
