@@ -116,6 +116,7 @@ export async function getAllUtxosWithSlpBalances(bchAddr) {
 
     return !frozenCoin && !isSlp && !isSlpBaton
   }).sort((a, b) => {
+    //Prefer confirmed utxos with higher values
     if (a.height === 0) {
       return 1
     }

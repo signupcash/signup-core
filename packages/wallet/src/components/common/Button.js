@@ -70,7 +70,7 @@ export default function ({
 
   const buttonStyle = css`
     background: ${getBgColor()};
-    color: ${isPrimary ? "white" : disabled ? "white" : "black"};
+    color: ${isPrimary || disabled ? "white" : "black"};
     user-select: none;
     width: 100%;
     font-family: Poppins, sans-serif;

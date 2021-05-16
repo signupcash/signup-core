@@ -185,15 +185,10 @@ function setRootDivHeight(newHeight) {
   rootDiv.classList.add(newHeight);
 }
 
-function showRootDiv(skipPopup) {
-  if (!skipPopup) {
-    setTimeout(function () {
-      rootDiv.style.setProperty("display", "block");
-    }, 0);
-
-  } else {
-    openPopup()
-  }
+function showRootDiv() {
+  setTimeout(function () {
+    rootDiv.style.setProperty("display", "block");
+  }, 0);
 }
 
 function setStateForRootDiv(_state, meta = {}) {
@@ -494,8 +489,14 @@ function sign(data) {
     });
 }
 
-function contribute(amount, unit, data, recipients, skipPopup = true) {
-  showRootDiv(skipPopup)
+function sendAnyoneCanPayCommitment(amount, unit, data, recipients, skipPopup = true) {
+  
+  if (skipPopup) {
+    openPopup();
+  } else {
+    showRootDiv();
+  }
+
   const newReqId = uuidv4();
 
   latestPayload = {
@@ -682,7 +683,7 @@ export function cash(params = {}) {
     sendSlp,
     genesisNFTGroup,
     genesisNFTChild,
-    contribute,
+    sendAnyoneCanPayCommitment,
     utility
   });
 }
