@@ -131,7 +131,6 @@ export async function getAllUtxosWithSlpBalances(bchAddr) {
   //unfreeze unfound frozen tokens
   const frozenCoinsWithoutUtxos = [].concat(...Object.values(frozenCoinsNotFound))
 
-  // TODO God willing: don't unfreeze but actually mark as spent, God willing.
   if (frozenCoinsWithoutUtxos.length) {
     await unfreezeUtxos(frozenCoinsWithoutUtxos)
   }

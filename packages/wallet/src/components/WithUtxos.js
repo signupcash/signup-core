@@ -97,7 +97,7 @@ const WithUtxos = (Component) => {
           slpAddr,
           frozenUtxos,
           freezeUtxo: async (txid, vout, reqType, data) => {
-            //TODO God willing: refetch utxos to be sure they exist, God willing.
+            //TODO God willing: refetch utxos to be sure they exist.
               // implications may be that can't freeze coins for unbroadcasted tx's
             const frozenUtxos = await freezeUtxo(txid, vout, reqType, data)
             setFrozenUtxos([].concat(...Object.values(frozenUtxos)))

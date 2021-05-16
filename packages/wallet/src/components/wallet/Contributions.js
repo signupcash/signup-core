@@ -134,8 +134,7 @@ export default function () {
         setDetails({ outputs, amount, data })
       }
 
-    } catch {
-      //TODO God willing: show some error
+    } catch (err) {
     }
   }
 
@@ -161,7 +160,6 @@ export default function () {
 
       try {
 
-        //TODO God willing: refetch utxos to get the actual amount/sats (add unit data too, God willing, about our utxos)
         await freezeUtxo(
           commitmentObject.inputs[0].previous_output_transaction_hash, 
           commitmentObject.inputs[0].previous_output_index,

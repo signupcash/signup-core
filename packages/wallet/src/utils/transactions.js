@@ -552,7 +552,7 @@ export async function sendCommitmentTx(
       throw "Zero or negative output value"
     }
   
-    // sum all the outputs, God willing
+    // calculate total recipient outputs
     sumOutputs += value
   }
 
@@ -560,8 +560,7 @@ export async function sendCommitmentTx(
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
   
-  //Create a tx to ourselves and check we have enough funds, God willing.
-  //Deposit more in order to do this, God willing.
+  //Create a tx to ourselves and check we have enough funds.
   let pledgeTx
 
   try { 
@@ -574,7 +573,7 @@ export async function sendCommitmentTx(
     throw "Failed to create commitment transaction"
   }
   
-  //Create and sign a pledge tx moving coins from frozen addr to recipients of campaign, God willing.
+  //Create and sign a pledge tx moving coins from frozen addr to recipients of campaign.
   const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
   
   tx.addInput(pledgeTx.getId(), 0);
