@@ -16,9 +16,8 @@ const headerStyle = css`
 `;
 
 export default function ({ clientPayload }) {
-  const { refetchUtxos, utxoIsFetching, walletExist, bchAddr } = useContext(
-    UtxosContext
-  );
+  const { refetchUtxos, utxoIsFetching, walletExist, bchAddr } =
+    useContext(UtxosContext);
 
   console.log("[Provider Payload] ", clientPayload);
 
@@ -28,7 +27,7 @@ export default function ({ clientPayload }) {
         {walletExist && (
           <Menu
             styles={menuStyles}
-            width={"200px"}
+            width={"230px"}
             right
             pageWrapId="body-wrap"
           >
@@ -44,8 +43,9 @@ export default function ({ clientPayload }) {
               class={css`
                 position: absolute;
                 bottom: 40px;
+                right: 12px;
                 text-align: center;
-                font-size: 13px;
+                font-size: 14px;
               `}
             >
               Support: hello@signup.cash
