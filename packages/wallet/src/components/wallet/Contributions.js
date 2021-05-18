@@ -38,6 +38,8 @@ export default function () {
   const [totalAmountInBCH, setTotalAmountInBCH] = useState();
   const [totalAmountInUSD, setTotalAmountInUSD] = useState();
 
+  const [revoking, setRevoking] = useState();
+
   const {
     bchAddr,
     latestSatoshisBalance,
@@ -189,6 +191,7 @@ export default function () {
         );
       } catch (err) {
         console.log("Failed to freeze coins!", err);
+        Sentry.captureException(e);
       }
 
       const serialized = btoa(JSON.stringify(commitmentObject));
@@ -228,18 +231,12 @@ export default function () {
 
   const balanceIsLoaded = !utxoIsFetching;
   const balanceIsEnough = totalAmountInSatoshis <= latestSatoshisBalance;
-  const showBalanceInSats = latestSatoshisBalance < 5000000;
+
   const balanceInUSDStr = !isNaN(balanceInUSD)
     ? " ($" + balanceInUSD + ")"
     : "";
-  const balanceStr =
-    (showBalanceInSats
-      ? `${latestSatoshisBalance || "0"} SATS`
-      : `${balanceInBch || "0"} BCH`) + balanceInUSDStr;
-  const showTotalAmountInSats = totalAmountInSatoshis < 5000000;
-  const totalAmountStr = showTotalAmountInSats
-    ? `${totalAmountInSatoshis || "0"} SATS`
-    : `${totalAmountInBCH || "0"} BCH`;
+  const balanceStr = `${balanceInBch || "0"} BCH` + balanceInUSDStr;
+  const totalAmountStr = `${totalAmountInBCH || "0"} BCH`;
 
   const totalAmountInUSDStr = !isNaN(totalAmountInUSD)
     ? " ($" + totalAmountInUSD + ")"
@@ -439,7 +436,7 @@ export default function () {
                         text-align: right;
                       `}
                     >
-                      {utxo.data.amount} {utxo.data.unit}
+                      {`${satsToBch(utxo.data.amount)} BCH`}
                     </Heading>
                   </div>
                 )}
