@@ -206,6 +206,7 @@ export default function () {
   }
 
   async function handleContributionRevocation({ txid, vout, data }) {
+    setRevoking(true);
     const frozenUtxo = { txid, vout, satoshis: data.amount };
 
     if (!canRevokeContributions) {
@@ -222,7 +223,8 @@ export default function () {
       [{ ...frozenUtxo, flag: "require" }, ...latestUtxos]
     );
 
-    await refetchUtxos();
+    refetchUtxos();
+    setRevoking(false);
   }
 
   function copyPledgeCommitment() {
@@ -506,7 +508,7 @@ export default function () {
                   border: none;
                 `}
               >
-                Revoke
+                {revoking ? "Revoking ..." : "Revoke"}
               </Button>
             </Article>
           ))}
