@@ -201,6 +201,7 @@ export default function () {
       toast.error("Failed to build commitment transaction!");
     } finally {
       setBuildingPledgeCommitment(false);
+      refetchUtxos();
     }
   }
 
