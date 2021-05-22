@@ -251,7 +251,7 @@ export default function () {
         <Link href="/">{`< Back to Wallet`}</Link>
       </header>
       <Article>
-        <Heading number={2}>Manual Contribution</Heading>
+        <Heading number={2}>Manual Crowdfunding</Heading>
         <form onSubmit={makeManualContribution} style="width:100%">
           {balanceIsLoaded && commitmentDetails && !balanceIsEnough && (
             <Heading highlight number={5} alert>
