@@ -246,7 +246,7 @@ export default function () {
     if (!pledgeIsCopied && warningsCount < 1) {
       setWarningsCount(warningsCount + 1);
       toast.warning(
-        "Please before exiting first copy the pledge result and paste it in the campaign page to finalize your commitment"
+        "Please before exiting first copy the pledge result and paste it in the campaign page."
       );
       return;
     }
@@ -366,7 +366,7 @@ export default function () {
             }}
             disabled={!commitmentDetails || buildingPledgeCommitment}
           >
-            {serializedPledgedCommitment ? "Clear" : "Refuse"}
+            {serializedPledgedCommitment ? "New" : "Refuse"}
           </Button>
         </form>
 
