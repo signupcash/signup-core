@@ -3,7 +3,7 @@ import moment from "moment";
 import * as Sentry from "@sentry/browser";
 
 import { useState, useEffect, useContext, useReducer } from "preact/hooks";
-import { Link } from "preact-router";
+import { Link, route } from "preact-router";
 import { css } from "emotion";
 import { toast } from "react-toastify";
 
@@ -42,6 +42,9 @@ export default function () {
   const [campaignName, setCampaignName] = useState("Untitled Campaign");
 
   const [revoking, setRevoking] = useState();
+
+  const [pledgeIsCopied, setPledgeIsCopied] = useState();
+  const [warningsCount, setWarningsCount] = useState(0);
 
   const {
     bchAddr,
@@ -234,7 +237,20 @@ export default function () {
 
   function copyPledgeCommitment() {
     navigator.clipboard.writeText(serializedPledgedCommitment);
+    setPledgeIsCopied(true);
     toast.info("Copied pledge to clipboard");
+  }
+
+  function handleBackButton() {
+    // only warn users once!
+    if (!pledgeIsCopied && warningsCount < 1) {
+      setWarningsCount(warningsCount + 1);
+      toast.warning(
+        "Please before exiting first copy the pledge result and paste it in the campaign page to finalize your commitment"
+      );
+      return;
+    }
+    route("/", true);
   }
 
   const balanceIsLoaded = !utxoIsFetching;
@@ -253,7 +269,7 @@ export default function () {
   return (
     <>
       <header>
-        <Link href="/">{`< Back to Wallet`}</Link>
+        <Link href="#" onClick={handleBackButton}>{`< Back to Wallet`}</Link>
       </header>
       <Article>
         <Heading number={2}>Manual Crowdfunding</Heading>
