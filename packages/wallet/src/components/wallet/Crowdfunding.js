@@ -11,6 +11,7 @@ import Heading from "../common/Heading";
 import Button from "../common/Button";
 import Article from "../common/Article";
 import TextArea from "../common/TextArea";
+import Input from "../common/Input";
 
 import { UtxosContext } from "../WithUtxos";
 import { sendCommitmentTx, sendBchTx, feesFor } from "../../utils/transactions";
@@ -37,6 +38,8 @@ export default function () {
   const [totalAmountInSatoshis, setTotalAmountInSatoshis] = useState();
   const [totalAmountInBCH, setTotalAmountInBCH] = useState();
   const [totalAmountInUSD, setTotalAmountInUSD] = useState();
+
+  const [campaignName, setCampaignName] = useState("Untitled Campaign");
 
   const [revoking, setRevoking] = useState();
 
@@ -182,9 +185,9 @@ export default function () {
           commitmentObject.inputs[0].previous_output_index,
           "contribution",
           {
-            title: "Manual",
+            title: campaignName,
             expires: commitmentDetails.expires,
-            origin: "Manual",
+            origin: "Wallet UI",
             amount: commitmentDetails.amount,
             unit: "SATS",
           }
@@ -201,7 +204,9 @@ export default function () {
       toast.error("Failed to build commitment transaction!");
     } finally {
       setBuildingPledgeCommitment(false);
-      refetchUtxos();
+      setTimeout(() => {
+        refetchUtxos();
+      }, 1000);
     }
   }
 
@@ -273,6 +278,17 @@ export default function () {
           )}
 
           <div style="margin-top:16px">
+            <Label>Campaign name: (optional)</Label>
+            <Input
+              type="text"
+              customCss={css`
+                margin-left: 0;
+              `}
+              onInput={(e) => {
+                setCampaignName(e.target.value);
+              }}
+              placeholder="BCHN Flipstarter"
+            />
             <Label>
               Pledge request <small>(paste)</small>
             </Label>
