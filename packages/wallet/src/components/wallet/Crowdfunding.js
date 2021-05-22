@@ -272,7 +272,7 @@ export default function () {
         <Link href="#" onClick={handleBackButton}>{`< Back to Wallet`}</Link>
       </header>
       <Article>
-        <Heading number={2}>Manual Crowdfunding</Heading>
+        <Heading number={3}>Manual Crowdfunding (beta)</Heading>
         <form onSubmit={makeManualContribution} style="width:100%">
           {balanceIsLoaded && commitmentDetails && !balanceIsEnough && (
             <Heading highlight number={5} alert>
