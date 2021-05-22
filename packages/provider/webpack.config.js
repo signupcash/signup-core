@@ -1,11 +1,19 @@
 const path = require("path");
+const { WebpackPluginServe } = require('webpack-plugin-serve')
+
+const isDevEnv = process.env.NODE_ENV === "development"
+const serveApp = isDevEnv && process.env.FORCE_SERVE_APP === "true" && process.env.FORCE_SERVE_APP !== "false"
+
+const serveEntry = serveApp ? { serve: "webpack-plugin-serve/client" } : {}
+const servePlugins = serveApp ? [new WebpackPluginServe({ port: 5000, static: "./" })] : []
 
 module.exports = {
   entry: {
     client: "./src/provider.js",
+    ...serveEntry
   },
   mode: process.env.NODE_ENV,
-  watch: process.env.NODE_ENV === "development",
+  watch: isDevEnv,
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "provider.js",
@@ -17,7 +25,7 @@ module.exports = {
     ignored: /node_modules/,
   },
   stats: {
-    warnings: process.env.NODE_ENV === "development",
+    warnings: isDevEnv,
   },
   module: {
     rules: [
@@ -33,4 +41,7 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    ...servePlugins
+  ]
 };

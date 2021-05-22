@@ -19,6 +19,7 @@ import ImportWallet from "./wallet/ImportWallet";
 import SLPTokens from "./wallet/SLPTokens";
 import NFTs from "./wallet/NFTs";
 import TokenPage from "./wallet/TokenPage";
+import Crowdfunding from "./wallet/Crowdfunding";
 
 import Home from "./home/Home";
 import WithUtxos from "./WithUtxos";
@@ -26,8 +27,7 @@ import WithUtxos from "./WithUtxos";
 import "../css/base.css";
 
 Sentry.init({
-  dsn:
-    "https://ed7dcd826ee742e59b9247fcb1e2a141@o466710.ingest.sentry.io/5481245",
+  dsn: "https://ed7dcd826ee742e59b9247fcb1e2a141@o466710.ingest.sentry.io/5481245",
   integrations: [new Integrations.BrowserTracing()],
 
   // We recommend adjusting this value in production, or using tracesSampler
@@ -48,6 +48,7 @@ function App() {
           "send_slp",
           "genesis_slp",
           "genesis_nft_child",
+          "contribution",
         ].includes(event.data.reqType)
       ) {
         return;
@@ -91,6 +92,7 @@ function App() {
         <SLPTokens path="/tokens" />
         <NFTs path="/NFTs" />
         <TokenPage path="/token" />
+        <Crowdfunding path="/crowdfunding" />
       </Router>
 
       <ToastContainer position="bottom-center" draggable />

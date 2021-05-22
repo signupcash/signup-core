@@ -1,6 +1,8 @@
 import "babel-polyfill";
 import axios from "axios";
 import { css } from "emotion";
+import { isCashAddress } from "../../wallet/src/utils/unitUtils";
+import { DUST } from "../../wallet/src/config";
 
 const SIGNUP_ORIGIN =
   process.env.NODE_ENV === "development"
@@ -489,6 +491,77 @@ function sign(data) {
     });
 }
 
+/**
+ * Moves desired amount into a consolidated UTXO and returns a signed anyonecanpay transaction to spend them. This commitment is revokable by the owner.
+ * 
+ * Useful to send less coins than needed for the outputs (so it's only spendable if others contribute to the transaction)
+ * Based on Flipstarter/Kickstarter: https://read.cash/@flipstarter/introducing-flipstarter-695d4d50#how-it-works-assurance-contracts-on-bitcoin-cash
+ * 
+ * @param {{value: Number, address: String}[]} recipients The desired recipient's (outputs) address and value in satoshis.
+ * @param {Number} amount The amount to commit to the recipients if they 
+ * @param {String} unit The units of amount (SAT(S)|BCH)
+ * @param {Object} data Data to include for signature to accompany commitment
+ * @param {Boolean} skipPopup Skip root div popup, defaults true
+ * @returns {
+ *  data: Object, 
+ *  data_signature: String, 
+ *  inputs: {{ 
+ *    previous_output_transaction_hash: String,
+ *    previous_output_index: Number,
+ *    sequence_number: Number,
+ *    unlocking_script: String 
+ *  }}[]
+ * } Base64EncodedString of the following shape
+ */
+function sendAnyoneCanPayCommitment(recipients = [], amount, unit = "SATS", data, skipPopup = true) {
+
+  if (!amount || !recipients || recipients.length < 1) {
+    throw new Error("[SIGNUP] Invalid parameters for sendAnyoneCanPayCommitment() function")
+  }
+
+  const invalidRecipientIndex = recipients.findIndex((recipient) => !recipient.value || recipient.value <= DUST || !isCashAddress(recipient.address))
+
+  if (invalidRecipientIndex !== -1) {
+    throw new Error("[SIGNUP] Invalid recipient " + invalidRecipientIndex + " value/address for sendAnyoneCanPayCommitment() function")
+  }
+
+  if (skipPopup) {
+    openPopup();
+  } else {
+    showRootDiv();
+  }
+
+  const newReqId = uuidv4();
+
+  latestPayload = {
+    reqId: newReqId,
+    reqType: "contribution",
+    recipients,
+    data: {
+      ...data,
+      includingFee: data.includingFee || 0
+    },
+    amount,
+    unit
+  };
+
+  return new Promise(function (resolve, reject) {
+    // first set a listener to receive the response back from signer
+    listenForMessage(newReqId, function (payloadFromWallet) {
+      console.log("[SIGNUP][FROM WALLET]", payloadFromWallet);
+      removeListeningForMessage();
+      if (payloadFromWallet.status === "CONTRIBUTION_SUCCESS") {
+        
+        resolve(payloadFromWallet);
+
+      } else {
+        // Signin failed
+        reject("User failed to Signin with a wallet");
+      }
+    });
+  });
+}
+
 function requestAccess(permissions) {
   showRootDiv();
   const newReqId = uuidv4();
@@ -644,6 +717,7 @@ export function cash(params = {}) {
     sendSlp,
     genesisNFTGroup,
     genesisNFTChild,
-    utility,
+    sendAnyoneCanPayCommitment,
+    utility
   });
 }

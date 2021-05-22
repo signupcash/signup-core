@@ -4,9 +4,9 @@
   "description": "A non-custodial easy-to-use platform to build DApps on top of Bitcoin Cash blockchain",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"lerna run build:dev --stream --profile\"  \"lerna run start\"",
-    "build:dev": "lerna run build:dev",
-    "build": "lerna run build",
+    "dev": "lerna run dev --stream --profile",
+    "build:dev": "lerna run build:dev --stream",
+    "build": "lerna run build --stream",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -23,8 +23,6 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "concurrently": "^5.3.0",
-    "lerna": "^3.22.1",
-    "serve": "^11.3.2"
-  },
-  "dependencies": {}
+    "lerna": "^3.22.1"
+  }
 }

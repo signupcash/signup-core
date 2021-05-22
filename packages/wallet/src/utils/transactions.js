@@ -12,14 +12,13 @@ import {
 } from "./slp";
 
 import {
-  isUserWalletExist,
   getWalletAddr,
   getWalletSLPAddr,
   getWalletHdNode,
 } from "./wallet";
 
 import { isInSatoshis, sats } from "./unitUtils";
-import { DUST } from "../config";
+import { DUST, BITCOIN_NETWORK } from "../config";
 
 export function feesFor(inputNum, outputNum) {
   return bitbox.BitcoinCash.getByteCount(
@@ -28,8 +27,7 @@ export function feesFor(inputNum, outputNum) {
   );
 }
 
-// perform the transaction right away
-export async function sendBchTx(
+async function createSendTransaction(
   amount,
   unit,
   receiverAddress,
@@ -47,13 +45,14 @@ export async function sendBchTx(
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
 
-  const tx = new bitbox.TransactionBuilder("mainnet");
+  const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
 
   let inputsSats = 0;
   let selectedUtxos = [];
   let fees;
 
   latestUtxos.forEach((utxo) => {
+    //break if no more utxos are needed
     if (selectedUtxos.length > 0 && inputsSats >= amountInSatoshis + fees) {
       return;
     }
@@ -62,10 +61,16 @@ export async function sendBchTx(
 
     // only need the satoshis here to sign in the end
     selectedUtxos.push(utxo.satoshis);
+
     // keeping track of inputs
     inputsSats += utxo.satoshis;
     fees = feesFor(selectedUtxos.length, 2);
   });
+
+  //Last check if inputs don't make up for amount + fees
+  if (inputsSats < amountInSatoshis + fees) {
+    return
+  }
 
   const changeAmount = inputsSats - amountInSatoshis - fees;
 
@@ -89,12 +94,24 @@ export async function sendBchTx(
   });
 
   const builtTx = tx.build();
-  const txHex = builtTx.toHex();
+  const spent = amountInSatoshis + fees
 
-  // Broadcast transation to the network
-  const txId = await sendRawTx(txHex);
+  return { tx: builtTx, spent }
+}
 
-  return { txId, spent: amountInSatoshis + fees };
+// perform the transaction right away
+export async function sendBchTx(
+  amount,
+  unit,
+  receiverAddress,
+  latestSatoshisBalance,
+  latestUtxos = []
+) {
+
+  const { tx, spent } = await createSendTransaction(amount, unit, receiverAddress, latestSatoshisBalance, latestUtxos)
+  const txId = await sendRawTx(tx.toHex());
+
+  return { txId, spent }
 }
 
 export async function sendSlpTx(
@@ -136,7 +153,8 @@ export async function sendSlpTx(
   // Proceed with the payment
   const hdNode = await getWalletHdNode();
   const keyPair = bitbox.HDNode.toKeyPair(hdNode);
-  const tx = new bitbox.TransactionBuilder("mainnet");
+
+  const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
 
   // Adding inputs
   inputUtxos.forEach((utxo) => {
@@ -446,4 +464,138 @@ export async function genesisNftChild(
   const txId = await sendRawTx(txHex);
 
   return { txId };
+}
+
+export async function sendCommitmentTx(
+  recipients,
+  data,
+  amount,
+  unit = "SATS",
+  latestSatoshisBalance,
+  latestUtxos = []
+) {
+  
+  //check donation exists and amount in donation exists
+  if (!amount) {
+    throw "Donation amount is missing"
+  }
+
+  try {
+    amount = parseInt(amount)
+  } catch (err) {
+    throw "Invalid donation amount"
+  }
+  
+  //check donation amount is non negative
+  if (amount <= 0) {
+    throw "Zero or negative donation amount"
+  }
+
+  let amountInSatoshis = await sats(amount, unit);
+
+  //check outputs exist
+  if (!recipients) {
+    throw "Outputs are missing"
+  }
+
+  //check outputs is a list
+  if (!recipients instanceof Array) {
+    throw "Outputs are not a list"
+  }
+  
+  //check there are one or more outputs
+  if (recipients.length <= 0) {
+    throw "Outputs are empty"
+  }
+
+  //check all outputs have a value and address 
+  let sumOutputs = 0
+  
+  for (let i = 0; i < recipients.length; i++) {
+    const output = recipients[i]
+    
+    if (!output.address) {
+      throw "Output is missing address"
+    }
+
+    if (!output.value) {
+      throw "Output is missing value"
+    }
+    
+    // check all output value is an int and positive amount
+    let value
+
+    try {
+      value = parseInt(output.value)
+    } catch (err) {
+      throw "Invalid output value"
+    }
+
+    if (value <= 0) {
+      throw "Zero or negative output value"
+    }
+  
+    // calculate total recipient outputs
+    sumOutputs += value
+  }
+
+  // proceed with the payment
+  const hdNode = await getWalletHdNode();
+  const keyPair = bitbox.HDNode.toKeyPair(hdNode);
+  
+  //Create a tx to ourselves and check we have enough funds.
+  let pledgeTx
+
+  try { 
+
+    const { tx = undefined } = (await createSendTransaction(amountInSatoshis, "SATS", bitbox.Address.toCashAddress(keyPair.getAddress()), latestSatoshisBalance, latestUtxos) || {})
+    pledgeTx = tx
+    
+  } catch (err) {
+
+    throw "Failed to create commitment transaction"
+  }
+  
+  //Create and sign a pledge tx moving coins from frozen addr to recipients of campaign.
+  const tx = new bitbox.TransactionBuilder(BITCOIN_NETWORK);
+  
+  tx.addInput(pledgeTx.getId(), 0);
+  
+  recipients.forEach(recipient => {
+    tx.addOutput(recipient.address, parseInt(recipient.value))
+  })
+
+  const vin = 0
+  let redeemScript
+  const hashType = tx.hashTypes.SIGHASH_ALL | tx.hashTypes.SIGHASH_ANYONECANPAY
+  const originalAmount = amountInSatoshis
+  const signatureAlgorithm = tx.signatureAlgorithms.ECDSA
+  
+  tx.sign(
+    vin, 
+    keyPair, 
+    redeemScript, 
+    hashType,
+    originalAmount,
+    signatureAlgorithm
+  )
+
+  const txin = tx.build().ins[0]
+  const wif = bitbox.HDNode.toWIF(hdNode);
+
+  const commitmentObject = {
+    inputs: [{
+      previous_output_transaction_hash: txin.hash.reverse().toString('hex'),
+      previous_output_index: txin.index,
+      sequence_number: txin.sequence,
+      unlocking_script: txin.script.toString('hex')
+    }],
+    data
+  }
+
+  commitmentObject.data_signature  = bitbox.BitcoinCash.signMessageWithPrivKey(wif, JSON.stringify(commitmentObject));
+
+  await sendRawTx(pledgeTx.toHex())
+
+  return commitmentObject
 }

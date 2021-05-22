@@ -6,6 +6,12 @@
         "pragma": "h",
         "pragmaFrag": "Fragment"
       }
+    ], 
+    [
+      "transform-inline-environment-variables",
+      {
+        "include": ["NODE_ENV", "WALLET_HD_PATH", "BITCOIN_NETWORK"]
+      }
     ]
   ]
 }

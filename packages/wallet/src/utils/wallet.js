@@ -11,7 +11,7 @@ import VanillaQR from "./vanillaQR";
 import { heightModifier, isDevEnv } from "../config";
 import { getBCHPrice } from "./price";
 import { memoize } from "./helpers";
-
+import { BITCOIN_NETWORK, WALLET_HD_PATH } from '../config'
 function q(selector, el) {
   if (!el) {
     el = document;
@@ -65,9 +65,9 @@ export async function getWalletAddr() {
   if (!userWallet || !isVerified) return;
 
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, BITCOIN_NETWORK);
 
-  const path = bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const path = bitbox.HDNode.derivePath(hdNode, WALLET_HD_PATH);
   const legacyAddr = path.keyPair.getAddress();
   bchAddr = bitbox.Address.toCashAddress(legacyAddr);
 
@@ -82,8 +82,8 @@ export async function getWalletSLPAddr() {
 export async function getWalletHdNode() {
   const { userWallet, isVerified } = await retrieveWalletCredentials();
   const seedBuffer = bitbox.Mnemonic.toSeed(userWallet);
-  const hdNode = bitbox.HDNode.fromSeed(seedBuffer);
-  return bitbox.HDNode.derivePath(hdNode, "m/44'/0'/0'/0/0");
+  const hdNode = bitbox.HDNode.fromSeed(seedBuffer, BITCOIN_NETWORK);
+  return bitbox.HDNode.derivePath(hdNode, WALLET_HD_PATH);
 }
 
 export async function getWalletEntropy() {
@@ -167,5 +167,106 @@ export async function getWalletSpendingsBySessionId(sessionId) {
     console.log(e);
     Sentry.captureException(e);
     return 0;
+  }
+}
+
+export async function getFrozenUtxos() {
+  
+  try {
+
+    const frozenUtxos = await localforage.getItem("SIGNUP_LOCKED_UTXOS")
+    return frozenUtxos ? JSON.parse(frozenUtxos) : {};
+    
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    return {};
+  }
+}
+
+export async function freezeUtxo(txid, vout, reqType, data) {
+  
+  try {
+    
+    return await freezeUtxos([{ txid, vout }], reqType, data)
+
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    
+    return {};
+  }
+}
+
+export async function freezeUtxos(utxos, reqType, data) {
+  
+  let lockedUtxos = {}
+
+  try {
+    
+    lockedUtxos = await getFrozenUtxos();
+
+    utxos.forEach(({ txid, vout }) => {
+      //Remove any duplicates before adding again
+      const lockedUtxosForTx = (lockedUtxos[txid] || []).filter(outpoint => outpoint.vout !== vout)
+      lockedUtxos[txid] = [...lockedUtxosForTx, { txid, vout, reqType, data }]
+    })
+
+    await localforage.setItem("SIGNUP_LOCKED_UTXOS", JSON.stringify(lockedUtxos));
+
+    return lockedUtxos
+
+  } catch (e) {
+
+    console.log(e);
+    Sentry.captureException(e);
+
+    return lockedUtxos;
+  }
+}
+
+export async function unfreezeUtxo(txid, vout) {
+  
+  try {
+    
+    return await unfreezeUtxos([{ txid, vout }])
+
+  } catch (e) {
+
+    console.log(e);
+    Sentry.captureException(e);
+
+    return {};
+  }
+}
+
+export async function unfreezeUtxos(utxos) {
+  
+  let lockedUtxos = {}
+
+  try {
+    
+    lockedUtxos = await getFrozenUtxos();
+
+    utxos.forEach(({ txid, vout }) => {
+      //Remove from txid
+      const lockedUtxosForTx = (lockedUtxos[txid] || []).filter(outpoint => outpoint.vout !== vout)
+
+      if (!lockedUtxosForTx.length) {
+        delete lockedUtxos[txid]
+      } else {
+        lockedUtxos[txid] = lockedUtxosForTx
+      }
+    })
+
+    await localforage.setItem("SIGNUP_LOCKED_UTXOS", JSON.stringify(lockedUtxos));
+
+    return lockedUtxos
+
+  } catch (e) {
+    console.log(e);
+    Sentry.captureException(e);
+    
+    return lockedUtxos;
   }
 }

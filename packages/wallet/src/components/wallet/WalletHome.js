@@ -10,6 +10,7 @@ import RequestAccess from "./RequestAccess";
 import RequestSlpSend from "./RequestSLPSend";
 import RequestSLPGenesis from "./RequestSLPGenesis";
 import RequestNFTGenesisChild from "./RequestNFTGenesisChild";
+import RequestSendContribution from "./RequestSendContribution";
 import Logo from "../common/Logo";
 import Article from "../common/Article";
 import Heading from "../common/Heading";
@@ -61,6 +62,10 @@ export default function ({ clientPayload }) {
         {reqType === "spend_token" && (
           <RequestSpendToken bchAddr={bchAddr} clientPayload={clientPayload} />
         )}
+        
+        {reqType === "contribution" && (
+          <RequestSendContribution clientPayload={clientPayload} />
+        )}
 
         {reqType === "access" && (
           <RequestAccess bchAddr={bchAddr} clientPayload={clientPayload} />
@@ -85,7 +90,8 @@ export default function ({ clientPayload }) {
           reqType !== "access" &&
           reqType !== "send_slp" &&
           reqType !== "genesis_slp" &&
-          reqType !== "genesis_nft_child" && (
+          reqType !== "genesis_nft_child" &&
+          reqType !== "contribution" && (
             <>
               <Logo slp />
 

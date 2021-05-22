@@ -22,19 +22,20 @@ export default {
   bmMenuWrap: {
     position: "fixed",
     height: "100%",
-    "margin-top": "-20px",
     display: "block",
+    "margin-top": "-20px",
   },
   bmMenu: {
     background: "#7c3aed",
-    padding: "2.5em 1.5em 0",
     fontSize: "1.15em",
+    padding: "2.5em 1.5em 0",
   },
   bmMorphShape: {
     fill: "#7c3aed",
   },
   bmItemList: {
     padding: "0.8em",
+    boxSizing: "border-box",
   },
   bmItem: {
     display: "block",
