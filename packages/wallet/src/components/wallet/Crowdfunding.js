@@ -246,7 +246,7 @@ export default function () {
     if (!pledgeIsCopied && warningsCount < 1) {
       setWarningsCount(warningsCount + 1);
       toast.warning(
-        "Please before exiting first copy the pledge result and paste it in the campaign page."
+        "Before leaving, please copy the pledge result to send it manually to the campaign."
       );
       return;
     }
