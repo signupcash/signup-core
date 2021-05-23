@@ -243,7 +243,7 @@ export default function () {
 
   function handleBackButton() {
     // only warn users once!
-    if (!pledgeIsCopied && warningsCount < 1) {
+    if (!pledgeIsCopied && unserializedCommitment && warningsCount < 1) {
       setWarningsCount(warningsCount + 1);
       toast.warning(
         "Before leaving, please copy the pledge result to send it manually to the campaign."
