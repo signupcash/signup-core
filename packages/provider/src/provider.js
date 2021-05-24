@@ -1,8 +1,6 @@
 import "babel-polyfill";
 import axios from "axios";
 import { css } from "emotion";
-import { isCashAddress } from "../../wallet/src/utils/unitUtils";
-import { DUST } from "../../wallet/src/config";
 
 const SIGNUP_ORIGIN =
   process.env.NODE_ENV === "development"
@@ -519,7 +517,7 @@ function sendAnyoneCanPayCommitment(recipients = [], amount, unit = "SATS", data
     throw new Error("[SIGNUP] Invalid parameters for sendAnyoneCanPayCommitment() function")
   }
 
-  const invalidRecipientIndex = recipients.findIndex((recipient) => !recipient.value || recipient.value <= DUST || !isCashAddress(recipient.address))
+  const invalidRecipientIndex = recipients.findIndex((recipient) => !recipient.value || !recipient.address)
 
   if (invalidRecipientIndex !== -1) {
     throw new Error("[SIGNUP] Invalid recipient " + invalidRecipientIndex + " value/address for sendAnyoneCanPayCommitment() function")
