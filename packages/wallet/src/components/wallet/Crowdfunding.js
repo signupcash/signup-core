@@ -379,7 +379,7 @@ export default function () {
 
         <Heading number={3}>Contribution History</Heading>
 
-        {utxoIsFetching && (
+        {!!utxoIsFetching && (
           <Heading number={4}>Fetching contributions...</Heading>
         )}
         {!utxoIsFetching &&
@@ -400,7 +400,7 @@ export default function () {
             >
               <Heading number={5}>Transaction: Contribution</Heading>
               <p style="width:100%">
-                {utxo.data.origin && (
+                {!!utxo.data.origin && (
                   <div
                     class={css`
                       display: flex;
@@ -409,7 +409,7 @@ export default function () {
                     `}
                   >
                     <Heading number={4} inline>
-                      From:
+                      Requested by:
                     </Heading>
                     <Heading
                       number={4}
@@ -425,7 +425,7 @@ export default function () {
                   </div>
                 )}
 
-                {utxo.data.title && (
+                {!!utxo.data.title && (
                   <div
                     class={css`
                       display: flex;
@@ -434,7 +434,7 @@ export default function () {
                     `}
                   >
                     <Heading number={4} inline>
-                      To:
+                      For:
                     </Heading>
                     <Heading
                       number={4}
@@ -450,7 +450,7 @@ export default function () {
                   </div>
                 )}
 
-                {utxo.data.amount && (
+                {!!utxo.data.amount && (
                   <div
                     class={css`
                       display: flex;
@@ -476,7 +476,7 @@ export default function () {
                   </div>
                 )}
 
-                {utxo.data.expires && (
+                {!!utxo.data.expires && (
                   <div
                     class={css`
                       display: flex;

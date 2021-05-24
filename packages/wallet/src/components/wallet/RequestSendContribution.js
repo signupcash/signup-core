@@ -54,7 +54,7 @@ export default function ({ clientPayload }) {
       fees = feesFor(selectedUtxos, 2);
     });
 
-    return fees;
+    return fees || 0;
   }
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function ({ clientPayload }) {
     setTotalAmountInSatoshis(totalAmountInSatoshis)
     setTotalFeesInSatoshis(calculateFeesForAmount(totalAmountInSatoshis))
 
-    const donationAmountInSatoshis = totalAmountInSatoshis - clientPayload.data.includingFee
+    const donationAmountInSatoshis = totalAmountInSatoshis
     setDonationAmountInSatoshis(donationAmountInSatoshis)
 
     const donationAmountInBCH = satsToBch(donationAmountInSatoshis);
@@ -101,7 +101,7 @@ export default function ({ clientPayload }) {
     const totalAmountInBCH = satsToBch(totalAmountInSatoshis);
     setTotalAmountInBCH(totalAmountInBCH);
 
-  }, [latestUtxos, clientPayload.amount, clientPayload.unit, clientPayload.data.includingFee])
+  }, [latestUtxos, clientPayload.amount, clientPayload.unit])
 
   useEffect(async () => {
 
@@ -236,7 +236,7 @@ export default function ({ clientPayload }) {
                 justify-content: space-between;
             `}>
                 <Heading number={4} inline>
-                From:
+                Requested by:
                 </Heading>
                 <Heading
                 number={4}
@@ -250,13 +250,13 @@ export default function ({ clientPayload }) {
                 {clientPayload.origin}
                 </Heading>
             </div>
-            { clientPayload.data && clientPayload.data.title && <div class={css`
+            { !!clientPayload.data.title && <div class={css`
                   display: flex;
                   flex-direction: row;
                   justify-content: space-between;
               `}>
               <Heading number={4} inline>
-                To:
+                For:
                 </Heading>
                 <Heading
                 number={4}
@@ -291,7 +291,7 @@ export default function ({ clientPayload }) {
                 `}>{ donationAmountStr }</Heading>
             </div>
             
-            { clientPayload.data && clientPayload.data.includingFee && <div class={css`
+            { !!totalFeesInSatoshis && <div class={css`
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
@@ -308,11 +308,11 @@ export default function ({ clientPayload }) {
                     text-align: right;
                 `}
                 >
-                { clientPayload.data.includingFee + totalFeesInSatoshis } SATS
+                { totalFeesInSatoshis } SATS
                 </Heading>
             </div> }
 
-            { clientPayload.data && clientPayload.data.expires && <div class={css`
+            { !!clientPayload.data.expires && <div class={css`
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
@@ -367,13 +367,13 @@ export default function ({ clientPayload }) {
           >
             <Heading number={5}>Transaction: Contribution</Heading>
             <p style="width:100%">
-              { utxo.data.origin && <div class={css`
+              { !!utxo.data.origin && <div class={css`
                   display: flex;
                   flex-direction: row;
                   justify-content: space-between;
               `}>
                   <Heading number={4} inline>
-                  From:
+                  Requested by:
                   </Heading>
                   <Heading
                   number={4}
@@ -388,13 +388,13 @@ export default function ({ clientPayload }) {
                   </Heading>
               </div> }
               
-              { utxo.data.title && <div class={css`
+              { !!utxo.data.title && <div class={css`
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
                 `}>
                 <Heading number={4} inline>
-                  To:
+                  For:
                   </Heading>
                   <Heading
                   number={4}
@@ -409,7 +409,7 @@ export default function ({ clientPayload }) {
                 </Heading>
               </div> }
 
-              { utxo.data.amount && <div class={css`
+              { !!utxo.data.amount && <div class={css`
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
@@ -429,7 +429,7 @@ export default function ({ clientPayload }) {
                   `}>{ utxo.data.amount } { utxo.data.unit }</Heading>
               </div> }
 
-              { utxo.data.expires && <div class={css`
+              { !!utxo.data.expires && <div class={css`
                   display: flex;
                   flex-direction: row;
                   justify-content: space-between;
