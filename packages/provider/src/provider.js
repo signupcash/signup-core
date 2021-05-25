@@ -536,8 +536,7 @@ function sendAnyoneCanPayCommitment(recipients = [], amount, unit = "SATS", data
     reqType: "contribution",
     recipients,
     data: {
-      ...data,
-      includingFee: data.includingFee || 0
+      ...data
     },
     amount,
     unit
