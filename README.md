@@ -1,3 +1,5 @@
+> This reporitory is not actively maintained anymore due to personal reasons. Please feel free to continue the code using a fork if you found it useful. 
+
 # Signup Core
 
 This repository contains the official libraries for the core functionality of [signup.cash](https://signup.cash), mostly the client side library and provider.
